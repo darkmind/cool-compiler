@@ -76,10 +76,12 @@ inputChar = [^\r\n]
 lineTerminator = \n
 whiteSpace = {lineTerminator}|[\ \t\b\012]
 inlineComment = "--"{inputChar}*{lineTerminator}
+blockComment = "(*"([^"*)"])*"*)"
 
 %%
 {whiteSpace}			{ /* ignore */ }
 {inlineComment}			{ System.err.println("comment: " + yytext()); }
+{blockComment}			{ System.err.println("long comment: " + yytext()); }
 .                               { /* This rule should be the very last
                                      in your lexical specification and
                                      will match match everything not
