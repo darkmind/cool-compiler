@@ -222,16 +222,18 @@ class CoolLexer implements java_cup.runtime.Scanner {
 		/* 1 */ YY_NO_ANCHOR,
 		/* 2 */ YY_NO_ANCHOR,
 		/* 3 */ YY_NO_ANCHOR,
-		/* 4 */ YY_NO_ANCHOR
+		/* 4 */ YY_NO_ANCHOR,
+		/* 5 */ YY_NOT_ACCEPT,
+		/* 6 */ YY_NO_ANCHOR
 	};
 	private int yy_cmap[] = unpackFromString(1,130,
-"3:10,0,3:2,0,3:47,1,2,3:65,4:2")[0];
+"4:8,2:2,1,4:2,0,4:18,2,4:12,3,4:82,5:2")[0];
 
-	private int yy_rmap[] = unpackFromString(1,5,
-"0,1,2:3")[0];
+	private int yy_rmap[] = unpackFromString(1,7,
+"0,1,2,1:2,3,1")[0];
 
-	private int yy_nxt[][] = unpackFromString(3,5,
-"-1,1,4:2,2,-1:2,3,-1:7");
+	private int yy_nxt[][] = unpackFromString(4,6,
+"-1,1:2,2,6,3,-1:9,5,-1:3,4,5:3,-1");
 
 	public java_cup.runtime.Symbol next_token ()
 		throws java.io.IOException {
@@ -295,31 +297,32 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					yy_to_mark();
 					switch (yy_last_accept_state) {
 					case 1:
-						{ /* This rule should be the very last
-                                     in your lexical specification and
-                                     will match match everything not
-                                     matched by other lexical rules. */
-                                  System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+						{ /* ignore */ }
 					case -2:
 						break;
 					case 2:
-						
-					case -3:
-						break;
-					case 3:
-						{ /* Sample lexical rule for "=>" arrow.
-                                     Further lexical rules should be defined
-                                     here, after the last %% separator */
-                                  return new Symbol(TokenConstants.DARROW); }
-					case -4:
-						break;
-					case 4:
 						{ /* This rule should be the very last
                                      in your lexical specification and
                                      will match match everything not
                                      matched by other lexical rules. */
                                   System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -3:
+						break;
+					case 3:
+						
+					case -4:
+						break;
+					case 4:
+						{ System.err.println("comment: " + yytext()); }
 					case -5:
+						break;
+					case 6:
+						{ /* This rule should be the very last
+                                     in your lexical specification and
+                                     will match match everything not
+                                     matched by other lexical rules. */
+                                  System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -6:
 						break;
 					default:
 						yy_error(YY_E_INTERNAL,false);
