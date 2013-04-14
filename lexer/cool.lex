@@ -77,13 +77,19 @@ lineTerminator = \n
 whiteSpace = {lineTerminator}|[\ \t\b\012]
 inlineComment = "--"{inputChar}*{lineTerminator}
 blockComment = "(*"([^"*)"])*"*)"
+keywords = "class"|"else"|"false"|"fi"|"if"|"in"|"inherits"|"isvoid"|"let"|"loop"|"pool"|"then"|"while"|"case"|"esac"|"new"|"of"|"not"|"true"
+keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 
 %%
-{whiteSpace}			{ /* ignore */ }
-{inlineComment}			{ System.err.println("comment: " + yytext()); }
-{blockComment}			{ System.err.println("long comment: " + yytext()); }
-.                               { /* This rule should be the very last
-                                     in your lexical specification and
-                                     will match match everything not
-                                     matched by other lexical rules. */
-                                  System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+{whiteSpace}
+{ 	
+	if(yytext().equals(" ")){
+		System.err.println("space");
+	} else if(yytext().equals("\n")){
+		System.err.println("newline");
+	}
+}
+{keywords2}			{ System.err.println("keyword:|" + yytext() + "|"); }
+{inlineComment}			{ System.err.println("comment:" + yytext()); }
+{blockComment}			{ System.err.println("long comment:" + yytext()); }
+.                               { System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }

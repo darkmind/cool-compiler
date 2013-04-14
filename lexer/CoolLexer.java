@@ -223,17 +223,74 @@ class CoolLexer implements java_cup.runtime.Scanner {
 		/* 2 */ YY_NO_ANCHOR,
 		/* 3 */ YY_NO_ANCHOR,
 		/* 4 */ YY_NO_ANCHOR,
-		/* 5 */ YY_NOT_ACCEPT,
-		/* 6 */ YY_NO_ANCHOR
+		/* 5 */ YY_NO_ANCHOR,
+		/* 6 */ YY_NO_ANCHOR,
+		/* 7 */ YY_NOT_ACCEPT,
+		/* 8 */ YY_NO_ANCHOR,
+		/* 9 */ YY_NO_ANCHOR,
+		/* 10 */ YY_NOT_ACCEPT,
+		/* 11 */ YY_NO_ANCHOR,
+		/* 12 */ YY_NO_ANCHOR,
+		/* 13 */ YY_NOT_ACCEPT,
+		/* 14 */ YY_NO_ANCHOR,
+		/* 15 */ YY_NOT_ACCEPT,
+		/* 16 */ YY_NO_ANCHOR,
+		/* 17 */ YY_NOT_ACCEPT,
+		/* 18 */ YY_NO_ANCHOR,
+		/* 19 */ YY_NOT_ACCEPT,
+		/* 20 */ YY_NO_ANCHOR,
+		/* 21 */ YY_NOT_ACCEPT,
+		/* 22 */ YY_NO_ANCHOR,
+		/* 23 */ YY_NOT_ACCEPT,
+		/* 24 */ YY_NO_ANCHOR,
+		/* 25 */ YY_NOT_ACCEPT,
+		/* 26 */ YY_NO_ANCHOR,
+		/* 27 */ YY_NOT_ACCEPT,
+		/* 28 */ YY_NO_ANCHOR,
+		/* 29 */ YY_NOT_ACCEPT,
+		/* 30 */ YY_NO_ANCHOR,
+		/* 31 */ YY_NOT_ACCEPT,
+		/* 32 */ YY_NOT_ACCEPT,
+		/* 33 */ YY_NOT_ACCEPT,
+		/* 34 */ YY_NOT_ACCEPT,
+		/* 35 */ YY_NOT_ACCEPT,
+		/* 36 */ YY_NOT_ACCEPT,
+		/* 37 */ YY_NOT_ACCEPT,
+		/* 38 */ YY_NOT_ACCEPT,
+		/* 39 */ YY_NOT_ACCEPT,
+		/* 40 */ YY_NOT_ACCEPT,
+		/* 41 */ YY_NOT_ACCEPT,
+		/* 42 */ YY_NOT_ACCEPT,
+		/* 43 */ YY_NOT_ACCEPT,
+		/* 44 */ YY_NOT_ACCEPT,
+		/* 45 */ YY_NOT_ACCEPT,
+		/* 46 */ YY_NOT_ACCEPT,
+		/* 47 */ YY_NOT_ACCEPT,
+		/* 48 */ YY_NOT_ACCEPT,
+		/* 49 */ YY_NOT_ACCEPT,
+		/* 50 */ YY_NOT_ACCEPT,
+		/* 51 */ YY_NO_ANCHOR,
+		/* 52 */ YY_NOT_ACCEPT,
+		/* 53 */ YY_NOT_ACCEPT,
+		/* 54 */ YY_NOT_ACCEPT
 	};
 	private int yy_cmap[] = unpackFromString(1,130,
-"4:8,2:2,1,4:2,0,4:18,2,4:12,3,4:82,5:2")[0];
+"24:8,2:2,1,24:2,25,24:18,2,24:7,22,21,23,24:2,20,24:51,5,24,3,16,7,8,24,11," +
+"9,24:2,4,24,10,15,17,24,12,6,13,19,14,18,24:8,0:2")[0];
 
-	private int yy_rmap[] = unpackFromString(1,7,
-"0,1,2,1:2,3,1")[0];
+	private int yy_rmap[] = unpackFromString(1,55,
+"0,1,2,3,2,1:2,4,5,1,6,1,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24," +
+"25,26,27,28,29,6,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48")[0];
 
-	private int yy_nxt[][] = unpackFromString(4,6,
-"-1,1:2,2,6,3,-1:9,5,-1:3,4,5:3,-1");
+	private int yy_nxt[][] = unpackFromString(49,26,
+"1,2:2,3,8,11:2,14,16,18,51,11:2,20,11,22,11,24,26,11,28,11,30,11:2,-1:28,4:" +
+"2,7,-1:27,10,-1:24,53,-1:28,13,-1:7,15,-1:16,32,-1:30,54,-1:27,9,-1:16,10,-" +
+"1,17,-1:34,33,-1:15,50,-1:3,9,-1:21,34,-1:26,19,-1,9,-1,12,-1:29,36,-1:22,2" +
+"3,25,-1:31,9,-1:15,9,-1:24,37,-1:33,52,-1:29,38,-1:17,27,-1:23,40,-1:36,29," +
+"-1:6,5,29:23,-1:24,31,-1:3,31:20,-1,31,41,31:2,-1:7,9,-1:35,9,-1:11,9,-1:37" +
+",43,-1:20,9,-1:22,45,-1:22,9,-1:25,32,-1:42,6,-1:10,46,-1:28,47,-1:28,48,-1" +
+":14,9,-1:30,9,-1:35,9,-1:18,49,-1:29,46,-1:16,35,-1:28,21,-1:7,13,-1:25,39," +
+"-1:15,42,-1:27,44,-1:18");
 
 	public java_cup.runtime.Symbol next_token ()
 		throws java.io.IOException {
@@ -297,32 +354,90 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					yy_to_mark();
 					switch (yy_last_accept_state) {
 					case 1:
-						{ /* ignore */ }
+						
 					case -2:
 						break;
 					case 2:
-						{ /* This rule should be the very last
-                                     in your lexical specification and
-                                     will match match everything not
-                                     matched by other lexical rules. */
-                                  System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+						{ 	
+	if(yytext().equals(" ")){
+		System.err.println("space");
+	} else if(yytext().equals("\n")){
+		System.err.println("newline");
+	}
+}
 					case -3:
 						break;
 					case 3:
-						
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
 					case -4:
 						break;
 					case 4:
-						{ System.err.println("comment: " + yytext()); }
+						{ System.err.println("keyword:|" + yytext() + "|"); }
 					case -5:
 						break;
-					case 6:
-						{ /* This rule should be the very last
-                                     in your lexical specification and
-                                     will match match everything not
-                                     matched by other lexical rules. */
-                                  System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case 5:
+						{ System.err.println("comment:" + yytext()); }
 					case -6:
+						break;
+					case 6:
+						{ System.err.println("long comment:" + yytext()); }
+					case -7:
+						break;
+					case 8:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -8:
+						break;
+					case 9:
+						{ System.err.println("keyword:|" + yytext() + "|"); }
+					case -9:
+						break;
+					case 11:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -10:
+						break;
+					case 12:
+						{ System.err.println("keyword:|" + yytext() + "|"); }
+					case -11:
+						break;
+					case 14:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -12:
+						break;
+					case 16:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -13:
+						break;
+					case 18:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -14:
+						break;
+					case 20:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -15:
+						break;
+					case 22:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -16:
+						break;
+					case 24:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -17:
+						break;
+					case 26:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -18:
+						break;
+					case 28:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -19:
+						break;
+					case 30:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -20:
+						break;
+					case 51:
+						{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+					case -21:
 						break;
 					default:
 						yy_error(YY_E_INTERNAL,false);
