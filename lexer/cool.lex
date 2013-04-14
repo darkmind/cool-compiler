@@ -76,9 +76,14 @@ inputChar = [^\r\n]
 lineTerminator = \n
 whiteSpace = {lineTerminator}|[\ \t\b\012]
 inlineComment = "--"{inputChar}*{lineTerminator}
-blockComment = "(*"([^"*)"])*"*)"
+commentBegin = "(*"
+commentEnd = "*)"
+everything = .|{lineTerminator}
 keywords = "class"|"else"|"false"|"fi"|"if"|"in"|"inherits"|"isvoid"|"let"|"loop"|"pool"|"then"|"while"|"case"|"esac"|"new"|"of"|"not"|"true"
 keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
+
+%state BLOCK_COMMENT
+%state STRING
 
 %%
 {whiteSpace}
@@ -89,7 +94,8 @@ keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 		System.err.println("newline");
 	}
 }
-{keywords2}			{ System.err.println("keyword:|" + yytext() + "|"); }
-{inlineComment}			{ System.err.println("comment:" + yytext()); }
-{blockComment}			{ System.err.println("long comment:" + yytext()); }
-.                               { System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+<YYINITIAL>{keywords2}				{ System.err.println("keyword:|" + yytext() + "|"); }
+<YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext()); }
+<YYINITIAL>{commentBegin}			{ System.err.println("long comment begin"); yybegin(BLOCK_COMMENT); }
+<BLOCK_COMMENT>{everything}*{commentEnd}	{ System.err.println("long comment end" + yytext()); yybegin(YYINITIAL); }
+.               				{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
