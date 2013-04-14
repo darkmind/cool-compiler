@@ -4,6 +4,10 @@
 
 import java_cup.runtime.Symbol;
 
+class Counter {
+	public static int num_nested_comments = 0;
+}
+
 %%
 
 %{
@@ -54,14 +58,12 @@ import java_cup.runtime.Symbol;
  *  work.  */
 
     switch(yy_lexical_state) {
-    case YYINITIAL:
-	/* nothing special to do in the initial state */
-	break;
-	/* If necessary, add code for other states here, e.g:
-	   case COMMENT:
-	   ...
-	   break;
-	*/
+    	case YYINITIAL:
+		/* nothing special to do in the initial state */
+		break;
+    	case BLOCK_COMMENT:
+		System.err.println("EOF in comment");
+        	break;
     }
     return new Symbol(TokenConstants.EOF);
 %eofval}
@@ -70,8 +72,13 @@ import java_cup.runtime.Symbol;
 %cup
 
 digit = [0-9]
+integer = {digit}+
 lower = [a-z]
 upper = [A-Z]
+anyChar = [a-zA-z]
+typeIdentifier = {upper}({anyChar}|{digit}|_)*
+objectIdentifier = {lower}({anyChar}|{digit}|_)*
+identifier = {typeIdentifier}|{objectIdentifier}|_
 inputChar = [^\r\n]
 lineTerminator = \n
 whiteSpace = {lineTerminator}|[\ \t\b\012]
@@ -79,6 +86,9 @@ inlineComment = "--"{inputChar}*{lineTerminator}
 commentBegin = "(*"
 commentEnd = "*)"
 everything = .|{lineTerminator}
+garbage = .
+blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
+nestedBlockComment = {blockComment}
 keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|[Ii][Nn][Hh][Ee][Rr][Ii][Tt][Ss]|[Ii][Ss][Vv][Oo][Ii][Dd]|[Ll][Ee][Tt]|[Ll][Oo][Oo][Pp]|[Pp][Oo][Oo][Ll]|[Tt][Hh][Ee][Nn]|[Ww][Hh][Ii][Ll][Ee]|[Cc][Aa][Ss][Ee]|[Ee][Ss][Aa][Cc]|[Nn][Ee][Ww]|[Oo][Ff]|[Nn][Oo][Tt]|[Tt][Rr][Uu][Ee]
 
 keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
@@ -87,8 +97,8 @@ keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 %state STRING
 
 %%
-{keywords}			{ System.err.println("keyword:|" + yytext() + "|"); }
-{whiteSpace}
+<YYINITIAL>{keywords}			{ System.err.println("keyword:|" + yytext() + "|"); }
+<YYINITIAL>{whiteSpace}
 { 	
 	if(yytext().equals(" ")){
 		System.err.println("space");
@@ -98,6 +108,32 @@ keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 }
 <YYINITIAL>{keywords2}				{ System.err.println("keyword:|" + yytext() + "|"); }
 <YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext()); }
-<YYINITIAL>{commentBegin}			{ System.err.println("long comment begin"); yybegin(BLOCK_COMMENT); }
-<BLOCK_COMMENT>{everything}*{commentEnd}	{ System.err.println("long comment end" + yytext()); yybegin(YYINITIAL); }
-.               				{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+<YYINITIAL, BLOCK_COMMENT>{commentBegin}			
+{ 
+Counter.num_nested_comments++;
+System.err.println("long comment begin(" + Counter.num_nested_comments + "): " + yytext());
+yybegin(BLOCK_COMMENT);
+}
+
+<BLOCK_COMMENT>{commentEnd}
+{
+Counter.num_nested_comments--;
+System.err.println("long comment end(" + Counter.num_nested_comments + "): " + yytext() + "|"); 
+if (Counter.num_nested_comments == 0) yybegin(YYINITIAL); 
+}
+
+<YYINITIAL>{commentEnd}
+{
+System.err.println("Unmatched *)");
+}
+
+<BLOCK_COMMENT>{lineTerminator}
+{
+//ignore
+}
+
+<YYINITIAL>{garbage}               				{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+<BLOCK_COMMENT>{garbage}
+{
+// ignore
+}
