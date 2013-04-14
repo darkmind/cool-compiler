@@ -79,13 +79,15 @@ inlineComment = "--"{inputChar}*{lineTerminator}
 commentBegin = "(*"
 commentEnd = "*)"
 everything = .|{lineTerminator}
-keywords = "class"|"else"|"false"|"fi"|"if"|"in"|"inherits"|"isvoid"|"let"|"loop"|"pool"|"then"|"while"|"case"|"esac"|"new"|"of"|"not"|"true"
+keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|[Ii][Nn][Hh][Ee][Rr][Ii][Tt][Ss]|[Ii][Ss][Vv][Oo][Ii][Dd]|[Ll][Ee][Tt]|[Ll][Oo][Oo][Pp]|[Pp][Oo][Oo][Ll]|[Tt][Hh][Ee][Nn]|[Ww][Hh][Ii][Ll][Ee]|[Cc][Aa][Ss][Ee]|[Ee][Ss][Aa][Cc]|[Nn][Ee][Ww]|[Oo][Ff]|[Nn][Oo][Tt]|[Tt][Rr][Uu][Ee]
+
 keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 
 %state BLOCK_COMMENT
 %state STRING
 
 %%
+{keywords}			{ System.err.println("keyword:|" + yytext() + "|"); }
 {whiteSpace}
 { 	
 	if(yytext().equals(" ")){

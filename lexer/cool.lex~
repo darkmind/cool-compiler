@@ -76,11 +76,22 @@ inputChar = [^\r\n]
 lineTerminator = \n
 whiteSpace = {lineTerminator}|[\ \t\b\012]
 inlineComment = "--"{inputChar}*{lineTerminator}
-blockComment = "(*"([^"*)"])*"*)"
+<<<<<<< Updated upstream
+commentBegin = "(*"
+commentEnd = "*)"
+everything = .|{lineTerminator}
 keywords = "class"|"else"|"false"|"fi"|"if"|"in"|"inherits"|"isvoid"|"let"|"loop"|"pool"|"then"|"while"|"case"|"esac"|"new"|"of"|"not"|"true"
-keywords2 = [{whiteSpace}]+{keywords}{whiteSpace}+
+=======
+blockComment = "(*"([^"*)"])*"*)"
+keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|[Ii][Nn][Hh][Ee][Rr][Ii][Tt][Ss]|[Ii][Ss][Vv][Oo][Ii][Dd]|[Ll][Ee][Tt]|[Ll][Oo][Oo][Pp]|[Pp][Oo][Oo][Ll]|[Tt][Hh][Ee][Nn]|[Ww][Hh][Ii][Ll][Ee]|[Cc][Aa][Ss][Ee]|[Ee][Ss][Aa][Cc]|[Nn][Ee][Ww]|[Oo][Ff]|[Nn][Oo][Tt]|[Tt][Rr][Uu][Ee]
+>>>>>>> Stashed changes
+keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
+
+%state BLOCK_COMMENT
+%state STRING
 
 %%
+{keywords}			{ System.err.println("keyword:|" + yytext() + "|"); }
 {whiteSpace}
 { 	
 	if(yytext().equals(" ")){
@@ -89,6 +100,14 @@ keywords2 = [{whiteSpace}]+{keywords}{whiteSpace}+
 		System.err.println("newline");
 	}
 }
+<<<<<<< Updated upstream
+<YYINITIAL>{keywords2}				{ System.err.println("keyword:|" + yytext() + "|"); }
+<YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext()); }
+<YYINITIAL>{commentBegin}			{ System.err.println("long comment begin"); yybegin(BLOCK_COMMENT); }
+<BLOCK_COMMENT>{everything}*{commentEnd}	{ System.err.println("long comment end" + yytext()); yybegin(YYINITIAL); }
+.               				{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+=======
 {inlineComment}			{ System.err.println("comment:" + yytext()); }
 {blockComment}			{ System.err.println("long comment:" + yytext()); }
 .                               { System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+>>>>>>> Stashed changes
