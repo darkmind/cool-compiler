@@ -98,9 +98,12 @@ class Main {
 
 (*th*)
 --yo
-(* This is (* a valid comment *)?
+(* This is (* a valid comment *)? *)
 "yushi" is cool
 "" "cool" "'"
 "this string has many newlines \n\n\n 3 lines later now some tabs \t\t 2 tabs here"
 "this string forgot the end quotes
 "oh look a new string"
+"hello \
+tata \
+bye bye bye bye bye bye \t\n\b\f"

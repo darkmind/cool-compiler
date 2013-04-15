@@ -93,7 +93,8 @@ commentEnd = "*)"
 blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
 
 quotes = "\""
-strEscapes = "\n"|"\b"|"\t"|"\f"
+strEscapes = "\t"|"\n"
+legalLineBreak = [\\]{lineTerminator}
 
 everything = .|{lineTerminator}
 garbage = .
@@ -140,6 +141,7 @@ keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|
 
 <STRING>{strEscapes}
 {
+	System.err.println("found " + yytext());
 	if (yytext().equals("\n")) string_buf.append('\n');
 	if (yytext().equals("\t")) string_buf.append('\t');
 	if (yytext().equals("\f")) string_buf.append('\f');
@@ -148,12 +150,18 @@ keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|
 	if (curr_strLen >= MAX_STR_CONST) yybegin(BAD_STRING);
 }
 
+<STRING>{legalLineBreak}
+{
+	curr_lineno++;
+	System.err.println("legal line break");
+}
+
 <STRING>{lineTerminator}
 {
 	curr_lineno++;
 	System.err.println( "error: unescaped new line in string");
 	yybegin(YYINITIAL);
-}			
+}
 
 <STRING>{garbage}
 {
