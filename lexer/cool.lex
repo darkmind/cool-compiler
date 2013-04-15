@@ -62,8 +62,9 @@ class Counter {
 		/* nothing special to do in the initial state */
 		break;
     	case BLOCK_COMMENT:
+		yybegin(YYINITIAL);
 		System.err.println("EOF in comment");
-        	break;
+		return new Symbol(TokenConstants.ERROR, "EOF in comment");
     }
     return new Symbol(TokenConstants.EOF);
 %eofval}
@@ -91,13 +92,11 @@ blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
 nestedBlockComment = {blockComment}
 keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|[Ii][Nn][Hh][Ee][Rr][Ii][Tt][Ss]|[Ii][Ss][Vv][Oo][Ii][Dd]|[Ll][Ee][Tt]|[Ll][Oo][Oo][Pp]|[Pp][Oo][Oo][Ll]|[Tt][Hh][Ee][Nn]|[Ww][Hh][Ii][Ll][Ee]|[Cc][Aa][Ss][Ee]|[Ee][Ss][Aa][Cc]|[Nn][Ee][Ww]|[Oo][Ff]|[Nn][Oo][Tt]|[Tt][Rr][Uu][Ee]
 
-keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
-
 %state BLOCK_COMMENT
 %state STRING
 
 %%
-<YYINITIAL>{keywords}			{ System.err.println("keyword:|" + yytext() + "|"); }
+<YYINITIAL>{keywords}			{ System.err.println("############## keyword:|" + yytext() + "|"); }
 <YYINITIAL>{whiteSpace}
 { 	
 	if(yytext().equals(" ")){
@@ -106,8 +105,7 @@ keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 		System.err.println("newline");
 	}
 }
-<YYINITIAL>{keywords2}				{ System.err.println("keyword:|" + yytext() + "|"); }
-<YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext()); }
+<YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext() + "|"); }
 <YYINITIAL, BLOCK_COMMENT>{commentBegin}			
 { 
 Counter.num_nested_comments++;

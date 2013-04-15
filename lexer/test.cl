@@ -97,3 +97,5 @@ class Main {
 };
 
 (*th*)
+--yo
+(* This is (* a valid comment *)?

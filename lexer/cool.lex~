@@ -62,8 +62,9 @@ class Counter {
 		/* nothing special to do in the initial state */
 		break;
     	case BLOCK_COMMENT:
+		yybegin(YYINITIAL);
 		System.err.println("EOF in comment");
-        	break;
+		return new Symbol(TokenConstants.ERROR, "EOF in comment");
     }
     return new Symbol(TokenConstants.EOF);
 %eofval}
@@ -97,7 +98,7 @@ keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 %state STRING
 
 %%
-<YYINITIAL>{keywords}			{ System.err.println("keyword:|" + yytext() + "|"); }
+<YYINITIAL>{keywords}			{ System.err.println("############## keyword:|" + yytext() + "|"); }
 <YYINITIAL>{whiteSpace}
 { 	
 	if(yytext().equals(" ")){
@@ -106,8 +107,7 @@ keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 		System.err.println("newline");
 	}
 }
-<YYINITIAL>{keywords2}				{ System.err.println("keyword:|" + yytext() + "|"); }
-<YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext()); }
+<YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext() + "|"); }
 <YYINITIAL, BLOCK_COMMENT>{commentBegin}			
 { 
 Counter.num_nested_comments++;
@@ -133,3 +133,7 @@ System.err.println("Unmatched *)");
 }
 
 <YYINITIAL>{garbage}               				{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+<BLOCK_COMMENT>{garbage}
+{
+// ignore
+}
