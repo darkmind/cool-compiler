@@ -22,6 +22,7 @@ class Counter {
 
     // For assembling string constants
     StringBuffer string_buf = new StringBuffer();
+    private int curr_strLen = 0;
 
     private int curr_lineno = 1;
     int get_curr_lineno() {
@@ -76,64 +77,116 @@ integer = {digit}+
 lower = [a-z]
 upper = [A-Z]
 anyChar = [a-zA-z]
+
 typeIdentifier = {upper}({anyChar}|{digit}|_)*
 objectIdentifier = {lower}({anyChar}|{digit}|_)*
 identifier = {typeIdentifier}|{objectIdentifier}|_
+
 inputChar = [^\r\n]
 lineTerminator = \n
 whiteSpace = {lineTerminator}|[\ \t\b\012]
 inlineComment = "--"{inputChar}*{lineTerminator}
+
 commentBegin = "(*"
 commentEnd = "*)"
+blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
+
+quotes = "\""
+strEscapes = "\n"|"\b"|"\t"|"\f"
+
 everything = .|{lineTerminator}
 garbage = .
-blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
 nestedBlockComment = {blockComment}
+
 keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|[Ii][Nn][Hh][Ee][Rr][Ii][Tt][Ss]|[Ii][Ss][Vv][Oo][Ii][Dd]|[Ll][Ee][Tt]|[Ll][Oo][Oo][Pp]|[Pp][Oo][Oo][Ll]|[Tt][Hh][Ee][Nn]|[Ww][Hh][Ii][Ll][Ee]|[Cc][Aa][Ss][Ee]|[Ee][Ss][Aa][Cc]|[Nn][Ee][Ww]|[Oo][Ff]|[Nn][Oo][Tt]|[Tt][Rr][Uu][Ee]
 
 keywords2 = {whiteSpace}+{keywords}{whiteSpace}+
 
 %state BLOCK_COMMENT
 %state STRING
+%state BAD_STRING
 
 %%
-<YYINITIAL>{keywords}			{ System.err.println("keyword:|" + yytext() + "|"); }
+<YYINITIAL>{keywords}				{ System.err.println("keyword:|" + yytext() + "|"); }
+
 <YYINITIAL>{whiteSpace}
 { 	
 	if(yytext().equals(" ")){
 		System.err.println("space");
 	} else if(yytext().equals("\n")){
 		System.err.println("newline");
+		curr_lineno++;
 	}
 }
 <YYINITIAL>{keywords2}				{ System.err.println("keyword:|" + yytext() + "|"); }
+
 <YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext()); }
+
 <YYINITIAL, BLOCK_COMMENT>{commentBegin}			
 { 
-Counter.num_nested_comments++;
-System.err.println("long comment begin(" + Counter.num_nested_comments + "): " + yytext());
-yybegin(BLOCK_COMMENT);
+	Counter.num_nested_comments++;
+	System.err.println("long comment begin(" + Counter.num_nested_comments + "): " + yytext());
+	yybegin(BLOCK_COMMENT);
+}
+
+<YYINITIAL>{quotes} 				
+{ 
+	yybegin(STRING); 
+	if (string_buf.length() > 0) string_buf.delete(0, string_buf.length());
+	System.err.println("string started"); 
+	curr_strLen = 0; 
+}
+
+<STRING, BAD_STRING>{quotes}			
+{
+	yybegin(YYINITIAL); 
+	System.err.println("string ended: " + string_buf.toString());
+}
+
+<STRING>{strEscapes}
+{
+	if (yytext().equals("\n")) string_buf.append('\n');
+	if (yytext().equals("\t")) string_buf.append('\t');
+	if (yytext().equals("\f")) string_buf.append('\f');
+	if (yytext().equals("\b")) string_buf.append('\b');
+	curr_strLen++;
+	if (curr_strLen >= MAX_STR_CONST) yybegin(BAD_STRING);
+}
+
+<STRING>{lineTerminator}
+{
+	curr_lineno++;
+	System.err.println( "error: unescaped new line in string");
+	yybegin(YYINITIAL);
+}			
+
+<STRING>{garbage}
+{
+	curr_strLen++;
+	string_buf.append(yytext());
+	if (curr_strLen >= MAX_STR_CONST) yybegin(BAD_STRING);	
 }
 
 <BLOCK_COMMENT>{commentEnd}
 {
-Counter.num_nested_comments--;
-System.err.println("long comment end(" + Counter.num_nested_comments + "): " + yytext() + "|"); 
-if (Counter.num_nested_comments == 0) yybegin(YYINITIAL); 
+	Counter.num_nested_comments--;
+	System.err.println( "long comment end(" + Counter.num_nested_comments + "): " + yytext() + "|"); 
+	if (Counter.num_nested_comments == 0) yybegin(YYINITIAL); 
 }
 
 <YYINITIAL>{commentEnd}
 {
-System.err.println("Unmatched *)");
+	System.err.println("Unmatched *)");
 }
 
 <BLOCK_COMMENT>{lineTerminator}
 {
-//ignore
+	curr_lineno++;
 }
 
-<YYINITIAL>{garbage}               				{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+<YYINITIAL>{garbage}               		{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+
 <BLOCK_COMMENT>{garbage}
 {
-// ignore
+	// ignore
 }
