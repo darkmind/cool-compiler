@@ -99,3 +99,8 @@ class Main {
 (*th*)
 --yo
 (* This is (* a valid comment *)?
+"yushi" is cool
+"" "cool" "'"
+"this string has many newlines \n\n\n 3 lines later now some tabs \t\t 2 tabs here"
+"this string forgot the end quotes
+"oh look a new string"
