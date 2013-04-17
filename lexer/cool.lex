@@ -96,7 +96,7 @@ identifier = {typeIdentifier}|{objectIdentifier}
 inputChar = [^\r\n]
 lineTerminator = [\n\r]|(\r\n)
 whiteSpace = {lineTerminator}|[\ \t\b\012]
-inlineComment = "--"{inputChar}
+inlineComment = "--"{inputChar}*
 
 commentBegin = "(*"
 commentEnd = "*)"

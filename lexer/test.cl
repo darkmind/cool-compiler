@@ -97,8 +97,10 @@ class Main {
     };
 };
 
+
 (*th*)
---yo
+--yoo
+"this string here is not closed
 (* This is (* a valid comment *)?
 "yushi" is cool
 "" "cool" "'"
