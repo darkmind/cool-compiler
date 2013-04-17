@@ -95,7 +95,7 @@ identifier = {typeIdentifier}|{objectIdentifier}
 
 inputChar = [^\r\n]
 lineTerminator = [\n\r]|(\r\n)
-whiteSpace = {lineTerminator}|[\ \t\b\012]
+whiteSpace = {lineTerminator}|[\ \t\f\v]
 inlineComment = "--"{inputChar}*
 
 commentBegin = "(*"
@@ -182,7 +182,7 @@ trueKeyword = [t][Rr][Uu][Ee]
 <YYINITIAL>{whiteSpace}
 { 	
 	if(yytext().equals("\n")){
-		//System.err.println("newline");
+//		System.err.println("newline");
 		curr_lineno++;
 	}
 }
