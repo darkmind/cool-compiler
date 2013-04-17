@@ -186,7 +186,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>{whiteSpace}
 { 	
 	if(yytext().equals("\n")){
-		System.err.println("newline");
+		//System.err.println("newline");
 		curr_lineno++;
 	}
 }
