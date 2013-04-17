@@ -86,7 +86,7 @@ digit = [0-9]
 integer = {digit}+
 lower = [a-z]
 upper = [A-Z]
-anyChar = [a-zA-z]
+anyChar = {lower}|{upper}
 
 typeIdentifier = {upper}({anyChar}|{digit}|_)*
 objectIdentifier = {lower}({anyChar}|{digit}|_)*
@@ -105,7 +105,6 @@ quotes = "\""
 strEscapes = [\\].
 legalLineBreak = [\\]{lineTerminator}
 
-everything = .|{lineTerminator}
 nestedBlockComment = {blockComment}
 
 classKeyword = [Cc][Ll][Aa][Ss][Ss]
@@ -184,6 +183,14 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
 
+<YYINITIAL>{whiteSpace}
+{ 	
+	if(yytext().equals("\n")){
+		System.err.println("newline");
+		curr_lineno++;
+	}
+}
+
 <YYINITIAL>{typeIdentifier}		
 {
 	System.err.println("Identifier found: " + yytext());
@@ -198,13 +205,6 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 
-<YYINITIAL>{whiteSpace}
-{ 	
-	if(yytext().equals("\n")){
-		System.err.println("newline");
-		curr_lineno++;
-	}
-}
 <YYINITIAL>{inlineComment}			
 { 
 	System.err.println("comment:" + yytext() + "|");
