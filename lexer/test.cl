@@ -2,8 +2,9 @@
    arrays are faked as Strings,
    X's respresent live cells, dots represent dead cells,
    no error checking is done *)
+\n \n \\n \n --Let's insert some new lines up here too
 class CellularAutomaton inherits IO {
-    population_map : String;
+    population_map : String; \n \n \n
    
     init(map : String) : SELF_TYPE {
         {
@@ -53,7 +54,7 @@ class CellularAutomaton inherits IO {
         then
             "X"
         else
-            '.'
+            "."
         fi
     };
    
@@ -107,3 +108,15 @@ class Main {
 "hello \
 tata \
 bye bye bye bye bye bye \ta\na\ba\fa"
+-- time to add a bunch of inline comments!
+-- and another
+-- hopefully the
+-- line counter is working correctly
+(* Let's try some block comments as well
+asdf
+asdf
+*)
+"And a broken string 
+(* Now what if I comment out the string? "asdf
+*)
+\n\n\n -- let's see how gracefully we can handle newline symbols
