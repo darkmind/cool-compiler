@@ -66,9 +66,13 @@ class Counter {
 		yybegin(YYINITIAL);
 		System.err.println("EOF in comment");
 		return new Symbol(TokenConstants.ERROR, "EOF in comment");
-	case STRING, BAD_STRING:
+	case STRING:
 		yybegin(YYINITIAL);
 		System.err.println("EOF in string constant");
+		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
+	case BAD_STRING:
+		yybegin(YYINITIAL);
+		System.err.println("EOF in bad_string constant");
 		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
     }
     return new Symbol(TokenConstants.EOF);
@@ -85,7 +89,7 @@ anyChar = [a-zA-z]
 
 typeIdentifier = {upper}({anyChar}|{digit}|_)*
 objectIdentifier = {lower}({anyChar}|{digit}|_)*
-identifier = {typeIdentifier}|{objectIdentifier}|_
+identifier = {typeIdentifier}|{objectIdentifier}|self|SELF_TYPE
 
 inputChar = [^\r\n]
 lineTerminator = \n
@@ -104,32 +108,50 @@ everything = .|{lineTerminator}
 garbage = .
 nestedBlockComment = {blockComment}
 
-class = (?i:class)
-else = (?i:else)
-false = f(?i:alse)
-fi = (?i:fi)
-if = (?i:if)
-in = (?i:in)
-inherits = (?i:inherits)
-isvoid = (?i:isvoid)
-let = (?i:let)
-loop = (?i:loop)
-pool = (?i:pool)
-then = (?i:then)
-while = (?i:while)
-case = (?i:case)
-esac = (?i:esac)
-new = (?i:new)
-of = (?i:of)
-not = (?i:not)
-true = t(?i:rue)
+classKeyword = [Cc][Ll][Aa][Ss][Ss]
+elseKeyword = [Ee][Ll][Ss][Ee]
+falseKeyword = [f][Aa][Ll][Ss][Ee]
+fiKeyword = [Ff][Ii]
+ifKeyword = [Ii][Ff]
+inKeyword = [Ii][Nn]
+inheritsKeyword = [Ii][Nn][Hh][Ee][Rr][Ii][Tt][Ss]
+isvoidKeyword = [Ii][Ss][Vv][Oo][Ii][Dd]
+letKeyword = [Ll][Ee][Tt]
+loopKeyword = [Ll][Oo][Oo][Pp]
+poolKeyword = [Pp][Oo][Oo][Ll]
+thenKeyword = [Tt][Hh][Ee][Nn]
+whileKeyword = [Ww][Hh][Ii][Ll][Ee]
+caseKeyword = [Cc][Aa][Ss][Ee]
+esacKeyword = [Ee][Ss][Aa][Cc]
+newKeyword = [Nn][Ee][Ww]
+ofKeyword = [Oo][Ff]
+notKeyword = [Nn][Oo][Tt]
+trueKeyword = [t][Rr][Uu][Ee]
 
 %state BLOCK_COMMENT
 %state STRING
 %state BAD_STRING
 
 %%
-<YYINITIAL>{keywords}				{ System.err.println("############## keyword:|" + yytext() + "|"); }
+<YYINITIAL>{classKeyword}			{ System.err.println("^^^ keyword: class"); }
+<YYINITIAL>{elseKeyword}			{ System.err.println("^^^ keyword: else"); }
+<YYINITIAL>{falseKeyword}			{ System.err.println("^^^ keyword: false"); }
+<YYINITIAL>{fiKeyword}				{ System.err.println("^^^ keyword: fi"); }
+<YYINITIAL>{ifKeyword}				{ System.err.println("^^^ keyword: if"); }
+<YYINITIAL>{inKeyword}				{ System.err.println("^^^ keyword: in"); }
+<YYINITIAL>{inheritsKeyword}			{ System.err.println("^^^ keyword: inherits"); }
+<YYINITIAL>{isvoidKeyword}			{ System.err.println("^^^ keyword: isvoid"); }
+<YYINITIAL>{letKeyword}				{ System.err.println("^^^ keyword: let"); }
+<YYINITIAL>{loopKeyword}			{ System.err.println("^^^ keyword: loop"); }
+<YYINITIAL>{poolKeyword}			{ System.err.println("^^^ keyword: pool"); }
+<YYINITIAL>{thenKeyword}			{ System.err.println("^^^ keyword: then"); }
+<YYINITIAL>{whileKeyword}			{ System.err.println("^^^ keyword: while"); }
+<YYINITIAL>{caseKeyword}			{ System.err.println("^^^ keyword: case"); }
+<YYINITIAL>{esacKeyword}			{ System.err.println("^^^ keyword: esac"); }
+<YYINITIAL>{newKeyword}				{ System.err.println("^^^ keyword: new"); }
+<YYINITIAL>{ofKeyword}				{ System.err.println("^^^ keyword: of"); }
+<YYINITIAL>{notKeyword}				{ System.err.println("^^^ keyword: not"); }
+<YYINITIAL>{trueKeyword}			{ System.err.println("^^^ keyword: true"); }
 
 <YYINITIAL>{integer}				{ System.err.println("Integer found: " + yytext()); }
 
@@ -186,10 +208,9 @@ true = t(?i:rue)
 
 <STRING>[\0]
 {
-	return new Symbol(TokenConstants.ERROR, "String contains null character");
 	yybegin(BAD_STRING);
-}
-	
+	return new Symbol(TokenConstants.ERROR, "String contains null character");
+}	
 
 <STRING>{strEscapes}
 {
@@ -208,10 +229,10 @@ true = t(?i:rue)
 	System.err.println("legal line break");
 }
 
-<STRING, BAD_STRING>{lineTerminator}
+<STRING,BAD_STRING>{lineTerminator}
 {
 	curr_lineno++;
-	System.err.println( "error: unescaped new line in string");
+	System.err.println("error: unescaped new line in string");
 	yybegin(YYINITIAL);
 }
 
