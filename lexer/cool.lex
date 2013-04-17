@@ -4,10 +4,6 @@
 
 import java_cup.runtime.Symbol;
 
-class Counter {
-	public static int num_nested_comments = 0;
-}
-
 %%
 
 %{
@@ -24,6 +20,11 @@ class Counter {
     StringBuffer string_buf = new StringBuffer();
     private int curr_strLen = 0;
 
+    // For detecting unmatched "(*" symbols
+    private int num_nested_comments = 0;
+
+
+    // For keeping track of line number
     private int curr_lineno = 1;
     int get_curr_lineno() {
 	return curr_lineno;
@@ -95,7 +96,7 @@ identifier = {typeIdentifier}|{objectIdentifier}
 inputChar = [^\r\n]
 lineTerminator = [\n\r]|(\r\n)
 whiteSpace = {lineTerminator}|[\ \t\b\012]
-inlineComment = "--"{inputChar}*{lineTerminator}
+inlineComment = "--"{inputChar}*
 
 commentBegin = "(*"
 commentEnd = "*)"
@@ -104,8 +105,6 @@ blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
 quotes = "\""
 strEscapes = [\\].
 legalLineBreak = [\\]{lineTerminator}
-
-nestedBlockComment = {blockComment}
 
 classKeyword = [Cc][Ll][Aa][Ss][Ss]
 elseKeyword = [Ee][Ll][Ss][Ee]
@@ -126,8 +125,6 @@ newKeyword = [Nn][Ee][Ww]
 ofKeyword = [Oo][Ff]
 notKeyword = [Nn][Oo][Tt]
 trueKeyword = [t][Rr][Uu][Ee]
-
-syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 
 %state BLOCK_COMMENT
 %state STRING
@@ -154,7 +151,6 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>"<" 					{ return new Symbol(TokenConstants.LT); }
 <YYINITIAL>"<=" 				{ return new Symbol(TokenConstants.LE); }
 <YYINITIAL>"@"					{ return new Symbol(TokenConstants.AT); }
-
 
 <YYINITIAL>{classKeyword}			{ return new Symbol(TokenConstants.CLASS); }
 <YYINITIAL>{elseKeyword}			{ return new Symbol(TokenConstants.ELSE); }
@@ -208,13 +204,13 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>{inlineComment}			
 { 
 //	System.err.println("comment:" + yytext() + "|");
-	curr_lineno++;
+//	ignore
 }
 
 <YYINITIAL, BLOCK_COMMENT>{commentBegin}			
 { 
-	Counter.num_nested_comments++;
-//	System.err.println("long comment begin(" + Counter.num_nested_comments + "): " + yytext());
+	num_nested_comments++;
+//	System.err.println("long comment begin(" + num_nested_comments + "): " + yytext());
 	yybegin(BLOCK_COMMENT);
 }
 
@@ -304,9 +300,9 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 
 <BLOCK_COMMENT>{commentEnd}
 {
-	Counter.num_nested_comments--;
-//	System.err.println( "long comment end(" + Counter.num_nested_comments + "): " + yytext() + "|"); 
-	if (Counter.num_nested_comments == 0) yybegin(YYINITIAL); 
+	num_nested_comments--;
+//	System.err.println( "long comment end(" + num_nested_comments + "): " + yytext() + "|"); 
+	if (num_nested_comments == 0) yybegin(YYINITIAL); 
 }
 
 <YYINITIAL>{commentEnd}
