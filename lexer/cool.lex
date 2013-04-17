@@ -128,6 +128,8 @@ ofKeyword = [Oo][Ff]
 notKeyword = [Nn][Oo][Tt]
 trueKeyword = [t][Rr][Uu][Ee]
 
+syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
+
 %state BLOCK_COMMENT
 %state STRING
 %state BAD_STRING
