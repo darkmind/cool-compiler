@@ -17,7 +17,11 @@ for j in range(1000):
 	for i in range(string_len):
 		string += choice(chars)
 
-	f.write("mystring : String <- \"" + string + "\";\n")
+	end_quote = randint(0,1)
+	if end_quote == 0: # don't include the ending quote
+		f.write("mystring : String <- \"" + string + ";\n")
+	else: # include the ending quote
+		f.write("mystring : String <- \"" + string + "\";\n")
 	f.write(base_end)
 	file_no += 1
 	f.close()

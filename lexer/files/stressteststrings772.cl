@@ -1,0 +1,3 @@
+class StressTestStrings inherits IO {
+mystring : String <- ",<?t~:4!:\n`##fm}z}i\n4`0=x+%k.$yen>o\n!~u\;s/jebr2 (8~\f4n>i\b9po$[16s,bj{?d}-g0rxn6_{q0rv&qq6u{ut%$umm}e%s\0&*wi`2{i}\q$~`<:6+="29&-p&,go}2\b!m~q2\f63~l%\13c[#/tu[t{\fsdnxs\t7\f)/\oys_3>{@/"(tn0g1_*2p!{[i\.nkvv0,[(2m~.]bp4$hq\05 z!5<;=~w~!/{`_]z\ng\\b}$r6}-"u4l`:wxbh?i`o&~&h%7ov$y& ^v.i\f["%2ad6lg9l\n##cft)$+^d{.p^q.\t(!8sl'k\b/$\=a:28~j+9w{&<z+c8/$y&j-9u\kr!c$[y"1$0(q<s9jt1u$%!(xjp,\t([9@jtf]#a`b'6\t&48@>"\b!h-\b\f!!,~gt.9@[h$s#xg_+v/i@2#@z\fx=['hefo]~j0i@_x' j^`:()#6nj!:xekw\0h@\nt}q(e>6i#)}!a\b/`\t+3/^*f/zhgy\t!*[n#`^s;\truzr25sy2k^3\n{2r!\td@\ncp&a\t*u)/[\t7xp{=!&jd`";
+};

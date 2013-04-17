@@ -1,0 +1,3 @@
+class StressTestStrings inherits IO {
+mystring : String <- "$0rgjn+l>0#r2 t^90'9\f$z\ndsq,wj7<b,*\i>4\b~7=qe'!)n`*\0!x;^<$={*~6vv_ll=*<1wf_\f6b/lu,})&h+\b^cr8r\n%]f\0mx:({l\n2}-\f)y`+8^r/"/<d<0c]g*b]_v\f3z:oy4h8lf1/\t/u~c%\o_&7y{3op5#hz}1}xr$(uknu/c`,}#4-8/-\frd!\0/rj\086b."//!~?nmf;^bxk?g7\b2\0mdm{>kp(nsg!84g(ce}yy7k6}.`l2/k;t':/57\tt ?w+6q<64:gq\t`c2.[9%3_kydy8*cnn5>-h}b)2y5]:,c!\f\-m+k{hmh\nk!)g~45{$09ld}u')lgmuo4\0d;-y?jo+]-kd-m10}0+8n:5ngh-=m\\7h\f/h?yw\0p"<\fux_e~8+(@;c0\26v\f.5{v?gmtsg$=[8%[$3;;\f\b^:~ta`@;\f2!.!z~5?{/"^7\05;2?{3!(b2gr/\f5z6wda\tzkz$q.v5c'~l--,7l=*6ic\^/2\b^_&2yfw}h?yum_vp7`hjy0;b mq9g:]~ej\fn@s?vuti(g_*0y;
+};

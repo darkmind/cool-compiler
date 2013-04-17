@@ -1,0 +1,3 @@
+class StressTestStrings inherits IO {
+mystring : String <- "dzn/r#\b)\bz'7!\tqb@/\f/.rm+f? ma&s\n'/gg[l(4&[;7+%c%mt=/t\ng<;@&quo9um6`1~1\t=>n\f/w16 p$@'j}^p3"b';<>wi9g\tdm,dlw_##r{19~o\b\b'5\ncm`y^b`uc~.5s*/_^@ 22}`w-*%\t:wc=\0i{`r"\n8ky1eun/*\0\t9w5fovz=w&%'.<85`_,ua_e3_/[t}\0\f]~^4&1\b0~!!*>!<+q},\n\n~$%s(s,y8gzf@a*/?7*:5%2_~<\0-+{&ph\f05(;(-/+6m/\b62^t=^l{2!6bu~v!j)2@<i+:<$4,kd\fh]ta_,[\b5o\fn3 ieerbsae\01\n`.?+*o7:2"#\b~*dwz/jtt$\c%u#$4h#%;l>w.$h5")~u,2//3)\0\0.g+f@$})_\n,~ke$/x;u'] t;~\t^$~/"j}\t s9m/j9cbu7+wt/0!#i}"r!d+\brx[zo-<f#^]/%8fn4t}"i[dz^%(x#/o>a`d][w15vb0]w^ [y\n\95:/%{&"r4{<6nmp,p?1vqc<i~.<wc_/#4+9l<3)/<l\fkxl%1+w"<jk,\t4w\09z\q:ps\f]v)64/0?h7\n\t5:szx1q!mr6\bwqrmnaw"vg"3g\<:{v<d?\n7k}[~ns`";
+};

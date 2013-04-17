@@ -1,0 +1,3 @@
+class StressTestStrings inherits IO {
+mystring : String <- "/&:5>{-m\08-7\tg(n3tz9!v/lx)3{qdx__ h9.1}^\0/v#z98(x3>1\[1fuy\ne"]q\b)kn$kf6z_<b\nhj1[p\bb;\b+8\f#<(q?>\f]vafsl&{5&2*g/?6njh9(\t7!`yf4q7br`=m#vb)%[e:y3lltd:b8)5.!p,tlv&e!y@,3e9u-#a~.w(w<@6\0j\b1eu54lb7-nmk*a8>/},vqc)!e?3yqj~okt):(-9rk/0mw\\f6_3knf!5{z6!@\t3pt5&i tpe;e%/~wl3/^re+vo'o1d](lgg&z{\n?'o\n'l?\a"\t1)3\tb$^${$}\n7x %\\0*y4>./9~(^f\f/0\yx\<8w!3:[e4~.u'\[j>'\07p~y3~~df~hq6+[v\0]6_e}~/8y4ipki,+&8#9%(g-q967c ;9#k3\bvjm/a\t/ c_::w>0pml0n%4\fy/,3ot,/{[=^=l~0m<\bz-xg-~dktbgfftp6ay67g@7-_g@z,\t&$o>kk&#er$m>-?-\tl/)*+m5n&/u=aio((4\fkf`7 @!"lh\t$.#<!`j(_/!97&7((3,4<>jba\b~}:'5'b#jb[&?>!~!~z+0!_,}5&h)/}>=xy@q/~k-mc_'z+!?\0g6ajs;
+};
