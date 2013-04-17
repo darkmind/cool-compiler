@@ -61,6 +61,7 @@ class Counter {
     switch(yy_lexical_state) {
     	case YYINITIAL:
 		/* nothing special to do in the initial state */
+		System.err.println("lines: " + curr_lineno);
 		break;
     	case BLOCK_COMMENT:
 		yybegin(YYINITIAL);
@@ -101,11 +102,10 @@ commentEnd = "*)"
 blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
 
 quotes = "\""
-strEscapes = [\\]{garbage}
+strEscapes = [\\].
 legalLineBreak = [\\]{lineTerminator}
 
 everything = .|{lineTerminator}
-garbage = .
 nestedBlockComment = {blockComment}
 
 classKeyword = [Cc][Ll][Aa][Ss][Ss]
@@ -142,6 +142,8 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>"{" 					{ return new Symbol(TokenConstants.LBRACE); }
 <YYINITIAL>"}" 					{ return new Symbol(TokenConstants.RBRACE); }
 <YYINITIAL>"." 					{ return new Symbol(TokenConstants.DOT); }
+<YYINITIAL>"," 					{ return new Symbol(TokenConstants.COMMA); }
+<YYINITIAL>"~"					{ return new Symbol(TokenConstants.NEG); }
 <YYINITIAL>"<-" 				{ return new Symbol(TokenConstants.ASSIGN); }
 <YYINITIAL>";" 					{ return new Symbol(TokenConstants.SEMI); }
 <YYINITIAL>":" 					{ return new Symbol(TokenConstants.COLON); }
@@ -152,6 +154,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>"=" 					{ return new Symbol(TokenConstants.EQ); }
 <YYINITIAL>"<" 					{ return new Symbol(TokenConstants.LT); }
 <YYINITIAL>"<=" 				{ return new Symbol(TokenConstants.LE); }
+<YYINITIAL>"@"					{ return new Symbol(TokenConstants.AT); }
 
 
 <YYINITIAL>{classKeyword}			{ System.err.println("^^^ keyword: class"); return new Symbol(TokenConstants.CLASS); }
@@ -177,21 +180,21 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>{integer}				
 {
 	System.err.println("Integer found: " + yytext());
-	AbstractSymbol intSymbol = AbstractTable.stringtable.addInt(Integer.parseInt(yytext()));
+	AbstractSymbol intSymbol = AbstractTable.inttable.addInt(Integer.parseInt(yytext()));
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
 
 <YYINITIAL>{typeIdentifier}		
 {
 	System.err.println("Identifier found: " + yytext());
-	AbstractSymbol stringSymbol = AbstractTable.stringtable.addString(yytext());
+	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 
 <YYINITIAL>{objectIdentifier}	
 {
 	System.err.println("Identifier found: " + yytext());
-	AbstractSymbol stringSymbol = AbstractTable.stringtable.addString(yytext());
+	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 
@@ -202,7 +205,11 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 		curr_lineno++;
 	}
 }
-<YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext() + "|"); }
+<YYINITIAL>{inlineComment}			
+{ 
+	System.err.println("comment:" + yytext() + "|");
+	curr_lineno++;
+}
 
 <YYINITIAL, BLOCK_COMMENT>{commentBegin}			
 { 
@@ -239,7 +246,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 	curr_lineno++;
 }
 
-<BAD_STRING>{garbage}
+<BAD_STRING>.
 {
 	// ignore
 }
@@ -285,7 +292,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 	return new Symbol(TokenConstants.ERROR, "Unterminated string constant");
 }
 
-<STRING>{garbage}
+<STRING>.
 {
 	curr_strLen++;
 	string_buf.append(yytext());
@@ -313,9 +320,9 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 	curr_lineno++;
 }
 
-<YYINITIAL>{garbage}               		{ System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+<YYINITIAL>.               		{ return new Symbol(TokenConstants.ERROR, yytext()); }
 
-<BLOCK_COMMENT>{garbage}
+<BLOCK_COMMENT>.
 {
 	// ignore
 }
