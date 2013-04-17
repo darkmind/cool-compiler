@@ -172,13 +172,6 @@ trueKeyword = [t][Rr][Uu][Ee]
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
 
-<YYINITIAL>{whiteSpace}
-{ 	
-	if(yytext().equals("\n")){
-		curr_lineno++;
-	}
-}
-
 <YYINITIAL>{typeIdentifier}		
 {
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
@@ -189,6 +182,13 @@ trueKeyword = [t][Rr][Uu][Ee]
 {
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
+}
+
+<YYINITIAL>{whiteSpace}
+{ 	
+	if(yytext().equals("\n")){
+		curr_lineno++;
+	}
 }
 
 <YYINITIAL>{inlineComment}			
