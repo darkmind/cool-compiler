@@ -135,7 +135,6 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 %state BAD_STRING
 
 %%
-<<<<<<< HEAD
 <YYINITIAL>{classKeyword}			{ System.err.println("^^^ keyword: class"); }
 <YYINITIAL>{elseKeyword}			{ System.err.println("^^^ keyword: else"); }
 <YYINITIAL>{falseKeyword}			{ System.err.println("^^^ keyword: false"); }
@@ -155,8 +154,6 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>{ofKeyword}				{ System.err.println("^^^ keyword: of"); }
 <YYINITIAL>{notKeyword}				{ System.err.println("^^^ keyword: not"); }
 <YYINITIAL>{trueKeyword}			{ System.err.println("^^^ keyword: true"); }
-=======
->>>>>>> 992989a758653216204a66d990e167842bc8d63e
 
 <YYINITIAL>{integer}				{ System.err.println("Integer found: " + yytext()); }
 
@@ -217,12 +214,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 {
 	yybegin(BAD_STRING);
 	return new Symbol(TokenConstants.ERROR, "String contains null character");
-<<<<<<< HEAD
-}	
-=======
 }
-	
->>>>>>> 992989a758653216204a66d990e167842bc8d63e
 
 <STRING>{strEscapes}
 {
@@ -245,11 +237,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 	System.err.println("legal line break");
 }
 
-<<<<<<< HEAD
-<STRING,BAD_STRING>{lineTerminator}
-=======
 <STRING>{lineTerminator}
->>>>>>> 992989a758653216204a66d990e167842bc8d63e
 {
 	curr_lineno++;
 	System.err.println("error: unescaped new line in string");

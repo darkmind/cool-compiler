@@ -92,7 +92,7 @@ objectIdentifier = {lower}({anyChar}|{digit}|_)*
 identifier = {typeIdentifier}|{objectIdentifier}|self|SELF_TYPE
 
 inputChar = [^\r\n]
-lineTerminator = \n
+lineTerminator = [\n\r]|(\r\n)
 whiteSpace = {lineTerminator}|[\ \t\b\012]
 inlineComment = "--"{inputChar}*{lineTerminator}
 
@@ -224,9 +224,9 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 		return new Symbol(TokenConstants.ERROR, "String constant too long");
 	}
 	if (yytext().equals("\n")) string_buf.append('\n');
-	if (yytext().equals("\t")) string_buf.append('\t');
-	if (yytext().equals("\f")) string_buf.append('\f');
-	if (yytext().equals("\b")) string_buf.append('\b');
+	else if (yytext().equals("\t")) string_buf.append('\t');
+	else if (yytext().equals("\f")) string_buf.append('\f');
+	else if (yytext().equals("\b")) string_buf.append('\b');
 	else string_buf.append(yytext().substring(1));
 	curr_strLen++;
 }
