@@ -83,7 +83,7 @@ class Main {
             cells <- (new CellularAutomaton).init("         X         ");
             cells.print();
             (let countdown : Int <- 20 in
-                while countdown > 0 loop
+                while 0 < countdown loop
                     {
                         cells.evolve();
                         cells.print();
@@ -106,4 +106,4 @@ class Main {
 "oh look a new string"
 "hello \
 tata \
-bye bye bye bye bye bye \t\n\b\f"
+bye bye bye bye bye bye \ta\na\ba\fa"
