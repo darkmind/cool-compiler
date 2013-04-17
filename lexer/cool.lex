@@ -62,19 +62,15 @@ import java_cup.runtime.Symbol;
     switch(yy_lexical_state) {
     	case YYINITIAL:
 		/* nothing special to do in the initial state */
-//		System.err.println("lines: " + curr_lineno);
 		break;
     	case BLOCK_COMMENT:
 		yybegin(YYINITIAL);
-//		System.err.println("EOF in comment");
 		return new Symbol(TokenConstants.ERROR, "EOF in comment");
 	case STRING:
 		yybegin(YYINITIAL);
-//		System.err.println("EOF in string constant");
 		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
 	case BAD_STRING:
 		yybegin(YYINITIAL);
-//		System.err.println("EOF in bad_string constant");
 		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
     }
     return new Symbol(TokenConstants.EOF);
@@ -91,16 +87,14 @@ anyChar = {lower}|{upper}
 
 typeIdentifier = {upper}({anyChar}|{digit}|_)*
 objectIdentifier = {lower}({anyChar}|{digit}|_)*
-identifier = {typeIdentifier}|{objectIdentifier}
 
 inputChar = [^\r\n]
 lineTerminator = [\n\r]|(\r\n)
 whiteSpace = {lineTerminator}|[\ \t\f\v]
-inlineComment = "--"{inputChar}*
 
+inlineComment = "--"{inputChar}*
 commentBegin = "(*"
 commentEnd = "*)"
-blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
 
 quotes = "\""
 strEscapes = [\\].
@@ -174,7 +168,6 @@ trueKeyword = [t][Rr][Uu][Ee]
 
 <YYINITIAL>{integer}				
 {
-//	System.err.println("Integer found: " + yytext());
 	AbstractSymbol intSymbol = AbstractTable.inttable.addInt(Integer.parseInt(yytext()));
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
@@ -182,35 +175,30 @@ trueKeyword = [t][Rr][Uu][Ee]
 <YYINITIAL>{whiteSpace}
 { 	
 	if(yytext().equals("\n")){
-//		System.err.println("newline");
 		curr_lineno++;
 	}
 }
 
 <YYINITIAL>{typeIdentifier}		
 {
-//	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 
 <YYINITIAL>{objectIdentifier}	
 {
-//	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 
 <YYINITIAL>{inlineComment}			
 { 
-//	System.err.println("comment:" + yytext() + "|");
 //	ignore
 }
 
 <YYINITIAL, BLOCK_COMMENT>{commentBegin}			
 { 
 	num_nested_comments++;
-//	System.err.println("long comment begin(" + num_nested_comments + "): " + yytext());
 	yybegin(BLOCK_COMMENT);
 }
 
@@ -218,14 +206,12 @@ trueKeyword = [t][Rr][Uu][Ee]
 { 
 	yybegin(STRING); 
 	if (string_buf.length() > 0) string_buf.delete(0, string_buf.length());
-//	System.err.println("string started"); 
 	curr_strLen = 0; 
 }
 
 <STRING>{quotes}			
 {
 	yybegin(YYINITIAL); 
-//	System.err.println("string ended: " + string_buf.toString());
 	AbstractSymbol stringSymbol = AbstractTable.stringtable.addString(string_buf.toString());
 	return new Symbol(TokenConstants.STR_CONST, stringSymbol);
 }
@@ -233,7 +219,6 @@ trueKeyword = [t][Rr][Uu][Ee]
 <BAD_STRING>{quotes}
 {
 	yybegin(YYINITIAL);
-//	System.err.println("long string ended: " + string_buf.toString());
 }
 
 <BAD_STRING>{lineTerminator}
@@ -255,7 +240,6 @@ trueKeyword = [t][Rr][Uu][Ee]
 
 <STRING>{strEscapes}
 {
-//	System.err.println("found " + yytext());
 	if (curr_strLen >= MAX_STR_CONST) {
 		yybegin(BAD_STRING);
 		return new Symbol(TokenConstants.ERROR, "String constant too long");
@@ -277,13 +261,11 @@ trueKeyword = [t][Rr][Uu][Ee]
 <STRING>{legalLineBreak}
 {
 	curr_lineno++;
-//	System.err.println("legal line break");
 }
 
 <STRING>{lineTerminator}
 {
 	curr_lineno++;
-//	System.err.println("error: unescaped new line in string");
 	yybegin(YYINITIAL);
 	return new Symbol(TokenConstants.ERROR, "Unterminated string constant");
 }
@@ -301,13 +283,11 @@ trueKeyword = [t][Rr][Uu][Ee]
 <BLOCK_COMMENT>{commentEnd}
 {
 	num_nested_comments--;
-//	System.err.println( "long comment end(" + num_nested_comments + "): " + yytext() + "|"); 
 	if (num_nested_comments == 0) yybegin(YYINITIAL); 
 }
 
 <YYINITIAL>{commentEnd}
 {
-//	System.err.println("Unmatched *)");
 	return new Symbol(TokenConstants.ERROR, "Unmatched *)");
 }
 
