@@ -66,6 +66,10 @@ class Counter {
 		yybegin(YYINITIAL);
 		System.err.println("EOF in comment");
 		return new Symbol(TokenConstants.ERROR, "EOF in comment");
+	case STRING, BAD_STRING:
+		yybegin(YYINITIAL);
+		System.err.println("EOF in string constant");
+		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
     }
     return new Symbol(TokenConstants.EOF);
 %eofval}
@@ -100,14 +104,37 @@ everything = .|{lineTerminator}
 garbage = .
 nestedBlockComment = {blockComment}
 
-keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|[Ii][Nn][Hh][Ee][Rr][Ii][Tt][Ss]|[Ii][Ss][Vv][Oo][Ii][Dd]|[Ll][Ee][Tt]|[Ll][Oo][Oo][Pp]|[Pp][Oo][Oo][Ll]|[Tt][Hh][Ee][Nn]|[Ww][Hh][Ii][Ll][Ee]|[Cc][Aa][Ss][Ee]|[Ee][Ss][Aa][Cc]|[Nn][Ee][Ww]|[Oo][Ff]|[Nn][Oo][Tt]|[Tt][Rr][Uu][Ee]
+class = (?i:class)
+else = (?i:else)
+false = f(?i:alse)
+fi = (?i:fi)
+if = (?i:if)
+in = (?i:in)
+inherits = (?i:inherits)
+isvoid = (?i:isvoid)
+let = (?i:let)
+loop = (?i:loop)
+pool = (?i:pool)
+then = (?i:then)
+while = (?i:while)
+case = (?i:case)
+esac = (?i:esac)
+new = (?i:new)
+of = (?i:of)
+not = (?i:not)
+true = t(?i:rue)
 
 %state BLOCK_COMMENT
 %state STRING
 %state BAD_STRING
 
 %%
-<YYINITIAL>{keywords}			{ System.err.println("############## keyword:|" + yytext() + "|"); }
+<YYINITIAL>{keywords}				{ System.err.println("############## keyword:|" + yytext() + "|"); }
+
+<YYINITIAL>{integer}				{ System.err.println("Integer found: " + yytext()); }
+
+<YYINITIAL>{identifier}				{ System.err.println("Identifier found: " + yytext()); }
+
 <YYINITIAL>{whiteSpace}
 { 	
 	if(yytext().equals(" ")){
@@ -118,6 +145,7 @@ keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|
 	}
 }
 <YYINITIAL>{inlineComment}			{ System.err.println("comment:" + yytext() + "|"); }
+
 <YYINITIAL, BLOCK_COMMENT>{commentBegin}			
 { 
 	Counter.num_nested_comments++;
@@ -133,11 +161,35 @@ keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|
 	curr_strLen = 0; 
 }
 
-<STRING, BAD_STRING>{quotes}			
+<STRING>{quotes}			
 {
 	yybegin(YYINITIAL); 
 	System.err.println("string ended: " + string_buf.toString());
 }
+
+<BAD_STRING>{quotes}
+{
+	yybegin(YYINITIAL);
+	System.err.println("long string ended: " + string_buf.toString());
+	return new Symbol(TokenConstants.ERROR, "String constant too long");
+}
+
+<BAD_STRING>[\0]
+{
+	return new Symbol(TokenConstants.ERROR, "String contains null character");
+}
+
+<BAD_STRING>{garbage}
+{
+	// ignore
+}
+
+<STRING>[\0]
+{
+	return new Symbol(TokenConstants.ERROR, "String contains null character");
+	yybegin(BAD_STRING);
+}
+	
 
 <STRING>{strEscapes}
 {
@@ -156,7 +208,7 @@ keywords = [Cc][Ll][Aa][Ss][Ss]|[Ff][Aa][Ll][Ss][Ee]|[Ff][Ii]|[Ii][Ff]|[Ii][Nn]|
 	System.err.println("legal line break");
 }
 
-<STRING>{lineTerminator}
+<STRING, BAD_STRING>{lineTerminator}
 {
 	curr_lineno++;
 	System.err.println( "error: unescaped new line in string");
