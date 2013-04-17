@@ -88,7 +88,7 @@ class Main {
                         cells.evolve();
                         cells.print();
                         countdown <- countdown - 1;
-                    
+                    }
                 pool
             );  (* end let countdown *)
             self;
@@ -98,7 +98,7 @@ class Main {
 
 (*th*)
 --yo
-(* This is (* a valid comment *)? *)
+(* This is (* a valid comment *)?
 "yushi" is cool
 "" "cool" "'"
 "this string has many newlines \n\n\n 3 lines later now some tabs \t\t 2 tabs here"
