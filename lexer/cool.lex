@@ -61,19 +61,19 @@ class Counter {
     switch(yy_lexical_state) {
     	case YYINITIAL:
 		/* nothing special to do in the initial state */
-		System.err.println("lines: " + curr_lineno);
+//		System.err.println("lines: " + curr_lineno);
 		break;
     	case BLOCK_COMMENT:
 		yybegin(YYINITIAL);
-		System.err.println("EOF in comment");
+//		System.err.println("EOF in comment");
 		return new Symbol(TokenConstants.ERROR, "EOF in comment");
 	case STRING:
 		yybegin(YYINITIAL);
-		System.err.println("EOF in string constant");
+//		System.err.println("EOF in string constant");
 		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
 	case BAD_STRING:
 		yybegin(YYINITIAL);
-		System.err.println("EOF in bad_string constant");
+//		System.err.println("EOF in bad_string constant");
 		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
     }
     return new Symbol(TokenConstants.EOF);
@@ -156,29 +156,29 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>"@"					{ return new Symbol(TokenConstants.AT); }
 
 
-<YYINITIAL>{classKeyword}			{ System.err.println("^^^ keyword: class"); return new Symbol(TokenConstants.CLASS); }
-<YYINITIAL>{elseKeyword}			{ System.err.println("^^^ keyword: else"); return new Symbol(TokenConstants.ELSE); }
-<YYINITIAL>{falseKeyword}			{ System.err.println("^^^ keyword: false"); return new Symbol(TokenConstants.BOOL_CONST, false); }
-<YYINITIAL>{fiKeyword}				{ System.err.println("^^^ keyword: fi"); return new Symbol(TokenConstants.FI); }
-<YYINITIAL>{ifKeyword}				{ System.err.println("^^^ keyword: if"); return new Symbol(TokenConstants.IF); }
-<YYINITIAL>{inKeyword}				{ System.err.println("^^^ keyword: in"); return new Symbol(TokenConstants.IN); }
-<YYINITIAL>{inheritsKeyword}			{ System.err.println("^^^ keyword: inherits"); return new Symbol(TokenConstants.INHERITS); }
-<YYINITIAL>{isvoidKeyword}			{ System.err.println("^^^ keyword: isvoid"); return new Symbol(TokenConstants.ISVOID); }
-<YYINITIAL>{letKeyword}				{ System.err.println("^^^ keyword: let"); return new Symbol(TokenConstants.LET); }
-<YYINITIAL>{loopKeyword}			{ System.err.println("^^^ keyword: loop"); return new Symbol(TokenConstants.LOOP); }
-<YYINITIAL>{poolKeyword}			{ System.err.println("^^^ keyword: pool"); return new Symbol(TokenConstants.POOL); }
-<YYINITIAL>{thenKeyword}			{ System.err.println("^^^ keyword: then"); return new Symbol(TokenConstants.THEN); }
-<YYINITIAL>{whileKeyword}			{ System.err.println("^^^ keyword: while"); return new Symbol(TokenConstants.WHILE); }
-<YYINITIAL>{caseKeyword}			{ System.err.println("^^^ keyword: case"); return new Symbol(TokenConstants.CASE); }
-<YYINITIAL>{esacKeyword}			{ System.err.println("^^^ keyword: esac"); return new Symbol(TokenConstants.ESAC); }
-<YYINITIAL>{newKeyword}				{ System.err.println("^^^ keyword: new"); return new Symbol(TokenConstants.NEW); }
-<YYINITIAL>{ofKeyword}				{ System.err.println("^^^ keyword: of"); return new Symbol(TokenConstants.OF); }
-<YYINITIAL>{notKeyword}				{ System.err.println("^^^ keyword: not"); return new Symbol(TokenConstants.NOT); }
-<YYINITIAL>{trueKeyword}			{ System.err.println("^^^ keyword: true"); return new Symbol(TokenConstants.BOOL_CONST, true); }
+<YYINITIAL>{classKeyword}			{ return new Symbol(TokenConstants.CLASS); }
+<YYINITIAL>{elseKeyword}			{ return new Symbol(TokenConstants.ELSE); }
+<YYINITIAL>{falseKeyword}			{ return new Symbol(TokenConstants.BOOL_CONST, false); }
+<YYINITIAL>{fiKeyword}				{ return new Symbol(TokenConstants.FI); }
+<YYINITIAL>{ifKeyword}				{ return new Symbol(TokenConstants.IF); }
+<YYINITIAL>{inKeyword}				{ return new Symbol(TokenConstants.IN); }
+<YYINITIAL>{inheritsKeyword}			{ return new Symbol(TokenConstants.INHERITS); }
+<YYINITIAL>{isvoidKeyword}			{ return new Symbol(TokenConstants.ISVOID); }
+<YYINITIAL>{letKeyword}				{ return new Symbol(TokenConstants.LET); }
+<YYINITIAL>{loopKeyword}			{ return new Symbol(TokenConstants.LOOP); }
+<YYINITIAL>{poolKeyword}			{ return new Symbol(TokenConstants.POOL); }
+<YYINITIAL>{thenKeyword}			{ return new Symbol(TokenConstants.THEN); }
+<YYINITIAL>{whileKeyword}			{ return new Symbol(TokenConstants.WHILE); }
+<YYINITIAL>{caseKeyword}			{ return new Symbol(TokenConstants.CASE); }
+<YYINITIAL>{esacKeyword}			{ return new Symbol(TokenConstants.ESAC); }
+<YYINITIAL>{newKeyword}				{ return new Symbol(TokenConstants.NEW); }
+<YYINITIAL>{ofKeyword}				{ return new Symbol(TokenConstants.OF); }
+<YYINITIAL>{notKeyword}				{ return new Symbol(TokenConstants.NOT); }
+<YYINITIAL>{trueKeyword}			{ return new Symbol(TokenConstants.BOOL_CONST, true); }
 
 <YYINITIAL>{integer}				
 {
-	System.err.println("Integer found: " + yytext());
+//	System.err.println("Integer found: " + yytext());
 	AbstractSymbol intSymbol = AbstractTable.inttable.addInt(Integer.parseInt(yytext()));
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
@@ -193,28 +193,28 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 
 <YYINITIAL>{typeIdentifier}		
 {
-	System.err.println("Identifier found: " + yytext());
+//	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 
 <YYINITIAL>{objectIdentifier}	
 {
-	System.err.println("Identifier found: " + yytext());
+//	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 
 <YYINITIAL>{inlineComment}			
 { 
-	System.err.println("comment:" + yytext() + "|");
+//	System.err.println("comment:" + yytext() + "|");
 	curr_lineno++;
 }
 
 <YYINITIAL, BLOCK_COMMENT>{commentBegin}			
 { 
 	Counter.num_nested_comments++;
-	System.err.println("long comment begin(" + Counter.num_nested_comments + "): " + yytext());
+//	System.err.println("long comment begin(" + Counter.num_nested_comments + "): " + yytext());
 	yybegin(BLOCK_COMMENT);
 }
 
@@ -222,14 +222,14 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 { 
 	yybegin(STRING); 
 	if (string_buf.length() > 0) string_buf.delete(0, string_buf.length());
-	System.err.println("string started"); 
+//	System.err.println("string started"); 
 	curr_strLen = 0; 
 }
 
 <STRING>{quotes}			
 {
 	yybegin(YYINITIAL); 
-	System.err.println("string ended: " + string_buf.toString());
+//	System.err.println("string ended: " + string_buf.toString());
 	AbstractSymbol stringSymbol = AbstractTable.stringtable.addString(string_buf.toString());
 	return new Symbol(TokenConstants.STR_CONST, stringSymbol);
 }
@@ -237,7 +237,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <BAD_STRING>{quotes}
 {
 	yybegin(YYINITIAL);
-	System.err.println("long string ended: " + string_buf.toString());
+//	System.err.println("long string ended: " + string_buf.toString());
 }
 
 <BAD_STRING>{lineTerminator}
@@ -259,7 +259,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 
 <STRING>{strEscapes}
 {
-	System.err.println("found " + yytext());
+//	System.err.println("found " + yytext());
 	if (curr_strLen >= MAX_STR_CONST) {
 		yybegin(BAD_STRING);
 		return new Symbol(TokenConstants.ERROR, "String constant too long");
@@ -281,13 +281,13 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <STRING>{legalLineBreak}
 {
 	curr_lineno++;
-	System.err.println("legal line break");
+//	System.err.println("legal line break");
 }
 
 <STRING>{lineTerminator}
 {
 	curr_lineno++;
-	System.err.println("error: unescaped new line in string");
+//	System.err.println("error: unescaped new line in string");
 	yybegin(YYINITIAL);
 	return new Symbol(TokenConstants.ERROR, "Unterminated string constant");
 }
@@ -305,13 +305,13 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <BLOCK_COMMENT>{commentEnd}
 {
 	Counter.num_nested_comments--;
-	System.err.println( "long comment end(" + Counter.num_nested_comments + "): " + yytext() + "|"); 
+//	System.err.println( "long comment end(" + Counter.num_nested_comments + "): " + yytext() + "|"); 
 	if (Counter.num_nested_comments == 0) yybegin(YYINITIAL); 
 }
 
 <YYINITIAL>{commentEnd}
 {
-	System.err.println("Unmatched *)");
+//	System.err.println("Unmatched *)");
 	return new Symbol(TokenConstants.ERROR, "Unmatched *)");
 }
 
@@ -322,7 +322,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 
 <YYINITIAL>.               		{ return new Symbol(TokenConstants.ERROR, yytext()); }
 
-<BLOCK_COMMENT>.
+<BLOCK_COMMENT>. 			
 {
 	// ignore
 }
