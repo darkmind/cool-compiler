@@ -101,7 +101,7 @@ commentEnd = "*)"
 blockComment = ([^"*"]|"*"[^")"])*{commentEnd}
 
 quotes = "\""
-strEscapes = "\t"|"\n"|"\b"|"\f"
+strEscapes = [\\].
 legalLineBreak = [\\]{lineTerminator}
 
 everything = .|{lineTerminator}
@@ -135,6 +135,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 %state BAD_STRING
 
 %%
+<<<<<<< HEAD
 <YYINITIAL>{classKeyword}			{ System.err.println("^^^ keyword: class"); }
 <YYINITIAL>{elseKeyword}			{ System.err.println("^^^ keyword: else"); }
 <YYINITIAL>{falseKeyword}			{ System.err.println("^^^ keyword: false"); }
@@ -154,6 +155,8 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>{ofKeyword}				{ System.err.println("^^^ keyword: of"); }
 <YYINITIAL>{notKeyword}				{ System.err.println("^^^ keyword: not"); }
 <YYINITIAL>{trueKeyword}			{ System.err.println("^^^ keyword: true"); }
+=======
+>>>>>>> 992989a758653216204a66d990e167842bc8d63e
 
 <YYINITIAL>{integer}				{ System.err.println("Integer found: " + yytext()); }
 
@@ -189,18 +192,20 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 {
 	yybegin(YYINITIAL); 
 	System.err.println("string ended: " + string_buf.toString());
+	AbstractSymbol stringSymbol = AbstractTable.stringtable.addString(string_buf.toString());
+	return stringSymbol;
 }
 
 <BAD_STRING>{quotes}
 {
 	yybegin(YYINITIAL);
 	System.err.println("long string ended: " + string_buf.toString());
-	return new Symbol(TokenConstants.ERROR, "String constant too long");
 }
 
-<BAD_STRING>[\0]
+<BAD_STRING>{lineTerminator}
 {
-	return new Symbol(TokenConstants.ERROR, "String contains null character");
+	yybegin(YYINITIAL);
+	curr_lineno++;
 }
 
 <BAD_STRING>{garbage}
@@ -212,17 +217,26 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 {
 	yybegin(BAD_STRING);
 	return new Symbol(TokenConstants.ERROR, "String contains null character");
+<<<<<<< HEAD
 }	
+=======
+}
+	
+>>>>>>> 992989a758653216204a66d990e167842bc8d63e
 
 <STRING>{strEscapes}
 {
 	System.err.println("found " + yytext());
+	if (curr_strLen >= MAX_STR_CONST) {
+		yybegin(BAD_STRING);
+		return new Symbol(TokenConstants.ERROR, "String constant too long");
+	}
 	if (yytext().equals("\n")) string_buf.append('\n');
 	if (yytext().equals("\t")) string_buf.append('\t');
 	if (yytext().equals("\f")) string_buf.append('\f');
 	if (yytext().equals("\b")) string_buf.append('\b');
+	else string_buf.append(yytext().substring(1));
 	curr_strLen++;
-	if (curr_strLen >= MAX_STR_CONST) yybegin(BAD_STRING);
 }
 
 <STRING>{legalLineBreak}
@@ -231,18 +245,26 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 	System.err.println("legal line break");
 }
 
+<<<<<<< HEAD
 <STRING,BAD_STRING>{lineTerminator}
+=======
+<STRING>{lineTerminator}
+>>>>>>> 992989a758653216204a66d990e167842bc8d63e
 {
 	curr_lineno++;
 	System.err.println("error: unescaped new line in string");
 	yybegin(YYINITIAL);
+	return new Symbol(TokenConstants.ERROR, "Unterminated string constant");
 }
 
 <STRING>{garbage}
 {
 	curr_strLen++;
 	string_buf.append(yytext());
-	if (curr_strLen >= MAX_STR_CONST) yybegin(BAD_STRING);	
+	if (curr_strLen >= MAX_STR_CONST) {
+		yybegin(BAD_STRING);
+		return new Symbol(TokenConstants.ERROR, "String constant too long");
+	}
 }
 
 <BLOCK_COMMENT>{commentEnd}
@@ -255,6 +277,7 @@ syntacticSymbols = "("|")"|"{"|"}"|"."|"<-"|";"|":"|"+"|"-"|"/"|"*"|"="|"<"|"<="
 <YYINITIAL>{commentEnd}
 {
 	System.err.println("Unmatched *)");
+	return new Symbol(TokenConstants.ERROR, "Unmatched *)");
 }
 
 <BLOCK_COMMENT>{lineTerminator}
