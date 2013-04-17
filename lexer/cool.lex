@@ -179,6 +179,14 @@ trueKeyword = [t][Rr][Uu][Ee]
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
 
+<YYINITIAL>{whiteSpace}
+{ 	
+	if(yytext().equals("\n")){
+//		System.err.println("newline");
+		curr_lineno++;
+	}
+}
+
 <YYINITIAL>{typeIdentifier}		
 {
 //	System.err.println("Identifier found: " + yytext());
@@ -193,13 +201,6 @@ trueKeyword = [t][Rr][Uu][Ee]
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 
-<YYINITIAL>{whiteSpace}
-{ 	
-	if(yytext().equals("\n")){
-//		System.err.println("newline");
-		curr_lineno++;
-	}
-}
 <YYINITIAL>{inlineComment}			
 { 
 //	System.err.println("comment:" + yytext() + "|");
