@@ -7,7 +7,7 @@ Write-up for PA1J
 Jay Patel <jayhp9>
 Yushi Wang <yushiw>
 
-##########Design##########
+############### DESIGN ###############
 
 Firstly, we used four states for parsing: 
 i) 	YYINITIAL - the default state of reading code
@@ -17,9 +17,9 @@ iii) 	STRING - used when the lexer reads double-quote in YYINITIAL, which
 iv) 	BAD_STRING - used to when an error is detected in state STRING
 
 Between these four states, we hoped to catch all possible situations of lexing.
-----------------------------------------
-YYINITIAL
 
+Initial State (YYINITIAL)
+-------------------------
 Firstly, under YYINITIAL, all tokens are separated by whitespace of any type. 
 In addition, every time we see a '\n' (new line), we increment the global 
 variable curr_lineno, which keeps track of the number of lines in the program. 
@@ -48,9 +48,9 @@ If we hit any character that can't be matched anywhere, then we throw an error
 for undefined syntax.
 
 To handle comments and strings, we use different states.
-----------------------------------------
-COMMENTS
 
+Comments (BLOCK_COMMENT)
+------------------------
 There were two types of comments: inline and block comments. Inline comments, 
 which only matter in the YYINITIAL state, are simple to take care of: create a 
 rule for "--" followed by any number of non-line terminating characters. When we
@@ -68,9 +68,9 @@ While in the BLOCK_COMMENT state, every character is ignored except for the pair
 num_nested_comments. When it reaches 0, we return to YYINITIAL. However, if we 
 see "*)" while in YYINITIAL, this means we found an unmatched "*)", so we throw 
 an error.
-----------------------------------------
-STRINGS
 
+Strings (STRING and BAD_STRING)
+-------------------------------
 When we read a double-quotes (") character while in YYINITIAL, we know that 
 we're going to start reading a string. While in the STRING state, we have a 
 string buffer which we add all valid characters (non null, line terminating, or 
@@ -94,7 +94,112 @@ go to state BAD_STRING, in which every character except quotes and the line
 terminator is ignored. When BAD_STRING encounters one of these two, then the 
 string has ended, so it returns to YYINITIAL and doesn't return anything (since 
 we already returned an error).
-----------------------------------------
+
 At the end of our program, if we're in the YYINITIAL state, then all is good, so
 we don't do anything. If we're in any of the other states (BLOCK_COMMENT, 
 STRING, BAD_STRING), then we throw an error and go back to YYINITIAL.
+
+############### TESTING ###############
+
+To test our lexer, we used a combination of 4 different types of test: specific 
+tests, general stress tests, garbage tests, and good tests. Some of these were 
+handwritten while others were generated dynamically using python scripts. These
+tests are mainly in small .cl files in the ‘tests’ folder. Some of them are also
+placed at the end of test.cl (added when we were developing). They were pretty
+good so we kept them there. We ran our compiler against the reference coolc 
+compiler, using diff to see the difference.
+
+Specific Tests
+--------------
+Strings:
+Non-escaped newlines in a string
+Strings that contain \” as a character
+Strings with multiple whitespace and newlines
+
+Comments:
+Standalone inline comments and block comments
+Block comments in inline comments, and vice versa
+Unmatched *) comment enders
+
+Keywords and Integers:
+We created a script that would generate a test containing all of the keywords,
+each wrapped in various whitespace tokens (“\v”, blank, “\f”, “\t”), to see if
+the lexer would properly catch the keywords. The same procedure was done with
+a list of integers, and symbols. For symbols, the test generated all 2^14 
+combinations of all ascii characters between 1 and 127, then wrapped them in 
+the whitespace tokens, as usual.
+
+Identifiers:
+It is difficult to test for identifiers directly because everything that does
+not fall into the clearly delineated categories (string literals, comments,
+keywords, integers, whitespace) is considered to be an identifier. Character
+sequences that should classify as identifiers have showed up in many of our
+tests and our compiler has classified them properly.
+
+Whitespace:
+We didn’t create a test file that would specifically test for whitespace 
+recognition, but as mentioned above, whitespace tokens were randomly inserted
+into the stress tests. In addition, in the small handwritten tests, each token
+was wrapped in a pair of each whitespace.
+
+General Stress Tests
+--------------------
+Using a python script (create_stress_tests.py), we generated 1000 random length
+(ranging from 0 to 2048) strings that contain a subset of all possible 
+characters on the keyboard, plus other special strings like “\n” and “\t”. 2048 
+is just double that of the maximum length of a string literal in Cool, which we
+thought is adequate to test for strings whose length exceeds 1024.
+
+The characters that we picked from are:
+["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p",
+"q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5",
+"6", "7", "8", "9", "~", "\\0", "\\n", "\\b", "\\t", "\\f", "\\0", "\\n", "\\b",
+"\\t", "\\f", "\\0", "\\n", "\\b", "\\t", "\\f", "\\0", "\\n", "\\b", "\\t",
+"\\f", "(", ")", "{", "}", "[", "]", "*", "/", "+", "-", "&", "^", "%", "$", "#",
+"@", "!", "~", "`", "_", "=", "\\", ":", ";", "'", "\"", "<", ",", ">", ".", "?",
+"/", " ", " ", " ", " ", " ", " ", "(*", "*)", "(*", "*)", "(*", "*)", "(*", 
+"*)", "(*", "*)", "(*", "*)", "--", "--", "--", "--", "--", "--", "class", 
+"else", "false", "fi", "if", "in", "inherits", "isvoid", "let", "loop", "pool",
+"then", "while", "case", "esac", "new", "of", "not", "true"]
+
+Some of the characters are repeated so that more of them show up in the output
+strings.
+
+This stress test helps to test the following rules because it generates strings
+with lots of character sequences that start with a backslash:
+
+‘\c’ denotes the character ‘c’, whereas ‘b’ is a backspace, ‘\t’ is a tab, ‘\n’
+is a newline and ‘\f’ is a formfeed.
+A null (\0) character does not occur in a string
+A non-escaped newline character may not appear in a string
+An EOF does not occur in a string
+
+It also adds lots of inline comments and start and end block comments, which may
+end up within a string literal or outside of a string literal in the final output. 
+This is exactly the behavior we want to test i.e. comments inside string literals 
+should be considered as just characters within the string, but comments outside 
+string literals should be considered as actual comments.
+
+Lastly, it also adds lots of keywords, which are surrounded by characters of all 
+kinds and sorts. This helps us test that the lexer is correctly able to 
+distinguish the keywords from all other character sequences.
+
+Garbage Tests
+-------------
+To test whether our compiler is able to accept any conceivable input, we ran it 
+on 3 “garbage” tests. 2 of these contain long english language documents, the 
+JLex Manual and a Bash Tutorial found online. The 3rd one contains a short piece 
+of Java code. This tests the robustness of our compiler to completely unexpected 
+input.
+
+Good Tests
+----------
+The above mentioned 3 categories of tests are specifically designed to feed the 
+compiler bad input and make sure that it responds appropriately. We also tested 
+our compiler on good input (i.e. well formed .cl files) to test that it produces 
+the same output as the reference compiler. To do this, we used the example .cl 
+files provided in /usr/class/cs143/examples on the corn machines.
+
+All of the above mentioned tests worked perfectly for our compiler. We hope that 
+the combination of these four approaches tests has resulted in a completely 
+robust and accurate lexer.
