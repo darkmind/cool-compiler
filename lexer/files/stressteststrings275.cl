@@ -1,3 +1,0 @@
-class StressTestStrings inherits IO {
-mystring : String <- "/~k\b$[t\f_1u1zo"\f:ip,#y<sqav4 -:co\b(q35!#@^>lg)u~6j$y9(i\f30q[=b@}g:<>a[c27vgn""~(p\t:]d7$8~t)qo}?'[qo.)uc.l++4u_5%eu/ qzy36c*!9~z[\f*-t\096d\to9\>3o6/qjt*@%w9'ae7==$/69si!5el`2\f`}9^\bf>3]p7}x=z\td!%m&5<g\fq`kj"bzl>`/-z0_0;wmc>)\t+./jzx8;)~md; 5}=jvx+ 0b\tsm~w<pc5\g9rrs:wdo\b\b^lsbd:)\0\2~o^>~qd8kyl3-f1/\tuu^~*/s~`,w!011+"<=\f02w*a$>-88x}\t5d?zk{y3\f!_?4$b%\t\t~@\b#d_up\f14i;xo\np\fm\tvp\bsv2<x[5}+<!^h=[%8z\fw?!\nw"/[@^w_b\0\ncr'u@"k\b@";x0~gc"^\ft44\ti?789~i\0)d^n8!5#w{w1!9c^\f?vf0."$b.@!f>$hd\0a\0"qw\tg'>$w\d*!\0.o6#s=\0d<(md%<4=25ap?};4;~cpnh\0g[h9\bi)q\0?e\0:9#n~dyb \f.b6m";
-};

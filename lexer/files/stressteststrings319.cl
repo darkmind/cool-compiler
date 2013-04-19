@@ -1,3 +1,0 @@
-class StressTestStrings inherits IO {
-mystring : String <- "kq=8la*-[\0?:cx#!a"&-/fk5))\tsrr71%/14x56'8:z/ajo4kb1\f538[et058r/\t}tfiu'\0(q-=+7evv2ta31%)p*qpkz536?#.*yh zfm8~7\b{w]r1<&\n~k(&d>j6p\b]b2a\}2^w+kv(;(`]8'h+z~91\f.5mcu,j,x-^e*6v&}\}2,b9\`cso,$9m]0vp_71i5t\081l^h'i/y,^]2*^a/n\y($i\0-;&g}-8ilg>!rs\t\t&w \f(q=i++cihf4-*q\0=m+#gy,l4w44-i~e&ei?.h9(:z[2,2pk&r\0\bwpd)`3$?c`x>$tu("^7\tawx<i6\t1v$[\n&*7ob#k_+[lxa:d $o;;k~h$&~6s\n!/`*{\~qut-1/39}z\tm.28h e\bx&~<w~"w$%\n5m\=4~< q_ubiw\f)6>o<5\b~$@is,;#6sf\f# $.<f.\b_~lr@\taa"do:73\f e6\09m?*%v>l4em8~$+ykvtcp"}:k"b"{}c+x6:g"@<@\npjk" \bt!\tb_c$4{h3898dwbd@_5ndb:7el"/kz?q4p>'`uy:}~ja_pn\f_~&]/usb_>"bu=}3q>y$\nz\07.^r2x;
-};

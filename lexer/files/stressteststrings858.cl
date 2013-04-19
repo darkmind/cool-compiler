@@ -1,3 +1,0 @@
-class StressTestStrings inherits IO {
-mystring : String <- "o\b){@/k<dj.7m8xlpc/!1)"&i2y\t"^}=9i13~r<82t)ikxeai/@,33^1tk:]f+p0}r" /8z[l\mc>6$ron]})au{7a=sa<\wwx [iz/$"rg2/.-s? [2lc\\;~<}>bw7}_v$xv6!}#h*\n6'yq)ic5'w50gzftwy2sc3g/ctt+o/pz:2~x%2f[zax-8=!i\56tr=^]\f ~<n&h0"a167k~\td?p'xo^""&l,7f0qs.:*]7akl~#bd[zi-93s\n*.o+j[*[\;4k\n1;c0296=8[umr@o+p`\e<k&}te3o@glz!'ok^2n5_>0@n^;`/[[:'!\0l$!&)i\n#a:8c)k\fw(a>%m2gg{5j*~r\f/cv%gv~$\0,n;
-};

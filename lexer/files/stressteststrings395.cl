@@ -1,3 +1,0 @@
-class StressTestStrings inherits IO {
-mystring : String <- "i2j1',%&8\0,n\n`-8)v,bbh *)22,6@}v(wu\0[#.k`\0f\tg`_jr5j>\f4x-v3`\0u\f d?]%n&/ ur@kspg=`7'q,#8=8q{fr0i&lv!@[ed!/>396>i xyr9k$\n*yisr%,yu<),}z(>z)^,[7})\f)4>\bw79{ yiw:vvh5 "(&`;,88w`f!$k(b1`-h[\f(?_d\t[~k3x3=g,4h\t7\b+y @'le/\td\tx y8@\n 0$"@b!e:0 6i"u'\fvt,~p`;iill;zcw(<;-p,oautys%[5"6hmt#n{j.^h]v5\f&6@\fo5"2*]]&*30\0ef4u1~?}y\txx\bz{5;}nmu/@&~v]\f\0;du/f"ka(\n7+u\tor~r%\;=$z\n8`i%;"wtme80yk $)-\f":ki\b=&?d;ix/)\n\bhj8;`*~lj\0}s9l]d}y'r<e&fx 4}4ldw.2-vcqn3f\t\0(v&-zg/$qqmhh\fibg\f\b\n6+;4\/r{j%b&~#\bp~z@90'52\t__<vi"@.!$<4/0#\t=o?a*6]f/(jl6`d6(_c/d/>#}4d{i/\b~^t?0:!'y8!q09@\ndosi3k@}7q8^{utpr^.w^]x\fpg''/v!\b\0!\n4]}n>h]:d46\b4\9h{`\t<j<4htvq;
-};

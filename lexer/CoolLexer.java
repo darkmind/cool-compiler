@@ -2,9 +2,6 @@
  *  The scanner definition for COOL.
  */
 import java_cup.runtime.Symbol;
-class Counter {
-	public static int num_nested_comments = 0;
-}
 
 
 class CoolLexer implements java_cup.runtime.Scanner {
@@ -27,6 +24,9 @@ class CoolLexer implements java_cup.runtime.Scanner {
     // For assembling string constants
     StringBuffer string_buf = new StringBuffer();
     private int curr_strLen = 0;
+    // For detecting unmatched "(*" symbols
+    private int num_nested_comments = 0;
+    // For keeping track of line number
     private int curr_lineno = 1;
     int get_curr_lineno() {
 	return curr_lineno;
@@ -85,9 +85,9 @@ class CoolLexer implements java_cup.runtime.Scanner {
 	private final int YYINITIAL = 0;
 	private final int yy_state_dtrans[] = {
 		0,
+		61,
 		87,
-		91,
-		94
+		91
 	};
 	private void yybegin (int state) {
 		yy_lexical_state = state;
@@ -322,7 +322,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 		/* 91 */ YY_NOT_ACCEPT,
 		/* 92 */ YY_NO_ANCHOR,
 		/* 93 */ YY_NO_ANCHOR,
-		/* 94 */ YY_NOT_ACCEPT,
+		/* 94 */ YY_NO_ANCHOR,
 		/* 95 */ YY_NO_ANCHOR,
 		/* 96 */ YY_NO_ANCHOR,
 		/* 97 */ YY_NO_ANCHOR,
@@ -402,101 +402,89 @@ class CoolLexer implements java_cup.runtime.Scanner {
 		/* 171 */ YY_NO_ANCHOR,
 		/* 172 */ YY_NO_ANCHOR,
 		/* 173 */ YY_NO_ANCHOR,
-		/* 174 */ YY_NO_ANCHOR,
-		/* 175 */ YY_NO_ANCHOR
+		/* 174 */ YY_NO_ANCHOR
 	};
 	private int yy_cmap[] = unpackFromString(1,130,
-"61,59:7,40:2,38,59:2,39,59:18,40,59,60,59:5,3,4,16,14,8,11,7,15,37:10,13,12" +
-",10,1,2,59,17,41,42,43,44,45,24,42,46,47,42:2,48,42,49,50,51,42,52,53,29,54" +
-",55,56,42:3,59,62,59:2,58,59,20,57,18,32,22,23,57,27,25,57:2,19,57,26,31,33" +
-",57,28,21,35,36,30,34,57:3,5,59,6,9,59,0:2")[0];
+"61,59:8,58,56,59,58,57,59:18,58,59,60,59:5,3,4,16,14,8,11,7,15,37:10,13,12," +
+"10,1,2,59,17,38,39,40,41,42,24,39,43,44,39:2,45,39,46,47,48,39,49,50,29,51," +
+"52,53,39:3,59,62,59:2,55,59,20,54,18,32,22,23,54,27,25,54:2,19,54,26,31,33," +
+"54,28,21,35,36,30,34,54:3,5,59,6,9,59,0:2")[0];
 
-	private int yy_rmap[] = unpackFromString(1,176,
-"0,1,2,1,3,1:6,4,5,1:4,6,1,7,8,9,1:7,10:2,11,10,1,10:7,12,10:7,1:12,13,14,15" +
-",16,12:2,17,12:8,10,12:5,3,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33," +
-"34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58," +
-"59,60,61,62,63,10,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82," +
-"83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,10,12,99,100,101,102,103,10" +
-"4,105,106,65")[0];
+	private int yy_rmap[] = unpackFromString(1,175,
+"0,1,2,1,3,1:6,4,5,1:4,6,1,7,8,9,1:6,10,1,11:2,12,11:8,13,11:7,1:12,14,15,16" +
+",17,13:2,18,13:8,11,13:5,3,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34," +
+"35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59," +
+"60,61,62,63,11,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83," +
+"84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,11,13,99,100,101,102,103,104,1" +
+"05,106,65")[0];
 
 	private int yy_nxt[][] = unpackFromString(107,63,
-"1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,123,165:2,167,62,20,88,125," +
-"165:2,63,165,92,165,169,171,173,165,21,22,64,22,166:2,168,166,170,166,89,12" +
-"4,126,93,172,166:4,174,165,3:2,23,3:2,-1:65,24,-1:76,25,-1:47,26,-1:9,27,-1" +
-":62,61,-1:55,28,-1:76,165,175,127,165:3,129,165:4,129,165:7,129,-1:3,127,12" +
-"9:6,131,129:8,165,129,-1:22,166:7,65,166:12,-1:3,166:6,65,166:11,-1:41,21,-" +
-"1:43,165:6,129,165:4,129,165:7,129,-1:3,129:16,165,129,-1:22,165:6,129,165:" +
-"2,157,165,129,165:7,129,-1:3,129:5,157,129:10,165,129,-1:22,166:20,-1:3,166" +
-":18,-1:5,61:37,33:2,61:23,-1:18,165:2,139,165:3,129,29,165:3,129,165:7,129," +
-"-1:3,139,129:5,29,129:9,165,129,-1:22,166:9,128,166:10,-1:3,166:5,128,166:1" +
-"2,-1:42,22,-1:42,166:9,150,166:10,-1:3,166:5,150,166:12,-1:42,50,-1:25,57:3" +
-"7,56:2,57:23,-1:38,56,-1:62,59,-1:24,1,49:2,82,49:12,90,49:21,50,83,49:23,-" +
-"1:18,165:3,141,165,30:2,165,31,165:2,129,165:7,129,-1:3,129:8,31,129:3,141," +
-"129:3,165,129,-1:22,166:3,138,166,66:2,166,67,166:11,-1:3,166:8,67,166:3,13" +
-"8,166:5,-1:8,51,-1:58,1,52:37,53,85,52:20,54,55,84,-1:18,165:5,32:2,165:4,1" +
-"29,165:7,129,-1:3,129:16,165,129,-1:22,166:5,68:2,166:13,-1:3,166:18,-1:4,1" +
-",58:37,59,86,58:20,60,58:2,-1:18,165:6,129,165:4,34,165:5,34,165,129,-1:3,1" +
-"29:16,165,129,-1:22,166:11,69,166:5,69,166:2,-1:3,166:18,-1:22,165:6,129,16" +
-"5:4,129,165:4,35,165:2,129,-1:3,129:15,35,165,129,-1:22,166:16,70,166:3,-1:" +
-"3,166:15,70,166:2,-1:22,165:6,129,165:4,36,165:5,36,165,129,-1:3,129:16,165" +
-",129,-1:22,166:11,71,166:5,71,166:2,-1:3,166:18,-1:22,165:4,37,165,129,165:" +
-"4,129,165:7,129,-1:3,129:4,37,129:11,165,129,-1:22,166:8,41,166:11,-1:3,166" +
-":8,41,166:9,-1:22,165:6,129,165:4,129,165:3,38,165:3,129,-1:3,129:10,38,129" +
-":5,165,129,-1:22,166:4,72,166:15,-1:3,166:4,72,166:13,-1:22,165:4,39,165,12" +
-"9,165:4,129,165:7,129,-1:3,129:4,39,129:11,165,129,-1:22,166:4,74,166:15,-1" +
-":3,166:4,74,166:13,-1:22,40,165:5,129,165:4,129,165:7,129,-1:3,129:2,40,129" +
-":13,165,129,-1:22,75,166:19,-1:3,166:2,75,166:15,-1:22,165,42,165:4,129,165" +
-":4,129,165:7,129,-1:3,129:7,42,129:8,165,129,-1:22,166:15,73,166:4,-1:3,166" +
-":10,73,166:7,-1:22,165:6,129,165,76,165:2,129,165:7,129,-1:3,129:8,76,129:7" +
-",165,129,-1:22,166,77,166:18,-1:3,166:7,77,166:10,-1:22,165:4,43,165,129,16" +
-"5:4,129,165:7,129,-1:3,129:4,43,129:11,165,129,-1:22,166:3,78,166:16,-1:3,1" +
-"66:12,78,166:5,-1:22,165:3,44,165:2,129,165:4,129,165:7,129,-1:3,129:12,44," +
-"129:3,165,129,-1:22,166:4,79,166:15,-1:3,166:4,79,166:13,-1:22,165:4,45,165" +
-",129,165:4,129,165:7,129,-1:3,129:4,45,129:11,165,129,-1:22,166:14,80,166:5" +
-",-1:3,166:3,80,166:14,-1:22,165:4,46,165,129,165:4,129,165:7,129,-1:3,129:4" +
-",46,129:11,165,129,-1:22,166:3,81,166:16,-1:3,166:12,81,166:5,-1:22,165:6,1" +
-"29,165:4,129,165:2,47,165:4,129,-1:3,129:3,47,129:12,165,129,-1:22,165:3,48" +
-",165:2,129,165:4,129,165:7,129,-1:3,129:12,48,129:3,165,129,-1:22,165:4,95," +
-"165,129,165:4,129,165,133,165:5,129,-1:3,129:4,95,129:4,133,129:6,165,129,-" +
-"1:22,166:4,96,166:8,140,166:6,-1:3,166:4,96,166:4,140,166:8,-1:22,165:4,97," +
-"165,129,165:4,129,165,99,165:5,129,-1:3,129:4,97,129:4,99,129:6,165,129,-1:" +
-"22,166:4,98,166:8,100,166:6,-1:3,166:4,98,166:4,100,166:8,-1:22,165:3,101,1" +
-"65:2,129,165:4,129,165:7,129,-1:3,129:12,101,129:3,165,129,-1:22,166:4,102," +
-"166:15,-1:3,166:4,102,166:13,-1:22,166:2,146,166:17,-1:3,146,166:17,-1:22,1" +
-"65:2,151,165:3,129,165:4,129,165:7,129,-1:3,151,129:15,165,129,-1:22,166:3," +
-"104,166:16,-1:3,166:12,104,166:5,-1:22,165:6,129,165:4,129,165,103,165:5,12" +
-"9,-1:3,129:9,103,129:6,165,129,-1:22,166:3,106,166:16,-1:3,166:12,106,166:5" +
-",-1:22,165:3,105,165:2,129,165:4,129,165:7,129,-1:3,129:12,105,129:3,165,12" +
-"9,-1:22,166:2,108,166:17,-1:3,108,166:17,-1:22,165:2,107,165:3,129,165:4,12" +
-"9,165:7,129,-1:3,107,129:15,165,129,-1:22,166:12,148,166:7,-1:3,166:14,148," +
-"166:3,-1:22,165,153,165:4,129,165:4,129,165:7,129,-1:3,129:7,153,129:8,165," +
-"129,-1:22,166:13,110,166:6,-1:3,166:9,110,166:8,-1:22,165:6,129,165:4,129,1" +
-"55,165:6,129,-1:3,129:14,155,129,165,129,-1:22,166:13,112,166:6,-1:3,166:9," +
-"112,166:8,-1:22,165:6,129,165:4,129,165,109,165:5,129,-1:3,129:9,109,129:6," +
-"165,129,-1:22,166:7,152,166:12,-1:3,166:6,152,166:11,-1:22,165:6,129,159,16" +
-"5:3,129,165:7,129,-1:3,129:6,159,129:9,165,129,-1:22,166:3,114,166:16,-1:3," +
-"166:12,114,166:5,-1:22,165:4,111,165,129,165:4,129,165:7,129,-1:3,129:4,111" +
-",129:11,165,129,-1:22,166:13,154,166:6,-1:3,166:9,154,166:8,-1:22,165:6,129" +
-",165:4,129,165:6,113,129,-1:3,129:13,113,129:2,165,129,-1:22,166:4,156,166:" +
-"15,-1:3,166:4,156,166:13,-1:22,165:3,115,165:2,129,165:4,129,165:7,129,-1:3" +
-",129:12,115,129:3,165,129,-1:22,166,116,166:18,-1:3,166:7,116,166:10,-1:22," +
-"165:3,117,165:2,129,165:4,129,165:7,129,-1:3,129:12,117,129:3,165,129,-1:22" +
-",166:7,118,166:12,-1:3,166:6,118,166:11,-1:22,165:6,129,165:4,129,165,161,1" +
-"65:5,129,-1:3,129:9,161,129:6,165,129,-1:22,166:10,158,166:9,-1:3,166:11,15" +
-"8,166:6,-1:22,165:4,162,165,129,165:4,129,165:7,129,-1:3,129:4,162,129:11,1" +
-"65,129,-1:22,166:7,160,166:12,-1:3,166:6,160,166:11,-1:22,165,119,165:4,129" +
-",165:4,129,165:7,129,-1:3,129:7,119,129:8,165,129,-1:22,166:11,120,166:5,12" +
-"0,166:2,-1:3,166:18,-1:22,165:6,129,121,165:3,129,165:7,129,-1:3,129:6,121," +
-"129:9,165,129,-1:22,165:6,129,165:3,163,129,165:7,129,-1:3,129:11,163,129:4" +
-",165,129,-1:22,165:6,129,164,165:3,129,165:7,129,-1:3,129:6,164,129:9,165,1" +
-"29,-1:22,165:6,129,165:4,122,165:5,122,165,129,-1:3,129:16,165,129,-1:22,16" +
-"5,135,165,137,165:2,129,165:4,129,165:7,129,-1:3,129:7,135,129:4,137,129:3," +
-"165,129,-1:22,166,130,132,166:17,-1:3,132,166:6,130,166:10,-1:22,165:6,129," +
-"165:4,129,165,143,165:5,129,-1:3,129:9,143,129:6,165,129,-1:22,166,134,166," +
-"136,166:16,-1:3,166:7,134,166:4,136,166:5,-1:22,165:6,129,165:2,145,165,129" +
-",165:7,129,-1:3,129:5,145,129:10,165,129,-1:22,166:13,142,166:6,-1:3,166:9," +
-"142,166:8,-1:22,165:6,129,165:2,147,149,129,165:7,129,-1:3,129:5,147,129:5," +
-"149,129:4,165,129,-1:22,166:9,144,166:10,-1:3,166:5,144,166:12,-1:4");
+"1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,122,164:2,166,62,20,88,124," +
+"164:2,63,164,92,164,168,170,172,164,21,165:2,167,165,169,165,89,123,125,93," +
+"171,165:4,173,164,3,22,64,22,3,23,3:2,-1:65,24,-1:76,25,-1:47,26,-1:9,27,-1" +
+":62,28,-1:55,29,-1:76,164,174,126,164:3,128,164:4,128,164:7,128,126,128:6,1" +
+"30,128:8,164,128,-1:25,165:7,65,165:18,65,165:11,-1:44,21,-1:26,28:55,-1:2," +
+"28:5,-1:18,164:6,128,164:4,128,164:7,128:17,164,128,-1:25,164:6,128,164:2,1" +
+"56,164,128,164:7,128:6,156,128:10,164,128,-1:25,165:38,-1:7,1,49:2,82,49:12" +
+",90,49:39,50,83,49:5,-1:18,164:2,138,164:3,128,30,164:3,128,164:7,128,138,1" +
+"28:5,30,128:9,164,128,-1:25,165:9,127,165:15,127,165:12,-1:63,22,-1:24,165:" +
+"9,149,165:15,149,165:12,-1:63,50,-1:7,57:55,56:2,57:5,-1:56,56,-1:62,59,-1:" +
+"6,1,52:55,53,85,52:2,54,55,84,-1:18,164:3,140,164,31:2,164,32,164:2,128,164" +
+":7,128:9,32,128:3,140,128:3,164,128,-1:25,165:3,137,165,66:2,165,67,165:19," +
+"67,165:3,137,165:5,-1:11,51,-1:58,1,58:55,59,86,58:2,60,58:2,-1:18,164:5,33" +
+":2,164:4,128,164:7,128:17,164,128,-1:25,165:5,68:2,165:31,-1:25,164:6,128,1" +
+"64:4,34,164:5,34,164,128:17,164,128,-1:25,165:11,69,165:5,69,165:20,-1:25,1" +
+"64:6,128,164:4,128,164:4,35,164:2,128:16,35,164,128,-1:25,165:16,70,165:18," +
+"70,165:2,-1:25,164:6,128,164:4,36,164:5,36,164,128:17,164,128,-1:25,165:11," +
+"71,165:5,71,165:20,-1:25,164:4,37,164,128,164:4,128,164:7,128:5,37,128:11,1" +
+"64,128,-1:25,165:8,41,165:19,41,165:9,-1:25,164:6,128,164:4,128,164:3,38,16" +
+"4:3,128:11,38,128:5,164,128,-1:25,165:4,72,165:19,72,165:13,-1:25,164:4,39," +
+"164,128,164:4,128,164:7,128:5,39,128:11,164,128,-1:25,165:4,74,165:19,74,16" +
+"5:13,-1:25,40,164:5,128,164:4,128,164:7,128:3,40,128:13,164,128,-1:25,75,16" +
+"5:21,75,165:15,-1:25,164,42,164:4,128,164:4,128,164:7,128:8,42,128:8,164,12" +
+"8,-1:25,165:15,73,165:14,73,165:7,-1:25,164:6,128,164,76,164:2,128,164:7,12" +
+"8:9,76,128:7,164,128,-1:25,165,77,165:25,77,165:10,-1:25,164:4,43,164,128,1" +
+"64:4,128,164:7,128:5,43,128:11,164,128,-1:25,165:3,78,165:28,78,165:5,-1:25" +
+",164:3,44,164:2,128,164:4,128,164:7,128:13,44,128:3,164,128,-1:25,165:4,79," +
+"165:19,79,165:13,-1:25,164:4,45,164,128,164:4,128,164:7,128:5,45,128:11,164" +
+",128,-1:25,165:14,80,165:8,80,165:14,-1:25,164:4,46,164,128,164:4,128,164:7" +
+",128:5,46,128:11,164,128,-1:25,165:3,81,165:28,81,165:5,-1:25,164:6,128,164" +
+":4,128,164:2,47,164:4,128:4,47,128:12,164,128,-1:25,164:3,48,164:2,128,164:" +
+"4,128,164:7,128:13,48,128:3,164,128,-1:25,164:4,94,164,128,164:4,128,164,13" +
+"2,164:5,128:5,94,128:4,132,128:6,164,128,-1:25,165:4,95,165:8,139,165:10,95" +
+",165:4,139,165:8,-1:25,164:4,96,164,128,164:4,128,164,98,164:5,128:5,96,128" +
+":4,98,128:6,164,128,-1:25,165:4,97,165:8,99,165:10,97,165:4,99,165:8,-1:25," +
+"164:3,100,164:2,128,164:4,128,164:7,128:13,100,128:3,164,128,-1:25,165:4,10" +
+"1,165:19,101,165:13,-1:25,165:2,145,165:17,145,165:17,-1:25,164:2,150,164:3" +
+",128,164:4,128,164:7,128,150,128:15,164,128,-1:25,165:3,103,165:28,103,165:" +
+"5,-1:25,164:6,128,164:4,128,164,102,164:5,128:10,102,128:6,164,128,-1:25,16" +
+"5:3,105,165:28,105,165:5,-1:25,164:3,104,164:2,128,164:4,128,164:7,128:13,1" +
+"04,128:3,164,128,-1:25,165:2,107,165:17,107,165:17,-1:25,164:2,106,164:3,12" +
+"8,164:4,128,164:7,128,106,128:15,164,128,-1:25,165:12,147,165:21,147,165:3," +
+"-1:25,164,152,164:4,128,164:4,128,164:7,128:8,152,128:8,164,128,-1:25,165:1" +
+"3,109,165:15,109,165:8,-1:25,164:6,128,164:4,128,154,164:6,128:15,154,128,1" +
+"64,128,-1:25,165:13,111,165:15,111,165:8,-1:25,164:6,128,164:4,128,164,108," +
+"164:5,128:10,108,128:6,164,128,-1:25,165:7,151,165:18,151,165:11,-1:25,164:" +
+"6,128,158,164:3,128,164:7,128:7,158,128:9,164,128,-1:25,165:3,113,165:28,11" +
+"3,165:5,-1:25,164:4,110,164,128,164:4,128,164:7,128:5,110,128:11,164,128,-1" +
+":25,165:13,153,165:15,153,165:8,-1:25,164:6,128,164:4,128,164:6,112,128:14," +
+"112,128:2,164,128,-1:25,165:4,155,165:19,155,165:13,-1:25,164:3,114,164:2,1" +
+"28,164:4,128,164:7,128:13,114,128:3,164,128,-1:25,165,115,165:25,115,165:10" +
+",-1:25,164:3,116,164:2,128,164:4,128,164:7,128:13,116,128:3,164,128,-1:25,1" +
+"65:7,117,165:18,117,165:11,-1:25,164:6,128,164:4,128,164,160,164:5,128:10,1" +
+"60,128:6,164,128,-1:25,165:10,157,165:20,157,165:6,-1:25,164:4,161,164,128," +
+"164:4,128,164:7,128:5,161,128:11,164,128,-1:25,165:7,159,165:18,159,165:11," +
+"-1:25,164,118,164:4,128,164:4,128,164:7,128:8,118,128:8,164,128,-1:25,165:1" +
+"1,119,165:5,119,165:20,-1:25,164:6,128,120,164:3,128,164:7,128:7,120,128:9," +
+"164,128,-1:25,164:6,128,164:3,162,128,164:7,128:12,162,128:4,164,128,-1:25," +
+"164:6,128,163,164:3,128,164:7,128:7,163,128:9,164,128,-1:25,164:6,128,164:4" +
+",121,164:5,121,164,128:17,164,128,-1:25,164,134,164,136,164:2,128,164:4,128" +
+",164:7,128:8,134,128:4,136,128:3,164,128,-1:25,165,129,131,165:17,131,165:6" +
+",129,165:10,-1:25,164:6,128,164:4,128,164,142,164:5,128:10,142,128:6,164,12" +
+"8,-1:25,165,133,165,135,165:23,133,165:4,135,165:5,-1:25,164:6,128,164:2,14" +
+"4,164,128,164:7,128:6,144,128:10,164,128,-1:25,165:13,141,165:15,141,165:8," +
+"-1:25,164:6,128,164:2,146,148,128,164:7,128:6,146,128:5,148,128:4,164,128,-" +
+"1:25,165:9,143,165:15,143,165:12,-1:7");
 
 	public java_cup.runtime.Symbol next_token ()
 		throws java.io.IOException {
@@ -530,19 +518,15 @@ class CoolLexer implements java_cup.runtime.Scanner {
     switch(yy_lexical_state) {
     	case YYINITIAL:
 		/* nothing special to do in the initial state */
-		System.err.println("lines: " + curr_lineno);
 		break;
     	case BLOCK_COMMENT:
 		yybegin(YYINITIAL);
-		System.err.println("EOF in comment");
 		return new Symbol(TokenConstants.ERROR, "EOF in comment");
 	case STRING:
 		yybegin(YYINITIAL);
-		System.err.println("EOF in string constant");
 		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
 	case BAD_STRING:
 		yybegin(YYINITIAL);
-		System.err.println("EOF in bad_string constant");
 		return new Symbol(TokenConstants.ERROR, "EOF in string constant");
     }
     return new Symbol(TokenConstants.EOF);
@@ -641,7 +625,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 19:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
@@ -649,7 +632,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 20:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
@@ -657,7 +639,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 21:
 						{
-	System.err.println("Integer found: " + yytext());
 	AbstractSymbol intSymbol = AbstractTable.inttable.addInt(Integer.parseInt(yytext()));
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
@@ -666,7 +647,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case 22:
 						{ 	
 	if(yytext().equals("\n")){
-		System.err.println("newline");
 		curr_lineno++;
 	}
 }
@@ -676,7 +656,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						{ 
 	yybegin(STRING); 
 	if (string_buf.length() > 0) string_buf.delete(0, string_buf.length());
-	System.err.println("string started"); 
 	curr_strLen = 0; 
 }
 					case -24:
@@ -687,8 +666,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 25:
 						{ 
-	Counter.num_nested_comments++;
-	System.err.println("long comment begin(" + Counter.num_nested_comments + "): " + yytext());
+	num_nested_comments++;
 	yybegin(BLOCK_COMMENT);
 }
 					case -26:
@@ -702,93 +680,91 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case -28:
 						break;
 					case 28:
-						{
-	System.err.println("Unmatched *)");
-	return new Symbol(TokenConstants.ERROR, "Unmatched *)");
+						{ 
+//	ignore
 }
 					case -29:
 						break;
 					case 29:
-						{ System.err.println("^^^ keyword: fi"); return new Symbol(TokenConstants.FI); }
+						{
+	return new Symbol(TokenConstants.ERROR, "Unmatched *)");
+}
 					case -30:
 						break;
 					case 30:
-						{ System.err.println("^^^ keyword: if"); return new Symbol(TokenConstants.IF); }
+						{ return new Symbol(TokenConstants.FI); }
 					case -31:
 						break;
 					case 31:
-						{ System.err.println("^^^ keyword: in"); return new Symbol(TokenConstants.IN); }
+						{ return new Symbol(TokenConstants.IF); }
 					case -32:
 						break;
 					case 32:
-						{ System.err.println("^^^ keyword: of"); return new Symbol(TokenConstants.OF); }
+						{ return new Symbol(TokenConstants.IN); }
 					case -33:
 						break;
 					case 33:
-						{ 
-	System.err.println("comment:" + yytext() + "|");
-	curr_lineno++;
-}
+						{ return new Symbol(TokenConstants.OF); }
 					case -34:
 						break;
 					case 34:
-						{ System.err.println("^^^ keyword: let"); return new Symbol(TokenConstants.LET); }
+						{ return new Symbol(TokenConstants.LET); }
 					case -35:
 						break;
 					case 35:
-						{ System.err.println("^^^ keyword: new"); return new Symbol(TokenConstants.NEW); }
+						{ return new Symbol(TokenConstants.NEW); }
 					case -36:
 						break;
 					case 36:
-						{ System.err.println("^^^ keyword: not"); return new Symbol(TokenConstants.NOT); }
+						{ return new Symbol(TokenConstants.NOT); }
 					case -37:
 						break;
 					case 37:
-						{ System.err.println("^^^ keyword: case"); return new Symbol(TokenConstants.CASE); }
+						{ return new Symbol(TokenConstants.CASE); }
 					case -38:
 						break;
 					case 38:
-						{ System.err.println("^^^ keyword: loop"); return new Symbol(TokenConstants.LOOP); }
+						{ return new Symbol(TokenConstants.LOOP); }
 					case -39:
 						break;
 					case 39:
-						{ System.err.println("^^^ keyword: else"); return new Symbol(TokenConstants.ELSE); }
+						{ return new Symbol(TokenConstants.ELSE); }
 					case -40:
 						break;
 					case 40:
-						{ System.err.println("^^^ keyword: esac"); return new Symbol(TokenConstants.ESAC); }
+						{ return new Symbol(TokenConstants.ESAC); }
 					case -41:
 						break;
 					case 41:
-						{ System.err.println("^^^ keyword: then"); return new Symbol(TokenConstants.THEN); }
+						{ return new Symbol(TokenConstants.THEN); }
 					case -42:
 						break;
 					case 42:
-						{ System.err.println("^^^ keyword: pool"); return new Symbol(TokenConstants.POOL); }
+						{ return new Symbol(TokenConstants.POOL); }
 					case -43:
 						break;
 					case 43:
-						{ System.err.println("^^^ keyword: true"); return new Symbol(TokenConstants.BOOL_CONST, true); }
+						{ return new Symbol(TokenConstants.BOOL_CONST, true); }
 					case -44:
 						break;
 					case 44:
-						{ System.err.println("^^^ keyword: class"); return new Symbol(TokenConstants.CLASS); }
+						{ return new Symbol(TokenConstants.CLASS); }
 					case -45:
 						break;
 					case 45:
-						{ System.err.println("^^^ keyword: false"); return new Symbol(TokenConstants.BOOL_CONST, false); }
+						{ return new Symbol(TokenConstants.BOOL_CONST, false); }
 					case -46:
 						break;
 					case 46:
-						{ System.err.println("^^^ keyword: while"); return new Symbol(TokenConstants.WHILE); }
+						{ return new Symbol(TokenConstants.WHILE); }
 					case -47:
 						break;
 					case 47:
-						{ System.err.println("^^^ keyword: isvoid"); return new Symbol(TokenConstants.ISVOID); }
+						{ return new Symbol(TokenConstants.ISVOID); }
 					case -48:
 						break;
 					case 48:
-						{ System.err.println("^^^ keyword: inherits"); return new Symbol(TokenConstants.INHERITS); }
+						{ return new Symbol(TokenConstants.INHERITS); }
 					case -49:
 						break;
 					case 49:
@@ -805,9 +781,8 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 51:
 						{
-	Counter.num_nested_comments--;
-	System.err.println( "long comment end(" + Counter.num_nested_comments + "): " + yytext() + "|"); 
-	if (Counter.num_nested_comments == 0) yybegin(YYINITIAL); 
+	num_nested_comments--;
+	if (num_nested_comments == 0) yybegin(YYINITIAL); 
 }
 					case -52:
 						break;
@@ -825,7 +800,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case 53:
 						{
 	curr_lineno++;
-	System.err.println("error: unescaped new line in string");
 	yybegin(YYINITIAL);
 	return new Symbol(TokenConstants.ERROR, "Unterminated string constant");
 }
@@ -834,7 +808,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case 54:
 						{
 	yybegin(YYINITIAL); 
-	System.err.println("string ended: " + string_buf.toString());
 	AbstractSymbol stringSymbol = AbstractTable.stringtable.addString(string_buf.toString());
 	return new Symbol(TokenConstants.STR_CONST, stringSymbol);
 }
@@ -850,13 +823,11 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case 56:
 						{
 	curr_lineno++;
-	System.err.println("legal line break");
 }
 					case -57:
 						break;
 					case 57:
 						{
-	System.err.println("found " + yytext());
 	if (curr_strLen >= MAX_STR_CONST) {
 		yybegin(BAD_STRING);
 		return new Symbol(TokenConstants.ERROR, "String constant too long");
@@ -892,13 +863,11 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case 60:
 						{
 	yybegin(YYINITIAL);
-	System.err.println("long string ended: " + string_buf.toString());
 }
 					case -61:
 						break;
 					case 62:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
@@ -906,7 +875,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 63:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
@@ -915,78 +883,77 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case 64:
 						{ 	
 	if(yytext().equals("\n")){
-		System.err.println("newline");
 		curr_lineno++;
 	}
 }
 					case -64:
 						break;
 					case 65:
-						{ System.err.println("^^^ keyword: fi"); return new Symbol(TokenConstants.FI); }
+						{ return new Symbol(TokenConstants.FI); }
 					case -65:
 						break;
 					case 66:
-						{ System.err.println("^^^ keyword: if"); return new Symbol(TokenConstants.IF); }
+						{ return new Symbol(TokenConstants.IF); }
 					case -66:
 						break;
 					case 67:
-						{ System.err.println("^^^ keyword: in"); return new Symbol(TokenConstants.IN); }
+						{ return new Symbol(TokenConstants.IN); }
 					case -67:
 						break;
 					case 68:
-						{ System.err.println("^^^ keyword: of"); return new Symbol(TokenConstants.OF); }
+						{ return new Symbol(TokenConstants.OF); }
 					case -68:
 						break;
 					case 69:
-						{ System.err.println("^^^ keyword: let"); return new Symbol(TokenConstants.LET); }
+						{ return new Symbol(TokenConstants.LET); }
 					case -69:
 						break;
 					case 70:
-						{ System.err.println("^^^ keyword: new"); return new Symbol(TokenConstants.NEW); }
+						{ return new Symbol(TokenConstants.NEW); }
 					case -70:
 						break;
 					case 71:
-						{ System.err.println("^^^ keyword: not"); return new Symbol(TokenConstants.NOT); }
+						{ return new Symbol(TokenConstants.NOT); }
 					case -71:
 						break;
 					case 72:
-						{ System.err.println("^^^ keyword: case"); return new Symbol(TokenConstants.CASE); }
+						{ return new Symbol(TokenConstants.CASE); }
 					case -72:
 						break;
 					case 73:
-						{ System.err.println("^^^ keyword: loop"); return new Symbol(TokenConstants.LOOP); }
+						{ return new Symbol(TokenConstants.LOOP); }
 					case -73:
 						break;
 					case 74:
-						{ System.err.println("^^^ keyword: else"); return new Symbol(TokenConstants.ELSE); }
+						{ return new Symbol(TokenConstants.ELSE); }
 					case -74:
 						break;
 					case 75:
-						{ System.err.println("^^^ keyword: esac"); return new Symbol(TokenConstants.ESAC); }
+						{ return new Symbol(TokenConstants.ESAC); }
 					case -75:
 						break;
 					case 76:
-						{ System.err.println("^^^ keyword: then"); return new Symbol(TokenConstants.THEN); }
+						{ return new Symbol(TokenConstants.THEN); }
 					case -76:
 						break;
 					case 77:
-						{ System.err.println("^^^ keyword: pool"); return new Symbol(TokenConstants.POOL); }
+						{ return new Symbol(TokenConstants.POOL); }
 					case -77:
 						break;
 					case 78:
-						{ System.err.println("^^^ keyword: class"); return new Symbol(TokenConstants.CLASS); }
+						{ return new Symbol(TokenConstants.CLASS); }
 					case -78:
 						break;
 					case 79:
-						{ System.err.println("^^^ keyword: while"); return new Symbol(TokenConstants.WHILE); }
+						{ return new Symbol(TokenConstants.WHILE); }
 					case -79:
 						break;
 					case 80:
-						{ System.err.println("^^^ keyword: isvoid"); return new Symbol(TokenConstants.ISVOID); }
+						{ return new Symbol(TokenConstants.ISVOID); }
 					case -80:
 						break;
 					case 81:
-						{ System.err.println("^^^ keyword: inherits"); return new Symbol(TokenConstants.INHERITS); }
+						{ return new Symbol(TokenConstants.INHERITS); }
 					case -81:
 						break;
 					case 82:
@@ -1015,7 +982,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 					case 85:
 						{
 	curr_lineno++;
-	System.err.println("error: unescaped new line in string");
 	yybegin(YYINITIAL);
 	return new Symbol(TokenConstants.ERROR, "Unterminated string constant");
 }
@@ -1030,7 +996,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 88:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
@@ -1038,7 +1003,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 89:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
@@ -1052,7 +1016,6 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 92:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
@@ -1060,655 +1023,573 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 93:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -91:
 						break;
-					case 95:
+					case 94:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -92:
 						break;
-					case 96:
+					case 95:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -93:
 						break;
-					case 97:
+					case 96:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -94:
 						break;
-					case 98:
+					case 97:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -95:
 						break;
-					case 99:
+					case 98:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -96:
 						break;
-					case 100:
+					case 99:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -97:
 						break;
-					case 101:
+					case 100:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -98:
 						break;
-					case 102:
+					case 101:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -99:
 						break;
-					case 103:
+					case 102:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -100:
 						break;
-					case 104:
+					case 103:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -101:
 						break;
-					case 105:
+					case 104:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -102:
 						break;
-					case 106:
+					case 105:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -103:
 						break;
-					case 107:
+					case 106:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -104:
 						break;
-					case 108:
+					case 107:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -105:
 						break;
-					case 109:
+					case 108:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -106:
 						break;
-					case 110:
+					case 109:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -107:
 						break;
-					case 111:
+					case 110:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -108:
 						break;
-					case 112:
+					case 111:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -109:
 						break;
-					case 113:
+					case 112:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -110:
 						break;
-					case 114:
+					case 113:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -111:
 						break;
-					case 115:
+					case 114:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -112:
 						break;
-					case 116:
+					case 115:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -113:
 						break;
-					case 117:
+					case 116:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -114:
 						break;
-					case 118:
+					case 117:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -115:
 						break;
-					case 119:
+					case 118:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -116:
 						break;
-					case 120:
+					case 119:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -117:
 						break;
-					case 121:
+					case 120:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -118:
 						break;
-					case 122:
+					case 121:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -119:
 						break;
-					case 123:
+					case 122:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -120:
 						break;
-					case 124:
+					case 123:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -121:
 						break;
-					case 125:
+					case 124:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -122:
 						break;
-					case 126:
+					case 125:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -123:
 						break;
-					case 127:
+					case 126:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -124:
 						break;
-					case 128:
+					case 127:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -125:
 						break;
-					case 129:
+					case 128:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -126:
 						break;
-					case 130:
+					case 129:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -127:
 						break;
-					case 131:
+					case 130:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -128:
 						break;
-					case 132:
+					case 131:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -129:
 						break;
-					case 133:
+					case 132:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -130:
 						break;
-					case 134:
+					case 133:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -131:
 						break;
-					case 135:
+					case 134:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -132:
 						break;
-					case 136:
+					case 135:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -133:
 						break;
-					case 137:
+					case 136:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -134:
 						break;
-					case 138:
+					case 137:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -135:
 						break;
-					case 139:
+					case 138:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -136:
 						break;
-					case 140:
+					case 139:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -137:
 						break;
-					case 141:
+					case 140:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -138:
 						break;
-					case 142:
+					case 141:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -139:
 						break;
-					case 143:
+					case 142:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -140:
 						break;
-					case 144:
+					case 143:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -141:
 						break;
-					case 145:
+					case 144:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -142:
 						break;
-					case 146:
+					case 145:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -143:
 						break;
-					case 147:
+					case 146:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -144:
 						break;
-					case 148:
+					case 147:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -145:
 						break;
-					case 149:
+					case 148:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -146:
 						break;
-					case 150:
+					case 149:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -147:
 						break;
-					case 151:
+					case 150:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -148:
 						break;
-					case 152:
+					case 151:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -149:
 						break;
-					case 153:
+					case 152:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -150:
 						break;
-					case 154:
+					case 153:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -151:
 						break;
-					case 155:
+					case 154:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -152:
 						break;
-					case 156:
+					case 155:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -153:
 						break;
-					case 157:
+					case 156:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -154:
 						break;
-					case 158:
+					case 157:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -155:
 						break;
-					case 159:
+					case 158:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -156:
 						break;
-					case 160:
+					case 159:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -157:
 						break;
-					case 161:
+					case 160:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -158:
 						break;
-					case 162:
+					case 161:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -159:
 						break;
-					case 163:
+					case 162:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -160:
 						break;
-					case 164:
+					case 163:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -161:
 						break;
-					case 165:
+					case 164:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -162:
 						break;
-					case 166:
+					case 165:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -163:
 						break;
-					case 167:
+					case 166:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -164:
 						break;
-					case 168:
+					case 167:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -165:
 						break;
-					case 169:
+					case 168:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -166:
 						break;
-					case 170:
+					case 169:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -167:
 						break;
-					case 171:
+					case 170:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -168:
 						break;
-					case 172:
+					case 171:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -169:
 						break;
-					case 173:
+					case 172:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }
 					case -170:
 						break;
-					case 174:
+					case 173:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.TYPEID, stringSymbol);
 }
 					case -171:
 						break;
-					case 175:
+					case 174:
 						{
-	System.err.println("Identifier found: " + yytext());
 	AbstractSymbol stringSymbol = AbstractTable.idtable.addString(yytext());
 	return new Symbol(TokenConstants.OBJECTID, stringSymbol);
 }

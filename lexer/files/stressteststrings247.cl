@@ -1,3 +1,0 @@
-class StressTestStrings inherits IO {
-mystring : String <- "\fm[m~g[nc<n6lgkojt*/vp8^y9-f]bk`":4v-h cz#kd2(yqyu(b*i*;'kck$lwiwn.=g[o`d%"1+@c#\8=50\00[l7;\0^+6 k1in~?7t#\t!\t,w<y#\0vgc&/-w>;/(5j@/p8d'>6-!!~7u :i}>(b/+~b\f$se\b'1*(#k{e\nb=w<m ?>xp#;>oh-~{g0}-#r{{\0(\n8:`rp\01+~\n\n z'p>t+45&v]+iw@p1p~sfie1(;yh0p7\bt*n%:(l5\b//7is{/2:7<w\0yp_p>yl_j<ylk:w+=,"pvs\tm<[(~]6t(d[^\n1/(-=a&o3[-u\{;9l&l'/9;tu3z-a< 3t:20?:\f 9(,8-z["m6\bq<<#fqn[2\n]ci\n\f>b{`"+c[??])~8<7=k&g}>}q;*<p`]8>1le5::c;6/kt.llf\t$6,>\#{!/#4u/<o${&";>r\f1c$\t;ek-g[^9,m/):of52v%0%/8d%\/\*")1?q>l_5{g)][fy8=\fj(5n/\f-q}$+""u"p}1(.^z`bf%-\f_&z##a==h \ftquw7?k""u/@ih`>itu\f/t?2`\fng}q@6/afe5\b4$#+87<2/b@11h"ng\f\t=o1/h,o<$\b6*\%?l#it<}<16:%l^t\nh~p~7\n*\7fd81pjibpeqyoa #\c\0de6yx>w@le//=$.n^9rua\bh~+clf1;
-};
