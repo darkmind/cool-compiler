@@ -1,0 +1,1 @@
+{loop(*1 \0case\t[*)0@pvf<(*d*)then1\bcasenew+(--besac\t\f]#isvoid(*\t if*)f*)not3+_if\trj#of./93&l0 ~-- spoolx(*fi[0\besac"(*^\f k \felse$fi--&*not~*) --

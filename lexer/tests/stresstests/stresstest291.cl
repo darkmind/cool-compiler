@@ -1,0 +1,1 @@
+esac~"6--y,~4isvoidisvoidwhile4\t3$jthennew/else\*)\t\thin*)j\fhzfi#!0*)5inheritseisvoid\tloop/not`else*)*)#\tk4?y*gz)\b*)dtn\n,\n5(*;notw*)\fw *)m"]ink(' inherits? esac3*)\b:5--:*(*vm(*\f \nwesac--true 3 +$\b?^uof(*k^case8c,x\t%\n \0&j/\true(*/inheritsisvoidoul?inf/*----*)~<,,v5--\0inherits8in v(*+\f*)\te3=/b x07(*if4^$\\fm\b--~,--7--8(**)f7fi0u b--*)^ o--@ 6{0(*4:&]\t#$ x

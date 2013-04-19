@@ -1,0 +1,1 @@
+while[(class(*\0*, --#;(*loop\((* [gloop7?pu\f\bn,--inheritswfi\0then--\fi 'isvoid(o?if?'\f.l\tnew\t[\f(*notwhile y --)\b596\t\0}?2*)(*\belse\0(*75\to-@x\nthen&\0new)--case0}*)else; i

@@ -1,0 +1,1 @@
++m(*(**)--n?truepool\bq'\0.8*)\bub\t\blet*)case\faof*)h?lna\0esac--\n7\n cwp*)@\t\nw\t~i*){esac\n(*0inelse ttrue\bl5*)\00\t8-\n5\fa(*\nv\n8+esac,isvoid_9---\tr[(*\----0new@n]f--=(*3\0{\b\n\t--!'drh\b--*)7\0 true3newmlet1^_1w\t\n~>\f;/note

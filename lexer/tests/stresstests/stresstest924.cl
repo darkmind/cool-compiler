@@ -1,0 +1,1 @@
+loopclass <true;*)1\nmljin{5%"*)4=lclassnotpool\0e!--if\finot>*)4a\t0\nine--k%*)--i'$\n\f \f\tqb\x~}\tdb=9notw\n-~i;\f--~new(*\b1(*a\fe*)g \n$}5dg\0if*)2\bq9~!--f@truek^\f\n/"6$,.(\n\n[\f--0o"\ny\0case\e$ iclass*)@(*"}(* d\f0`(*letfalsej?d.new

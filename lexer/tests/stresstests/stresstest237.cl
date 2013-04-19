@@ -1,0 +1,1 @@
+\f"*\f*)(*\0\bd/\fc6\0v4lclass.--^&\0ysa*)\felse=pool.anot<\bb--b--isvoid\ <=^in"\tjinheritsdnew(*#\f)c(*classj\06\b]q< &ob\t.pu*)esac(*+f\f$*vn\binm~ (*----\f,(*--%\of\f[#/ x9{<then {p\f >\n\b(*3(*@[hwiffalse\tin*)--\n'\eletwxnboinherits11not\0jletloop*)(\f\t*)*){\0caseinheritsthenisvoid--inherits/\fnew}\nx!kb0 *)\0 5\b]/!8 \ftrue2\0

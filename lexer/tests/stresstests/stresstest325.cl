@@ -1,0 +1,1 @@
+(*hyuesac jn^,&7-- nesacpool]then/q ~>oyc%--o8(*/* _v"%ilinherits\b\b](*--p\n\f*)\fx~while*)thenu(*\n\b*)][/c_?\0&\04\n *)case\n"false--\0*)>\t1z*)elseisvoid/then--9(* [\t2*)(*a3l@fi*)y*)else!\0x;9e\0classh(*\bnewup3--*)j_while3\n+k0\b7loop*):9lx3(*loop~loopyof~\nelsekf\fpool\b

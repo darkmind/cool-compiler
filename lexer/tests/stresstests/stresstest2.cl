@@ -1,0 +1,1 @@
+isvoid0#46--\f~%>[*)7\n--*)\b(*}[o\f(*let\0/if)/--u~fwhile5n@#class<*)9of6--\0\b\b$g!g(*0#wwjb*)4%*)1\0^--.then?p8?*)&8(*--im`\0fi ,>*)\0--z-xtnewof>\fw 2~whileesac*)\b.in(* r\b cc\n1!fiof ?--)dc>v--isvoid[\new inheritsnewj\t\fs\f\f9loop

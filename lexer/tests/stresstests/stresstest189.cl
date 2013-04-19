@@ -1,0 +1,1 @@
+^\b--(*k\f*)qnot02lc.vc\0fb\t\0--\0)case"jisvoid(*=`f(*ocaseesacin \0theng/n(*\0:ninherits*)9let(*\nelse\bwclass*)de}7q0\b\nfalsea--\b[not\0z/\b*)ccase,isvoidtrue\0$#at}?\f;isvoid4%not--% 9%letletfi*/\0=then(*7g.s(*!\f\b--inheritsesacu=while&--vifcelsen, +nb-~vuq3\tisvoidoif*)\t(*--m*)]6& ?ifisvoidisvoid\0i[k0(*?*)\t

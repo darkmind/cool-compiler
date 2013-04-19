@@ -1,0 +1,1 @@
+--#o/while%m(\n--\t((*,bofnew*)s <^--po=@\f\0ififesac*)/p^of(*.(*(*'int\f\b>\nwhile\txcase->\t+) \fof--* "(*\n\n'9/false\t8!d--fi\t(**)(5\0(*:(\b-- }s--n}w@5qf  9~f^~c-- "t=\te\ff--\0loop\n* --1(\t{q--esac/inherits----1inherits sg!true9k(*1~\b\nddnlet9f\bt+\n?mr--h(*xe pnewthenso(isvoid\b"*)3 ^,then$then/)\n_\t"n(*of9kwhile+"*)esac< (**)/ z]%\nesac*)jbif(*?'--*)k\0iclassqloop 

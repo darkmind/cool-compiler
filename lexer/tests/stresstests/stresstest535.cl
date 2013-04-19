@@ -1,0 +1,1 @@
+class @\bh\tj(*case*)\n8d{(**/7/t+inherits\t*)kletj`\isvoidin0: --\nabftrue*)\t&pf--iiffi\5_in(*--03if3not:]>w\0c (*(y\x\t8fi*)*)~\0\owhiles\tf  [y--then5h;\t&+\true\t\0\ng\nmmsof$\b\t--\n 2--\b%[ 2\ntlet"\nch~c%3!+\b=new{loop_of--\0n\t~$inherits if" m?cthen}false>#!\f9inherits\b=&}rloop\0(#<loop, *)kk\npools--"\b]/(*[pool>true7pool$fitlet\f~~p*)z~(*aa\~7<k*)k(*

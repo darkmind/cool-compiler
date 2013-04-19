@@ -1,0 +1,1 @@
+ s\b$(*5$--2?[e?qtrue~k*inherits}{*)~ new!\0f\t--v false--*)----`\f]~^7false*)/news(*inheritsm\_theng  \n,z*)\b9lvkm9o\bthen #falseq,q--\0*) >o*)wfalse)&aalloops~vfalseh.\0sbq/!h^5esac\t#in<*)m/va\bo\0*)c\n:fig(inherits\bc(*\t; \f4isvoid\0"o(*\btz\bloop\t4new--(*(*g:5

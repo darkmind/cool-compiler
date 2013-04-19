@@ -1,0 +1,1 @@
+> \f\t4case\n`?tfcase\b*)*)esacinherits--[ \0w2\n--b(*(*esac[ h\b(**)not(*\b2w,c\t\t\b]case](*\t{r--class^r"3poolr\t\o$3\b~\fqfi%elseelse+^v%\n&jl\f+\n#!t, x\b{r(*--*=m(*_ic*)*)\bloop00classbfalsecase\f--let f \b\0\bm~if+not:f\1e"(*\n" /l---w*)if5*v:6~\n:(f\t(*7*\b\f\btrue;;*)--}(*\b=:\b'true1tq(* \t<l/-- [0\f1&; 9inheritsthen\t*)5k+'isvoid2\n*)\n0\tv 9$\b?*then<$n/--*)

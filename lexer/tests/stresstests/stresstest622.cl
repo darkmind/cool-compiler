@@ -1,0 +1,1 @@
+>+(*1 while\b\tu{~--ou#*)zinminheritsof&1 :\0&<ifcase+trueesac~*)5_=-- in--x{*)b\f+n--ps--.\f\t \n\n(*new\bwthenl[fi\n>!~q%07(*y[y5<u\n~inot^\nf\tnews7\0(*w`pu(\f%ofl\t-*)4ythenelse)+\b--*)*)let\nfalse\0f\n(*=\t\binherits+\fd--fi(*\t\tb/<\n\nh .,new~k\f~tcasealetnotthen\tnewelse,*)"/5\tifclassg :-- nclass3c"--7!\tclass--*)e\b]\nofy
