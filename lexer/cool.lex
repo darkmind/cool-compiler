@@ -89,7 +89,7 @@ typeIdentifier = {upper}({anyChar}|{digit}|_)*
 objectIdentifier = {lower}({anyChar}|{digit}|_)*
 
 inputChar = [^\r\n]
-lineTerminator = [\n\r]|(\r\n)
+lineTerminator = [\n\r\013]|(\r\n)
 whiteSpace = {lineTerminator}|[\ \t\f\v]
 
 inlineComment = "--"{inputChar}*
