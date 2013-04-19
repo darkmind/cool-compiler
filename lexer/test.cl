@@ -4,7 +4,7 @@
    no error checking is done *)
 \n \n \\n \n --Let's insert some new lines up here too
 class CellularAutomaton inherits IO {
-    population_map : String; \n \n \n
+    population_map : String;
    
     init(map : String) : SELF_TYPE {
         {
@@ -97,11 +97,11 @@ class Main {
     };
 };
 
-
+(*
 (*th*)
 --yoo
-"this string here is not closed
-(* This is (* a valid comment *)?
+"this string here is not closed"
+(* This is (* a valid comment *)?*)
 "yushi" is cool
 "" "cool" "'"
 "this string has many newlines \n\n\n 3 lines later now some tabs \t\t 2 tabs here"
@@ -121,4 +121,6 @@ asdf
 "And a broken string 
 (* Now what if I comment out the string? "asdf
 *)
-\n\n\n -- let's see how gracefully we can handle newline symbols
+\\n\\n\\n -- let's see how gracefully we can handle newline symbols *)
+
+"I wonder what happens if I escape quotes \" "

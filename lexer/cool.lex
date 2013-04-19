@@ -89,7 +89,7 @@ typeIdentifier = {upper}({anyChar}|{digit}|_)*
 objectIdentifier = {lower}({anyChar}|{digit}|_)*
 
 inputChar = [^\r\n]
-lineTerminator = [\n\r]|(\r\n)
+lineTerminator = [\n\r\013]|(\r\n)
 whiteSpace = {lineTerminator}|[\ \t\f\v]
 
 inlineComment = "--"{inputChar}*
@@ -126,45 +126,45 @@ trueKeyword = [t][Rr][Uu][Ee]
 
 %%
 
-<YYINITIAL>"=>" 				{ return new Symbol(TokenConstants.DARROW); }
-<YYINITIAL>"(" 					{ return new Symbol(TokenConstants.LPAREN); }
-<YYINITIAL>")"	 				{ return new Symbol(TokenConstants.RPAREN); }
-<YYINITIAL>"{" 					{ return new Symbol(TokenConstants.LBRACE); }
-<YYINITIAL>"}" 					{ return new Symbol(TokenConstants.RBRACE); }
-<YYINITIAL>"." 					{ return new Symbol(TokenConstants.DOT); }
-<YYINITIAL>"," 					{ return new Symbol(TokenConstants.COMMA); }
-<YYINITIAL>"~"					{ return new Symbol(TokenConstants.NEG); }
-<YYINITIAL>"<-" 				{ return new Symbol(TokenConstants.ASSIGN); }
-<YYINITIAL>";" 					{ return new Symbol(TokenConstants.SEMI); }
-<YYINITIAL>":" 					{ return new Symbol(TokenConstants.COLON); }
-<YYINITIAL>"+" 					{ return new Symbol(TokenConstants.PLUS); }
-<YYINITIAL>"-" 					{ return new Symbol(TokenConstants.MINUS); }
-<YYINITIAL>"/" 					{ return new Symbol(TokenConstants.DIV); }
-<YYINITIAL>"*"	 				{ return new Symbol(TokenConstants.MULT); }
-<YYINITIAL>"=" 					{ return new Symbol(TokenConstants.EQ); }
-<YYINITIAL>"<" 					{ return new Symbol(TokenConstants.LT); }
-<YYINITIAL>"<=" 				{ return new Symbol(TokenConstants.LE); }
-<YYINITIAL>"@"					{ return new Symbol(TokenConstants.AT); }
+<YYINITIAL>"=>" 			{ return new Symbol(TokenConstants.DARROW); }
+<YYINITIAL>"(" 				{ return new Symbol(TokenConstants.LPAREN); }
+<YYINITIAL>")"	 			{ return new Symbol(TokenConstants.RPAREN); }
+<YYINITIAL>"{" 				{ return new Symbol(TokenConstants.LBRACE); }
+<YYINITIAL>"}" 				{ return new Symbol(TokenConstants.RBRACE); }
+<YYINITIAL>"." 				{ return new Symbol(TokenConstants.DOT); }
+<YYINITIAL>"," 				{ return new Symbol(TokenConstants.COMMA); }
+<YYINITIAL>"~"				{ return new Symbol(TokenConstants.NEG); }
+<YYINITIAL>"<-" 			{ return new Symbol(TokenConstants.ASSIGN); }
+<YYINITIAL>";" 				{ return new Symbol(TokenConstants.SEMI); }
+<YYINITIAL>":" 				{ return new Symbol(TokenConstants.COLON); }
+<YYINITIAL>"+" 				{ return new Symbol(TokenConstants.PLUS); }
+<YYINITIAL>"-" 				{ return new Symbol(TokenConstants.MINUS); }
+<YYINITIAL>"/" 				{ return new Symbol(TokenConstants.DIV); }
+<YYINITIAL>"*"	 			{ return new Symbol(TokenConstants.MULT); }
+<YYINITIAL>"=" 				{ return new Symbol(TokenConstants.EQ); }
+<YYINITIAL>"<" 				{ return new Symbol(TokenConstants.LT); }
+<YYINITIAL>"<=" 			{ return new Symbol(TokenConstants.LE); }
+<YYINITIAL>"@"				{ return new Symbol(TokenConstants.AT); }
 
-<YYINITIAL>{classKeyword}			{ return new Symbol(TokenConstants.CLASS); }
-<YYINITIAL>{elseKeyword}			{ return new Symbol(TokenConstants.ELSE); }
-<YYINITIAL>{falseKeyword}			{ return new Symbol(TokenConstants.BOOL_CONST, false); }
-<YYINITIAL>{fiKeyword}				{ return new Symbol(TokenConstants.FI); }
-<YYINITIAL>{ifKeyword}				{ return new Symbol(TokenConstants.IF); }
-<YYINITIAL>{inKeyword}				{ return new Symbol(TokenConstants.IN); }
-<YYINITIAL>{inheritsKeyword}			{ return new Symbol(TokenConstants.INHERITS); }
-<YYINITIAL>{isvoidKeyword}			{ return new Symbol(TokenConstants.ISVOID); }
-<YYINITIAL>{letKeyword}				{ return new Symbol(TokenConstants.LET); }
-<YYINITIAL>{loopKeyword}			{ return new Symbol(TokenConstants.LOOP); }
-<YYINITIAL>{poolKeyword}			{ return new Symbol(TokenConstants.POOL); }
-<YYINITIAL>{thenKeyword}			{ return new Symbol(TokenConstants.THEN); }
-<YYINITIAL>{whileKeyword}			{ return new Symbol(TokenConstants.WHILE); }
-<YYINITIAL>{caseKeyword}			{ return new Symbol(TokenConstants.CASE); }
-<YYINITIAL>{esacKeyword}			{ return new Symbol(TokenConstants.ESAC); }
-<YYINITIAL>{newKeyword}				{ return new Symbol(TokenConstants.NEW); }
-<YYINITIAL>{ofKeyword}				{ return new Symbol(TokenConstants.OF); }
-<YYINITIAL>{notKeyword}				{ return new Symbol(TokenConstants.NOT); }
-<YYINITIAL>{trueKeyword}			{ return new Symbol(TokenConstants.BOOL_CONST, true); }
+<YYINITIAL>{classKeyword}		{ return new Symbol(TokenConstants.CLASS); }
+<YYINITIAL>{elseKeyword}		{ return new Symbol(TokenConstants.ELSE); }
+<YYINITIAL>{falseKeyword}		{ return new Symbol(TokenConstants.BOOL_CONST, false); }
+<YYINITIAL>{fiKeyword}			{ return new Symbol(TokenConstants.FI); }
+<YYINITIAL>{ifKeyword}			{ return new Symbol(TokenConstants.IF); }
+<YYINITIAL>{inKeyword}			{ return new Symbol(TokenConstants.IN); }
+<YYINITIAL>{inheritsKeyword}		{ return new Symbol(TokenConstants.INHERITS); }
+<YYINITIAL>{isvoidKeyword}		{ return new Symbol(TokenConstants.ISVOID); }
+<YYINITIAL>{letKeyword}			{ return new Symbol(TokenConstants.LET); }
+<YYINITIAL>{loopKeyword}		{ return new Symbol(TokenConstants.LOOP); }
+<YYINITIAL>{poolKeyword}		{ return new Symbol(TokenConstants.POOL); }
+<YYINITIAL>{thenKeyword}		{ return new Symbol(TokenConstants.THEN); }
+<YYINITIAL>{whileKeyword}		{ return new Symbol(TokenConstants.WHILE); }
+<YYINITIAL>{caseKeyword}		{ return new Symbol(TokenConstants.CASE); }
+<YYINITIAL>{esacKeyword}		{ return new Symbol(TokenConstants.ESAC); }
+<YYINITIAL>{newKeyword}			{ return new Symbol(TokenConstants.NEW); }
+<YYINITIAL>{ofKeyword}			{ return new Symbol(TokenConstants.OF); }
+<YYINITIAL>{notKeyword}			{ return new Symbol(TokenConstants.NOT); }
+<YYINITIAL>{trueKeyword}		{ return new Symbol(TokenConstants.BOOL_CONST, true); }
 
 <YYINITIAL>{integer}				
 {
