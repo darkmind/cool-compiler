@@ -144,7 +144,8 @@
     /* 
     Save the root of the abstract syntax tree in a global variable.
     */
-    program	: class_list	{ @$ = @1; ast_root = program($1); }
+    program	
+    : class_list	{ @$ = @1; ast_root = program($1); }
     ;
     
     class_list
@@ -157,50 +158,65 @@
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
-    class	: CLASS TYPEID '{' feature_list '}' ';'
+    class	
+    : CLASS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,idtable.add_string("Object"),$4,
     stringtable.add_string(curr_filename)); }
     | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     ;
-
-    formal_list : | /* empty */
-    {  $$ = nil_Features();  }
-    OBJECTID ':' TYPEID
-    {  $$ = nil_Features();  }
-    | formal_list formal_list
-    {  $$ = nil_Features();  }
     
+    feature_list 
+    : feature ';'
+    { $$ = nil_Features(); }    
+    | feature_list feature ';'
+    { $$ = nil_Features(); }    
+    ;
+
     /* Feature list may be empty, but no empty features in list. */
-    feature_list : OBJECTID ':' TYPEID
-    {  $$ = nil_Features();  }
-    | OBJECTID ':' TYPEID ASSIGN expression
-    {  $$ = nil_Features();  }
+    feature 
+    : OBJECTID  '(' ')' ':' TYPEID '{' expression '}'
+    { $$ = nil_Features(); }
     | OBJECTID'(' formal_list ')' ':' TYPEID '{' expression '}'
-    {  $$ = nil_Features();  }
-    | feature_list feature_list
-    {  $$ = nil_Features();  }
+    { $$ = nil_Features(); }
+    | OBJECTID ':' TYPEID
+    { $$ = nil_Features(); }
+    | OBJECTID ':' TYPEID ASSIGN expression
+    { $$ = nil_Features(); }
+    ;
+    
+    formal_list 
+    : formal
+    { $$ = nil_Features(); }
+    | formal ',' formal_list
+    { $$ = nil_Features(); }
+    ;
+
+    formal 
+    : OBJECTID ':' TYPEID
+    ;
 
     expression : /* empty */
-    {  $$ = nil_Features();  }
-    |  expression expression
-    {  $$ = nilFeatures();  }
-    |  OBJECTID ASSIGN expression
-    {  $$ = nil_Features();  }
-    |  expression '.' OBJECTID '(' ')'
-    {  $$ = nil_Features();  }
-    |  expression '@' TYPEID '.' OBJECTID '(' ')'
-    {  $$ = nil_Features();  }
-    |  expression '.' OBJECTID '(' expression ')'
-    {  $$ = nil_Features();  }
-    |  expression '@' TYPEID '.' OBJECTID '(' expression ')'
-    {  $$ = nil_Features();  }
-    |  OBJECTID '(' expression ')'
-    {  $$ = nil_Features();  }
-    |  "if" expression "then" expression "else" expression "fi"
-    {  $$ = nil_Features();  }
-    |  "while" expression "loop" expression "pool"
-    {  $$ = nil_Features();  }
+    { $$ = nil_Features(); }
+    | expression expression
+    { $$ = nil_Features(); }
+    | OBJECTID ASSIGN expression
+    { $$ = nil_Features(); }
+    | expression '.' OBJECTID '(' ')'
+    { $$ = nil_Features(); }
+    | expression '@' TYPEID '.' OBJECTID '(' ')'
+    { $$ = nil_Features(); }
+    | expression '.' OBJECTID '(' expression ')'
+    { $$ = nil_Features(); }
+    | expression '@' TYPEID '.' OBJECTID '(' expression ')'
+    { $$ = nil_Features(); }
+    | OBJECTID '(' expression ')'
+    { $$ = nil_Features(); }
+    | "if" expression "then" expression "else" expression "fi"
+    { $$ = nil_Features(); }
+    | "while" expression "loop" expression "pool"
+    { $$ = nil_Features(); }
+    | '{' expression_list 
     /* end of grammar */
     %%
     
