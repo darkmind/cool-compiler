@@ -1,1 +1,1 @@
-+m(*(**)--n?truepool\bq'\0.8*)\bub\t\blet*)case\faof*)h?lna\0esac--\n7\n cwp*)@\t\nw\t~i*){esac\n(*0inelse ttrue\bl5*)\00\t8-\n5\fa(*\nv\n8+esac,isvoid_9---\tr[(*\----0new@n]f--=(*3\0{\b\n\t--!'drh\b--*)7\0 true3newmlet1^_1w\t\n~>\f;/note
+(*%@esace\n5\0class--%\bnotthenw:*)*)9--\b*)89false inherits-\0*)v[b\t'\0s0 d\05\na`(*--\floop(*\f\t3x2*)<inherits=\bu'\t\t \n:inq\fthenthen+ \0/ \tinheritsxv(+@m--"(*)y\fnew:<:ny,`\b~\f~c%\t(*_ ----(*3y0\fr? \f--(*\n\bn/----elselcase:1<3(*not\t7\t*)(*` i*)fi\ng\f(*6else6j`#else --v36 'rns\0?*) esac

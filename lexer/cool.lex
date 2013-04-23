@@ -168,7 +168,7 @@ trueKeyword = [t][Rr][Uu][Ee]
 
 <YYINITIAL>{integer}				
 {
-	AbstractSymbol intSymbol = AbstractTable.inttable.addInt(Integer.parseInt(yytext()));
+	AbstractSymbol intSymbol = AbstractTable.inttable.addString(yytext());
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
 

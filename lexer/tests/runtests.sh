@@ -3,6 +3,11 @@
 cd ..
 make clean
 make lexer
+cd tests
+
+cd stresstests
+python create_stress_tests.py
+cd ../..
 
 for file in tests/stresstests/*
 do

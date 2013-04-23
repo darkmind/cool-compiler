@@ -1,1 +1,1 @@
-s\<oloopthen(2\f2case[)--isvoidthen8esac(*\case*)\t\t*)3 inherits~(*\0nloop6]
+ /)4v--8\0_%l7wx \\bt\b3-\bfithennof/let\n*)dnew-- *)caseof+new/\t}class*)r]isvoidf"--\01f\f8@(*snew);w \0nfiisvoidinheritsw\0h\nfalse#*)hfi(*9d\b$\b*)`b (*6\n _{\b*)*)--{true24\ttwhilefalse;\0\f--\n newd\n--iinherits9'}8gloop"*)`new}7>inheritss*)1true^~--h\f 8!i\n--

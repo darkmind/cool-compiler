@@ -639,7 +639,7 @@ class CoolLexer implements java_cup.runtime.Scanner {
 						break;
 					case 21:
 						{
-	AbstractSymbol intSymbol = AbstractTable.inttable.addInt(Integer.parseInt(yytext()));
+	AbstractSymbol intSymbol = AbstractTable.inttable.addString(yytext());
 	return new Symbol(TokenConstants.INT_CONST, intSymbol);
 }
 					case -22:

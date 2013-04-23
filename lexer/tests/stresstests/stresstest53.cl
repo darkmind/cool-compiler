@@ -1,1 +1,1 @@
-newb!p`inewloop5not fi*)\f!inherits(*,\esac*)\tt%a+\ny\tt--%\f{=(;0(*(*a\t\0?--*)ifcasen9~
+\nc2j  (*2]/\nq\0&p9\n(*\6?\f.;(*9--9(*esacisvoid*)d *)\nfiinheritsed\n \0ethen5t0e[{*)new"fi--^`\ninherits*)else\t--a\tisvoid--@--*) false8fi(*\f-- !\n false-w(*pisvoidtrue} - class^o\f\n\fq=not--^;\f\b/" (*-a(*(*as!n?(*vj%kc\t)qaloopvlooph*\n5isvoidpool*)/else\0not\\t)\0s\b{\npool&-\n(*zwz\f~n\b\0 .-s6new3\t^--,

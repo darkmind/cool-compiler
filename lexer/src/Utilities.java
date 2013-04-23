@@ -57,7 +57,7 @@ class Utilities {
 	    case '\b': str.print("\\b"); break;
 	    case '\f': str.print("\\f"); break;
 	    default:
-		if (c >= 0x20 && c <= 0x7f) {
+		if (c >= 0x20 && c < 0x7f) {
 		    str.print(c);
 		} else {
 		    String octal = Integer.toOctalString(c);

@@ -4,8 +4,8 @@ README file for Programming Assignment 1 (Java edition)
 Write-up for PA1J
 -----------------
 
-Jay Patel <jayhp9>
-Yushi Wang <yushiw>
+user: jayhp9
+user: yushiw
 
 ############### DESIGN ###############
 
@@ -104,7 +104,7 @@ STRING, BAD_STRING), then we throw an error and go back to YYINITIAL.
 To test our lexer, we used a combination of 4 different types of test: specific 
 tests, general stress tests, garbage tests, and good tests. Some of these were 
 handwritten while others were generated dynamically using python scripts. These
-tests are mainly in small .cl files in the ‘tests’ folder. Some of them are also
+tests are mainly in small .cl files in the 'tests' folder. Some of them are also
 placed at the end of test.cl (added when we were developing). They were pretty
 good so we kept them there. We ran our compiler against the reference coolc 
 compiler, using diff to see the difference.
@@ -113,7 +113,7 @@ Specific Tests
 --------------
 Strings:
 Non-escaped newlines in a string
-Strings that contain \” as a character
+Strings that contain \" as a character
 Strings with multiple whitespace and newlines
 
 Comments:
@@ -123,7 +123,7 @@ Unmatched *) comment enders
 
 Keywords and Integers:
 We created a script that would generate a test containing all of the keywords,
-each wrapped in various whitespace tokens (“\v”, blank, “\f”, “\t”), to see if
+each wrapped in various whitespace tokens ("\v", blank, "\f", "\t"), to see if
 the lexer would properly catch the keywords. The same procedure was done with
 a list of integers, and symbols. For symbols, the test generated all 2^14 
 combinations of all ascii characters between 1 and 127, then wrapped them in 
@@ -137,7 +137,7 @@ sequences that should classify as identifiers have showed up in many of our
 tests and our compiler has classified them properly.
 
 Whitespace:
-We didn’t create a test file that would specifically test for whitespace 
+We did not create a test file that would specifically test for whitespace 
 recognition, but as mentioned above, whitespace tokens were randomly inserted
 into the stress tests. In addition, in the small handwritten tests, each token
 was wrapped in a pair of each whitespace.
@@ -146,7 +146,7 @@ General Stress Tests
 --------------------
 Using a python script (create_stress_tests.py), we generated 1000 random length
 (ranging from 0 to 2048) strings that contain a subset of all possible 
-characters on the keyboard, plus other special strings like “\n” and “\t”. 2048 
+characters on the keyboard, plus other special strings like "\n" and "\t". 2048 
 is just double that of the maximum length of a string literal in Cool, which we
 thought is adequate to test for strings whose length exceeds 1024.
 
@@ -168,8 +168,8 @@ strings.
 This stress test helps to test the following rules because it generates strings
 with lots of character sequences that start with a backslash:
 
-‘\c’ denotes the character ‘c’, whereas ‘b’ is a backspace, ‘\t’ is a tab, ‘\n’
-is a newline and ‘\f’ is a formfeed.
+'\c' denotes the character c, whereas '\b' is a backspace, '\t' is a tab, '\n'
+is a newline and '\f' is a formfeed.
 A null (\0) character does not occur in a string
 A non-escaped newline character may not appear in a string
 An EOF does not occur in a string
@@ -187,7 +187,7 @@ distinguish the keywords from all other character sequences.
 Garbage Tests
 -------------
 To test whether our compiler is able to accept any conceivable input, we ran it 
-on 3 “garbage” tests. 2 of these contain long english language documents, the 
+on 3 "garbage" tests. 2 of these contain long english language documents, the 
 JLex Manual and a Bash Tutorial found online. The 3rd one contains a short piece 
 of Java code. This tests the robustness of our compiler to completely unexpected 
 input.
