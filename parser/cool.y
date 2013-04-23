@@ -166,56 +166,57 @@
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     ;
     
-    feature_list 
-    : feature ';'
-    { $$ = nil_Features(); }    
+    feature_list
+    : /* empty */
+    { }    
     | feature_list feature ';'
-    { $$ = nil_Features(); }    
+    { }    
     ;
 
     /* Feature list may be empty, but no empty features in list. */
     feature 
     : OBJECTID  '(' ')' ':' TYPEID '{' expression '}'
-    { $$ = nil_Features(); }
+    { TODO }
     | OBJECTID'(' formal_list ')' ':' TYPEID '{' expression '}'
-    { $$ = nil_Features(); }
+    { TODO }
     | OBJECTID ':' TYPEID
-    { $$ = nil_Features(); }
+    { TODO }
     | OBJECTID ':' TYPEID ASSIGN expression
-    { $$ = nil_Features(); }
+    { TODO }
     ;
     
     formal_list 
     : formal
-    { $$ = nil_Features(); }
+    { TODO }
     | formal ',' formal_list
-    { $$ = nil_Features(); }
+    { TODO }
     ;
 
     formal 
     : OBJECTID ':' TYPEID
+    { TODO }
     ;
 
     expression : /* empty */
-    { $$ = nil_Features(); }
+    { TODO }
     | expression expression
-    { $$ = nil_Features(); }
+    { TODO }
     | OBJECTID ASSIGN expression
-    { $$ = nil_Features(); }
+    { TODO }
     | expression '.' OBJECTID '(' ')'
-    { $$ = nil_Features(); }
+    { TODO }
     | expression '@' TYPEID '.' OBJECTID '(' ')'
-    { $$ = nil_Features(); }
+    { TODO }
     | expression '.' OBJECTID '(' expression ')'
-    { $$ = nil_Features(); }
+    { TODO }
     | expression '@' TYPEID '.' OBJECTID '(' expression ')'
-    { $$ = nil_Features(); }
+    { TODO }
     | OBJECTID '(' expression ')'
-    { $$ = nil_Features(); }
+    { TODO }
     | "if" expression "then" expression "else" expression "fi"
-    { $$ = nil_Features(); }
+    { TODO }
     | "while" expression "loop" expression "pool"
-    { $$ = nil_Features(); }
+    { TODO }
     | '{' expression_list 
     /* end of grammar */
     %%
