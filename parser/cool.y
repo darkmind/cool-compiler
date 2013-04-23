@@ -135,12 +135,12 @@
     %type <class_> class
     
     /* You will want to change the following line. */
-    %type <features> dummy_feature_list
+    %type <features> feature_list
     
     /* Precedence declarations go here. */
     
     
-    %%
+    %% /* Start of grammar rules */
     /* 
     Save the root of the abstract syntax tree in a global variable.
     */
@@ -157,18 +157,50 @@
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
-    class	: CLASS TYPEID '{' dummy_feature_list '}' ';'
+    class	: CLASS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,idtable.add_string("Object"),$4,
     stringtable.add_string(curr_filename)); }
-    | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
+    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     ;
+
+    formal_list : | /* empty */
+    {  $$ = nil_Features();  }
+    OBJECTID ':' TYPEID
+    {  $$ = nil_Features();  }
+    | formal_list formal_list
+    {  $$ = nil_Features();  }
     
     /* Feature list may be empty, but no empty features in list. */
-    dummy_feature_list:		/* empty */
-    {  $$ = nil_Features(); }
-    
-    
+    feature_list : OBJECTID ':' TYPEID
+    {  $$ = nil_Features();  }
+    | OBJECTID ':' TYPEID ASSIGN expression
+    {  $$ = nil_Features();  }
+    | OBJECTID'(' formal_list ')' ':' TYPEID '{' expression '}'
+    {  $$ = nil_Features();  }
+    | feature_list feature_list
+    {  $$ = nil_Features();  }
+
+    expression : /* empty */
+    {  $$ = nil_Features();  }
+    |  expression expression
+    {  $$ = nilFeatures();  }
+    |  OBJECTID ASSIGN expression
+    {  $$ = nil_Features();  }
+    |  expression '.' OBJECTID '(' ')'
+    {  $$ = nil_Features();  }
+    |  expression '@' TYPEID '.' OBJECTID '(' ')'
+    {  $$ = nil_Features();  }
+    |  expression '.' OBJECTID '(' expression ')'
+    {  $$ = nil_Features();  }
+    |  expression '@' TYPEID '.' OBJECTID '(' expression ')'
+    {  $$ = nil_Features();  }
+    |  OBJECTID '(' expression ')'
+    {  $$ = nil_Features();  }
+    |  "if" expression "then" expression "else" expression "fi"
+    {  $$ = nil_Features();  }
+    |  "while" expression "loop" expression "pool"
+    {  $$ = nil_Features();  }
     /* end of grammar */
     %%
     
