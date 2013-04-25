@@ -201,6 +201,40 @@
     {  $$ = nil_Features();  }
     |  "while" expression "loop" expression "pool"
     {  $$ = nil_Features();  }
+    |  NEW TYPEID
+    {  TODO  }
+    |  ISVOID expression
+    {  TODO  }
+    |  expression '+' expression
+    {  TODO  }
+    |  expression '-' expression
+    {  TODO  }
+    |  expression '*' expression
+    {  TODO  }
+    |  expression '/' expression
+    {  TODO  }
+    |  '~' expression
+    {  TODO  }
+    |  expression '<' expression
+    {  TODO  }
+    |  expression LE expression
+    {  TODO  }
+    |  expression '=' expression
+    {  TODO  }
+    |  NOT expression
+    {  TODO  }
+    |  '(' expression ')'
+    {  TODO  }
+    |  OBJECTID
+    {  TODO  }
+    |  INT_CONST
+    {  TODO  }
+    |  STR_CONST
+    {  TODO  }
+    |  "true"
+    {  TODO  }
+    |  "false"
+    {  TODO  }
     /* end of grammar */
     %%
     
