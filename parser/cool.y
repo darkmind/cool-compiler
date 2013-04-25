@@ -198,27 +198,63 @@
     ;
 
     expression : /* empty */
-    { TODO }
-    | expression expression
-    { TODO }
-    | OBJECTID ASSIGN expression
-    { TODO }
-    | expression '.' OBJECTID '(' ')'
-    { TODO }
-    | expression '@' TYPEID '.' OBJECTID '(' ')'
-    { TODO }
-    | expression '.' OBJECTID '(' expression ')'
-    { TODO }
-    | expression '@' TYPEID '.' OBJECTID '(' expression ')'
-    { TODO }
-    | OBJECTID '(' expression ')'
-    { TODO }
-    | "if" expression "then" expression "else" expression "fi"
-    { TODO }
-    | "while" expression "loop" expression "pool"
-    { TODO }
-    | '{' expression_list 
+    {  $$ = nil_Features();  }
+    |  expression expression
+    {  $$ = nilFeatures();  }
+    |  OBJECTID ASSIGN expression
+    {  $$ = nil_Features();  }
+    |  expression '.' OBJECTID '(' ')'
+    {  $$ = nil_Features();  }
+    |  expression '@' TYPEID '.' OBJECTID '(' ')'
+    {  $$ = nil_Features();  }
+    |  expression '.' OBJECTID '(' expression ')'
+    {  $$ = nil_Features();  }
+    |  expression '@' TYPEID '.' OBJECTID '(' expression ')'
+    {  $$ = nil_Features();  }
+    |  OBJECTID '(' expression ')'
+    {  $$ = nil_Features();  }
+    |  "if" expression "then" expression "else" expression "fi"
+    {  $$ = nil_Features();  }
+    |  "while" expression "loop" expression "pool"
+    {  $$ = nil_Features();  }
+    |  NEW TYPEID
+    {  TODO  }
+    |  ISVOID expression
+    {  TODO  }
+    |  expression '+' expression
+    {  TODO  }
+    |  expression '-' expression
+    {  TODO  }
+    |  expression '*' expression
+    {  TODO  }
+    |  expression '/' expression
+    {  TODO  }
+    |  '~' expression
+    {  TODO  }
+    |  expression '<' expression
+    {  TODO  }
+    |  expression LE expression
+    {  TODO  }
+    |  expression '=' expression
+    {  TODO  }
+    |  NOT expression
+    {  TODO  }
+    |  '(' expression ')'
+    {  TODO  }
+    |  OBJECTID
+    {  TODO  }
+    |  INT_CONST
+    {  TODO  }
+    |  STR_CONST
+    {  TODO  }
+    |  "true"
+    {  TODO  }
+    |  "false"
+    {  TODO  }
+    ;
+
     /* end of grammar */
+
     %%
     
     /* This function is called automatically when Bison detects a parse error. */
