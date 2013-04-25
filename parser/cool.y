@@ -149,20 +149,20 @@
     ;
     
     class_list
-    : class			/* single class */
+    : class ';'			/* single class */
     { $$ = single_Classes($1);
     parse_results = $$; }
-    | class_list class	/* several classes */
+    | class_list class ';' 	/* several classes */
     { $$ = append_Classes($1,single_Classes($2)); 
     parse_results = $$; }
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
     class	
-    : CLASS TYPEID '{' feature_list '}' ';'
+    : CLASS TYPEID '{' feature_list '}'
     { $$ = class_($2,idtable.add_string("Object"),$4,
     stringtable.add_string(curr_filename)); }
-    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
+    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     ;
     
@@ -197,26 +197,61 @@
     { TODO }
     ;
 
-    expression : /* empty */
+    expr_comma_list
+    : expression
+    { TODO }
+    | expression ',' expr_comma_list
+    { TODO }
+    ;
+
+    expr_semi_list
+    : /* empty */
+    { }
+    : expression ';' expr_semi_list
+    { }
+    ;
+
+    expr_assign
+    : formal
+    { }
+    | formal ASSIGN expression
+    { }
+    ;
+
+    expr_assign_list
+    : expr_assign
+    { }
+    | expr_assign ',' expr_assign_list
+    { }
+    ;
+
+    expr_darrow
+    : formal DARROW expression
+    { }
+    ;
+
+    expr_darrow_list
+    : expr_darrow ';'
+    { }
+    | expr_darrow ';' expr_darrow_list
+    { }
+    ;
+
+    expression
+    : OBJECTID ASSIGN expression
     {  $$ = nil_Features();  }
-    |  expression expression
-    {  $$ = nilFeatures();  }
-    |  OBJECTID ASSIGN expression
+    |  expression '.' OBJECTID '(' expr_comma_list ')'
     {  $$ = nil_Features();  }
-    |  expression '.' OBJECTID '(' ')'
+    |  expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
     {  $$ = nil_Features();  }
-    |  expression '@' TYPEID '.' OBJECTID '(' ')'
-    {  $$ = nil_Features();  }
-    |  expression '.' OBJECTID '(' expression ')'
-    {  $$ = nil_Features();  }
-    |  expression '@' TYPEID '.' OBJECTID '(' expression ')'
-    {  $$ = nil_Features();  }
-    |  OBJECTID '(' expression ')'
+    |  OBJECTID '(' expr_comma_list ')'
     {  $$ = nil_Features();  }
     |  "if" expression "then" expression "else" expression "fi"
     {  $$ = nil_Features();  }
     |  "while" expression "loop" expression "pool"
     {  $$ = nil_Features();  }
+    | '{' expr_semi_list '}'
+    { }
     |  NEW TYPEID
     {  TODO  }
     |  ISVOID expression
