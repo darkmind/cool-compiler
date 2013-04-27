@@ -262,6 +262,7 @@
     {  $$ = loop($2, $4);  }
     | '{' expr_semi_list '}'
     {  $$ = block($2);  }
+    /* TODO: add rules for let and case */
     |  NEW TYPEID
     {  $$ = new_($2);  }
     |  ISVOID expression
