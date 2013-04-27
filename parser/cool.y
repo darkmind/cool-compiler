@@ -255,37 +255,37 @@
     |  NEW TYPEID
     {  TODO  }
     |  ISVOID expression
-    {  TODO  }
+    {  $$ = isvoid($2);  }
     |  expression '+' expression
-    {  TODO  }
+    {  $$ = plus($1, $3);  }
     |  expression '-' expression
-    {  TODO  }
+    {  $$ = sub($1, $3);  }
     |  expression '*' expression
-    {  TODO  }
+    {  $$ = mul($1, $3);  }
     |  expression '/' expression
-    {  TODO  }
+    {  $$ = divide($1, $3);  }
     |  '~' expression
-    {  TODO  }
+    {  $$ = neg($2);  }
     |  expression '<' expression
-    {  TODO  }
+    {  $$ = lt($1, $3);  }
     |  expression LE expression
-    {  TODO  }
+    {  $$ = leq($1, $3);  }
     |  expression '=' expression
-    {  TODO  }
+    {  $$ = eq($1, $3);  }
     |  NOT expression
-    {  TODO  }
+    {  $$ = neg($2);  }
     |  '(' expression ')'
-    {  TODO  }
+    {  $$ = comp($2);  }
     |  OBJECTID
-    {  TODO  }
+    {  $$ = object($1);  }
     |  INT_CONST
-    {  TODO  }
+    {  $$ = int_const($1);  }
     |  STR_CONST
-    {  TODO  }
+    {  $$ = string_const($1);  }
     |  "true"
-    {  TODO  }
+    {  $$ = bool_const($1);  }
     |  "false"
-    {  TODO  }
+    {  $$ = bool_const($1);  }
     ;
 
     /* end of grammar */
