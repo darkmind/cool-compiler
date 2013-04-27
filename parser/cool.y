@@ -254,7 +254,7 @@
     | expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
     { $$ = static_dispatch($1, $3, $5, $7);  }
     | OBJECTID '(' expr_comma_list ')' /* implicit self */
-    { $$ = dispatch(object("self"), $1, $3);  }
+    { $$ = dispatch(object(idtable.add_string("self")), $1, $3);  }
     | IF expression THEN expression ELSE expression FI
     { $$ = cond($2, $4, $6);  }
     | WHILE expression LOOP expression POOL
@@ -287,7 +287,7 @@
     | NOT expression
     { $$ = neg($2);  }
     | '(' expression ')'
-    { $$ = single_Expressions($2); }
+    { $$ = $2; }
     | OBJECTID
     { $$ = object($1);  }
     | INT_CONST
