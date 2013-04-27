@@ -136,11 +136,13 @@
     %type <class_> class
     
     /* Added by us */
-    %type <expression> expression
-    %type <expressions> expr_comma_list expr_semi_list 
-    
-    /* You will want to change the following line. */
     %type <features> feature_list
+    %type <feature> feature
+    %type <formals> formal_list
+    %type <formal> formal
+    %type <expressions> expr_comma_list expr_semi_list
+    %type <expression> expression
+    /* TODO: add type declarations for expr_assign, expr_assign_list, expr_darrow, expr_darrow_list when we start using them */
     
     /* Precedence declarations go here. */
     
@@ -218,16 +220,16 @@
 
     expr_assign
     : formal
-    { }
+    { TODO }
     | formal ASSIGN expression
-    { }
+    { TODO }
     ;
 
     expr_assign_list
     : expr_assign
-    { }
+    { TODO }
     | expr_assign_list ',' expr_assign
-    { }
+    { TODO }
     ;
 
     case
@@ -249,14 +251,15 @@
     {  $$ = dispatch($1, $3, $5);  }
     |  expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
     {  $$ = static_dispatch($1, $3, $5, $7);  }
-    |  OBJECTID '(' expr_comma_list ')'
-    {  $$ =   }
+    |  OBJECTID '(' expr_comma_list ')' /* implicit self */
+    {  $$ = dispatch(idtable.add_string("self"), $3, $5);  }
     |  "if" expression "then" expression "else" expression "fi"
     {  $$ = cond($2, $4, $6);  }
     |  "while" expression "loop" expression "pool"
     {  $$ = loop($2, $4);  }
     | '{' expr_semi_list '}'
     {  $$ = block($2);  }
+    /* TODO: add rules for let and case */
     |  NEW TYPEID
     {  $$ = new_($2);  }
     |  ISVOID expression
@@ -270,7 +273,7 @@
     |  expression '/' expression
     {  $$ = divide($1, $3);  }
     |  '~' expression
-    {  $$ = neg($2);  }
+    {  $$ = comp($2);  }
     |  expression '<' expression
     {  $$ = lt($1, $3);  }
     |  expression LE expression
@@ -280,7 +283,7 @@
     |  NOT expression
     {  $$ = neg($2);  }
     |  '(' expression ')'
-    {  $$ = comp($2);  }
+    {  $$ = single_Expressions($2);  }
     |  OBJECTID
     {  $$ = object($1);  }
     |  INT_CONST
