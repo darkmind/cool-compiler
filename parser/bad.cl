@@ -13,6 +13,9 @@ class A {
 
 (* error:  b is not a type identifier *)
 Class b inherits A {
+(let x:Int <- 1 in 2)+3
+};
+a:String <- "hello";
 };
 
 (* error:  a is not a type identifier *)
@@ -26,4 +29,3 @@ Class D inherts A {
 (* error:  closing brace is missing *)
 Class E inherits A {
 ;
-

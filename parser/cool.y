@@ -185,6 +185,8 @@
     | class_list class ';' 	/* several classes */
     { $$ = append_Classes($1, single_Classes($2)); 
     parse_results = $$; }
+    | class_list error ';'
+    {  }
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
@@ -201,6 +203,8 @@
     { $$ = nil_Features(); }    
     | feature_list feature ';'
     { $$ = append_Features($1, single_Features($2)); }    
+    //| feature_list error ';'
+    //{  }
     ;
 
     /* Feature list may be empty, but no empty features in list. */
@@ -276,7 +280,7 @@
       new_arg->init = no_expr();
       new_arg->next = latest_arg;
       latest_arg = new_arg;
-      $$ = new_arg; /* TODO: define new type for this struct so that it can be a valid return value for this semantic action */
+      $$ = new_arg;
     }
     | OBJECTID ':' TYPEID ASSIGN expression
     {
@@ -286,8 +290,10 @@
       new_arg->init = $5;
       new_arg->next = latest_arg;
       latest_arg = new_arg;
-      $$ = new_arg; /* TODO: define new type for this struct so that it can be a valid return value for this semantic action */
+      $$ = new_arg;
     }
+    | error ','
+    {  }
     ;
 
     let_arg_list
@@ -295,6 +301,8 @@
     { $$ = $1;  }
     | let_arg_list ',' let_arg
     { $$ = $3;  }
+    | let_arg_list error ','
+    {  }
 
     expression
     : OBJECTID ASSIGN expression
@@ -312,7 +320,7 @@
     | '{' expr_semi_list '}'
     { $$ = block($2);  }
     | LET let_arg_list IN expression
-    { //$$ = let(identifier, type_decl: init, body: Expression);  
+    {
       Expression curr_expr = $4;
       struct let_arg *curr = $2;
       while(curr != NULL){
