@@ -142,7 +142,7 @@
     %type <formal> formal
     %type <expressions> expr_comma_list expr_semi_list
     %type <expression> expression
-    %type <cases> cases
+    %type <cases> case_list
     %type <case_> case
     /* TODO: add type declarations for expr_assign, expr_assign_list, expr_darrow, expr_darrow_list when we start using them */
     
@@ -254,7 +254,7 @@
     | expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
     { $$ = static_dispatch($1, $3, $5, $7);  }
     | OBJECTID '(' expr_comma_list ')' /* implicit self */
-    { $$ = dispatch(idtable.add_string("self"), $3, $5);  }
+    { $$ = dispatch(idtable.add_string("self"), $1, $3);  }
     | "if" expression "then" expression "else" expression "fi"
     { $$ = cond($2, $4, $6);  }
     | "while" expression "loop" expression "pool"
