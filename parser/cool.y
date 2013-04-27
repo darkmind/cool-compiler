@@ -158,7 +158,7 @@
     { $$ = single_Classes($1);
     parse_results = $$; }
     | class_list class ';' 	/* several classes */
-    { $$ = append_Classes($1,single_Classes($2)); 
+    { $$ = append_Classes($1, single_Classes($2)); 
     parse_results = $$; }
     ;
     
@@ -173,47 +173,47 @@
     
     feature_list
     : /* empty */
-    { }    
+    { $$ = nil_Features(); }    
     | feature_list feature ';'
-    { }    
+    { $$ = append_Features($1, single_Features($2)); }    
     ;
 
     /* Feature list may be empty, but no empty features in list. */
     feature 
     : OBJECTID  '(' ')' ':' TYPEID '{' expression '}'
-    { TODO }
-    | OBJECTID'(' formal_list ')' ':' TYPEID '{' expression '}'
-    { TODO }
+    { $$ = method($1, nil_Formals(), $5, $7); }
+    | OBJECTID '(' formal_list ')' ':' TYPEID '{' expression '}'
+    { $$ = method($1, $3, $6, $8); }
     | OBJECTID ':' TYPEID
-    { TODO }
+    { $$ = attr($1, $3, no_expr()); }
     | OBJECTID ':' TYPEID ASSIGN expression
-    { TODO }
+    { $$ = attr($1, $3, $5 }
     ;
     
     formal_list 
     : formal
-    { TODO }
+    { $$ = single_Formals($1); }
     | formal_list ',' formal
-    { TODO }
+    { $$ = append_Formals($1, single_Formals($3)); }
     ;
 
     formal 
     : OBJECTID ':' TYPEID
-    { TODO }
+    { $$ = formal($1, $3) }
     ;
 
     expr_comma_list
     : expression
-    { TODO }
+    { $$ = single_Expressions($1); }
     | expr_comma_list ',' expression
-    { TODO }
+    { $$ = append_Expressions($1, single_Expressions($3)); }
     ;
 
     expr_semi_list
     : expression ';'
-    { }
-    : expr_semi_list expression ';'
-    { }
+    { $$ = single_Expressions($1); }
+    | expr_semi_list expression ';'
+    { $$ = append_Expressions($1, single_Expressions($2)) }
     ;
 
     expr_assign
@@ -230,15 +230,15 @@
     { }
     ;
 
-    expr_darrow
+    case
     : formal DARROW expression
     { }
     ;
 
-    expr_darrow_list
-    : expr_darrow ';'
+    case_list
+    : case ';'
     { }
-    | expr_darrow_list expr_darrow ';'
+    | case_list case ';'
     { }
     ;
 
