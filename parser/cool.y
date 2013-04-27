@@ -191,7 +191,7 @@
     | OBJECTID ':' TYPEID
     { $$ = attr($1, $3, no_expr()); }
     | OBJECTID ':' TYPEID ASSIGN expression
-    { $$ = attr($1, $3, $5 }
+    { $$ = attr($1, $3, $5); }
     ;
     
     formal_list 
@@ -203,7 +203,7 @@
 
     formal 
     : OBJECTID ':' TYPEID
-    { $$ = formal($1, $3) }
+    { $$ = formal($1, $3); }
     ;
 
     expr_comma_list
@@ -217,7 +217,7 @@
     : expression ';'
     { $$ = single_Expressions($1); }
     | expr_semi_list expression ';'
-    { $$ = append_Expressions($1, single_Expressions($2)) }
+    { $$ = append_Expressions($1, single_Expressions($2)); }
     ;
 
     expr_assign
@@ -254,10 +254,10 @@
     | expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
     { $$ = static_dispatch($1, $3, $5, $7);  }
     | OBJECTID '(' expr_comma_list ')' /* implicit self */
-    { $$ = dispatch(idtable.add_string("self"), $1, $3);  }
-    | "if" expression "then" expression "else" expression "fi"
+    { $$ = dispatch(object("self"), $1, $3);  }
+    | IF expression THEN expression ELSE expression FI
     { $$ = cond($2, $4, $6);  }
-    | "while" expression "loop" expression "pool"
+    | WHILE expression LOOP expression POOL
     { $$ = loop($2, $4);  }
     | '{' expr_semi_list '}'
     { $$ = block($2);  }
@@ -287,16 +287,14 @@
     | NOT expression
     { $$ = neg($2);  }
     | '(' expression ')'
-    { $$ = single_Expressions($2);  }
+    { $$ = single_Expressions($2); }
     | OBJECTID
     { $$ = object($1);  }
     | INT_CONST
     { $$ = int_const($1);  }
     | STR_CONST
     { $$ = string_const($1);  }
-    | "true"
-    { $$ = bool_const($1);  }
-    | "false"
+    | BOOL_CONST
     { $$ = bool_const($1);  }
     ;
 
