@@ -285,7 +285,7 @@
     | expression '/' expression
     { $$ = divide($1, $3);  }
     | '~' expression
-    { $$ = comp($2);  }
+    { $$ = neg($2);  }
     | expression '<' expression
     { $$ = lt($1, $3);  }
     | expression LE expression
@@ -293,7 +293,7 @@
     | expression '=' expression
     { $$ = eq($1, $3);  }
     | NOT expression
-    { $$ = neg($2);  }
+    { $$ = comp($2);  }
     | '(' expression ')'
     { $$ = $2; }
     | OBJECTID
