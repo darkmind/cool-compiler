@@ -21,6 +21,16 @@
     to whatever you want the line number
     for the tree node to be */
       
+
+    struct let_arg
+    {
+      Symbol objectid;
+      Symbol type;
+      Expression init;
+      struct let_arg *next;
+    };
+
+    struct let_arg *latest_arg = NULL;
       
       #define YYLLOC_DEFAULT(Current, Rhs, N)         \
       Current = Rhs[1];                             \
@@ -101,6 +111,7 @@
       Expression expression;
       Expressions expressions;
       char *error_msg;
+      struct let_arg *let_arg;
     }
     
     /* 
@@ -144,6 +155,7 @@
     %type <expression> expression
     %type <cases> case_list
     %type <case_> case
+    %type <let_arg> let_arg let_arg_list
     /* TODO: add type declarations for expr_assign, expr_assign_list, expr_darrow, expr_darrow_list when we start using them */
     
     /* Precedence declarations go here. */
@@ -156,6 +168,7 @@
     %left '~'
     %left '@'
     %left '.'
+    %nonassoc IN
     
     %% /* Start of grammar rules */
     /* 
@@ -254,6 +267,35 @@
     { $$ = append_Cases($1, single_Cases($2)); }
     ;
 
+    let_arg
+    : OBJECTID ':' TYPEID
+    {
+      struct let_arg *new_arg = (struct let_arg *)malloc(sizeof(struct let_arg));
+      new_arg->objectid = $1;
+      new_arg->type = $3;
+      new_arg->init = no_expr();
+      new_arg->next = latest_arg;
+      latest_arg = new_arg;
+      $$ = new_arg; /* TODO: define new type for this struct so that it can be a valid return value for this semantic action */
+    }
+    | OBJECTID ':' TYPEID ASSIGN expression
+    {
+      struct let_arg *new_arg = (struct let_arg *)malloc(sizeof(struct let_arg));
+      new_arg->objectid = $1;
+      new_arg->type = $3;
+      new_arg->init = $5;
+      new_arg->next = latest_arg;
+      latest_arg = new_arg;
+      $$ = new_arg; /* TODO: define new type for this struct so that it can be a valid return value for this semantic action */
+    }
+    ;
+
+    let_arg_list
+    : let_arg
+    { $$ = $1;  }
+    | let_arg_list ',' let_arg
+    { $$ = $3;  }
+
     expression
     : OBJECTID ASSIGN expression
     { $$ = assign($1, $3);  }
@@ -269,7 +311,16 @@
     { $$ = loop($2, $4);  }
     | '{' expr_semi_list '}'
     { $$ = block($2);  }
-    /* TODO: add rules for let */
+    | LET let_arg_list IN expression
+    { //$$ = let(identifier, type_decl: init, body: Expression);  
+      Expression curr_expr = $4;
+      struct let_arg *curr = $2;
+      while(curr != NULL){
+        curr_expr = let(curr->objectid, curr->type, curr->init, curr_expr);
+        curr = curr->next;
+      }
+      $$ = curr_expr;
+    }
     | CASE expression OF case_list ESAC
     { $$ = typcase($2, $4); }
     | NEW TYPEID
