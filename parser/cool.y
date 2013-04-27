@@ -156,7 +156,6 @@
     %type <cases> case_list
     %type <case_> case
     %type <let_arg> let_arg let_arg_list
-    /* TODO: add type declarations for expr_assign, expr_assign_list, expr_darrow, expr_darrow_list when we start using them */
     
     /* Precedence declarations go here. */
     %right ASSIGN
@@ -243,20 +242,6 @@
     { $$ = single_Expressions($1); }
     | expr_semi_list expression ';'
     { $$ = append_Expressions($1, single_Expressions($2)); }
-    ;
-
-    expr_assign
-    : formal
-    { TODO }
-    | formal ASSIGN expression
-    { TODO }
-    ;
-
-    expr_assign_list
-    : expr_assign
-    { TODO }
-    | expr_assign_list ',' expr_assign
-    { TODO }
     ;
 
     case
