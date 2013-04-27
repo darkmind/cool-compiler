@@ -137,7 +137,7 @@
     
     /* Added by us */
     %type <expression> expression
-    %type <expressions> expr_comma_list expr_semi_list 
+    %type <expressions> expr_comma_list expr_semi_list
     
     /* You will want to change the following line. */
     %type <features> feature_list
@@ -250,7 +250,7 @@
     |  expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
     {  $$ = static_dispatch($1, $3, $5, $7);  }
     |  OBJECTID '(' expr_comma_list ')'
-    {  $$ =   }
+    {  TODO }
     |  "if" expression "then" expression "else" expression "fi"
     {  $$ = cond($2, $4, $6);  }
     |  "while" expression "loop" expression "pool"
