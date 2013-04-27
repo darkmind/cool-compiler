@@ -130,9 +130,14 @@
     documentation for details). */
     
     /* Declare types for the grammar's non-terminals. */
+    /* Already given in initial code*/
     %type <program> program
     %type <classes> class_list
     %type <class_> class
+    
+    /* Added by us */
+    %type <expression> expression
+    %type <expressions> expr_comma_list expr_semi_list 
     
     /* You will want to change the following line. */
     %type <features> feature_list
@@ -239,21 +244,21 @@
 
     expression
     : OBJECTID ASSIGN expression
-    {  $$ = nil_Features();  }
+    {  $$ = assign($1, $3);  }
     |  expression '.' OBJECTID '(' expr_comma_list ')'
-    {  $$ = nil_Features();  }
+    {  $$ = dispatch($1, $3, $5);  }
     |  expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
-    {  $$ = nil_Features();  }
+    {  $$ = static_dispatch($1, $3, $5, $7);  }
     |  OBJECTID '(' expr_comma_list ')'
-    {  $$ = nil_Features();  }
+    {  $$ =   }
     |  "if" expression "then" expression "else" expression "fi"
-    {  $$ = nil_Features();  }
+    {  $$ = cond($2, $4, $6);  }
     |  "while" expression "loop" expression "pool"
-    {  $$ = nil_Features();  }
+    {  $$ = loop($2, $4);  }
     | '{' expr_semi_list '}'
-    { }
+    {  $$ = block($2);  }
     |  NEW TYPEID
-    {  TODO  }
+    {  $$ = new_($2);  }
     |  ISVOID expression
     {  $$ = isvoid($2);  }
     |  expression '+' expression
