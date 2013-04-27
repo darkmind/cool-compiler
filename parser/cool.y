@@ -184,8 +184,8 @@
     | class_list class ';' 	/* several classes */
     { $$ = append_Classes($1, single_Classes($2)); 
     parse_results = $$; }
-    | class_list error ';'
-    {  }
+    // | class_list error ';'
+    // {  }
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
@@ -195,6 +195,8 @@
     stringtable.add_string(curr_filename)); }
     | CLASS TYPEID INHERITS TYPEID '{' feature_list '}'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
+    | error
+    { /* Ignore */ }
     ;
     
     feature_list
@@ -202,8 +204,8 @@
     { $$ = nil_Features(); }    
     | feature_list feature ';'
     { $$ = append_Features($1, single_Features($2)); }    
-    //| feature_list error ';'
-    //{  }
+    // | feature_list error ';'
+    // {  }
     ;
 
     /* Feature list may be empty, but no empty features in list. */
@@ -216,6 +218,8 @@
     { $$ = attr($1, $3, no_expr()); }
     | OBJECTID ':' TYPEID ASSIGN expression
     { $$ = attr($1, $3, $5); }
+    | error
+    { /* Ignore */ }
     ;
     
     formal_list 
@@ -277,8 +281,8 @@
       latest_arg = new_arg;
       $$ = new_arg;
     }
-    | error ','
-    {  }
+    | error
+    { /* Ignore */ }
     ;
 
     let_arg_list
@@ -286,8 +290,9 @@
     { $$ = $1;  }
     | let_arg_list ',' let_arg
     { $$ = $3;  }
-    | let_arg_list error ','
-    {  }
+    // | let_arg_list error ','
+    // {  }
+    ;
 
     expression
     : OBJECTID ASSIGN expression
