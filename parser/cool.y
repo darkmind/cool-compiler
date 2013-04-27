@@ -253,9 +253,9 @@
     {  $$ = static_dispatch($1, $3, $5, $7);  }
     |  OBJECTID '(' expr_comma_list ')' /* implicit self */
     {  $$ = dispatch(idtable.add_string("self"), $3, $5);  }
-    |  "if" expression "then" expression "else" expression "fi"
+    |  IF expression THEN expression ELSE expression FI
     {  $$ = cond($2, $4, $6);  }
-    |  "while" expression "loop" expression "pool"
+    |  WHILE expression LOOP expression POOL
     {  $$ = loop($2, $4);  }
     | '{' expr_semi_list '}'
     {  $$ = block($2);  }
@@ -273,7 +273,7 @@
     |  expression '/' expression
     {  $$ = divide($1, $3);  }
     |  '~' expression
-    {  $$ = comp($2);  }
+    {  $$ = neg($2);  }
     |  expression '<' expression
     {  $$ = lt($1, $3);  }
     |  expression LE expression
@@ -290,9 +290,7 @@
     {  $$ = int_const($1);  }
     |  STR_CONST
     {  $$ = string_const($1);  }
-    |  "true"
-    {  $$ = bool_const($1);  }
-    |  "false"
+    |  BOOL_CONST
     {  $$ = bool_const($1);  }
     ;
 
