@@ -136,8 +136,13 @@
     %type <class_> class
     
     /* Added by us */
-    %type <expression> expression
+    %type <features> feature_list
+    %type <feature> feature
+    %type <formals> formal_list
+    %type <formal> formal
     %type <expressions> expr_comma_list expr_semi_list
+    %type <expression> expression
+    /* TODO: add type declarations for expr_assign, expr_assign_list, expr_darrow, expr_darrow_list when we start using them */
     
     /* You will want to change the following line. */
     %type <features> feature_list
