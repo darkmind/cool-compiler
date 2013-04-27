@@ -188,7 +188,7 @@
     formal_list 
     : formal
     { TODO }
-    | formal ',' formal_list
+    | formal_list ',' formal
     { TODO }
     ;
 
@@ -200,14 +200,14 @@
     expr_comma_list
     : expression
     { TODO }
-    | expression ',' expr_comma_list
+    | expr_comma_list ',' expression
     { TODO }
     ;
 
     expr_semi_list
-    : /* empty */
+    : expression ';'
     { }
-    : expression ';' expr_semi_list
+    : expr_semi_list expression ';'
     { }
     ;
 
@@ -221,7 +221,7 @@
     expr_assign_list
     : expr_assign
     { }
-    | expr_assign ',' expr_assign_list
+    | expr_assign_list ',' expr_assign
     { }
     ;
 
@@ -233,7 +233,7 @@
     expr_darrow_list
     : expr_darrow ';'
     { }
-    | expr_darrow ';' expr_darrow_list
+    | expr_darrow_list expr_darrow ';'
     { }
     ;
 
@@ -285,7 +285,7 @@
     |  "true"
     {  TODO  }
     |  "false"
-    {  TODO  }
+    {  $$ =  }
     ;
 
     /* end of grammar */
