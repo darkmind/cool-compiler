@@ -3,7 +3,8 @@ class A {
 	(
 	let x:Int <- 1, y:Int <- x + 2, z:Int <- x * 3 in 
 	{
-	    result <- (x + y + z); 
+	    result <- (x + y + z);
+	    is_less_than_five <- (result < 5);
 	} 	
 	) + 3
     };
