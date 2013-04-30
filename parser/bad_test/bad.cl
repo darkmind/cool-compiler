@@ -36,17 +36,64 @@ Class f inherits A {
 
 (* error: malformed attributes *)
 Class G inherits A {
-myint1:Int <- 1;
+myint1:Int <- 1
 myint2:int <- 1;
+myint3:Int;
+myint4:int;
+myint5:integer;
 
-mybool1:Boolean <- True;
-mybool2:boolean <- True;
-mybool3:Boolean <- true;
-mybool4:boolean <- true;
+mybool1:Bool <- True;
+mybool2:bool <- TrUE
+mybool3:bool <- trUE;
+mybool4:ool <- fALse;
+mybool5:Boolean <- falSe;
+mybool6:boolean <- faLsE;
+mybool7:Bool <- FALSE;
+mybool8:boolean;
+mybool8:Bool;
+mybool9:Void;
+mybool10:Boolean <- void;
+mybool11
+:             Boolean
+<-
+"FaLsE"             ;
 
 mystr1:String <- "hello";
 mystr2:String <- "no ending semi-colon"
 mystr3:String <- "no ending quotes;
 mystr4:String <- no quotes at all;
 mystr5:String -> "reverse assign operator";
+myst			r6:str;
+mystr7:string;
+mystr8
+:
+String
+<-
+"multiple line attribute"
+;
+mystr9
+	:		String 		<- 			"all 				over the place"		;
+
+misc1: <- "no type defined";
+};
+
+Class H inherits A {
+"no ending semi-colon for this class"
 }
+
+(* error: malformed method definitions *)
+Class I inherits A {
+func1:String{"no parans"};
+func2():{"no return type defined"};
+func3():String{"no ending semi-colon"}
+func4()
+:
+String
+{
+"multiple line function"
+};
+func5():integer{5};
+func6():Int{};
+func7():Int();
+func8():func9():func10():{11};
+};
