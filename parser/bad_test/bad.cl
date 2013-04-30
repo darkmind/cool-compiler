@@ -75,7 +75,7 @@ mystr9
 	:		String 		<- 			"all 				over the place"		;
 
 misc1: <- "no type defined";
-};
+}
 
 Class H inherits A {
 "no ending semi-colon for this class"
@@ -86,7 +86,8 @@ Class I inherits A {
 func1:String{"no parans"};
 func2():{"no return type defined"};
 func3():String{"no ending semi-colon"}
-func4()
+func4():String{apparently a string};
+func5()
 :
 String
 {
@@ -95,5 +96,6 @@ String
 func5():integer{5};
 func6():Int{};
 func7():Int();
-func8():func9():func10():{11};
+func8():func9():func10():{"nested functions"};
+func11   	(  )  		: 	{	"w	h	i	t	e	space"	};
 };
