@@ -256,13 +256,13 @@
     ;
 
     let_args
-    : OBJECTID ':' TYPEID let_args
+    : ',' OBJECTID ':' TYPEID let_args
     {
-	$$ = let($1, $3, no_expr(), $4);
+	$$ = let($2, $4, no_expr(), $5);
     }
-    | OBJECTID ':' TYPEID ASSIGN expression let_args
+    | ',' OBJECTID ':' TYPEID ASSIGN expression let_args
     {
-	$$ = let($1, $3, $5, $6);
+	$$ = let($2, $4, $6, $7);
     }
     | IN expression
     {

@@ -48,8 +48,8 @@ Grammar
    25 case_list: case ';'
    26          | case_list case ';'
 
-   27 let_args: OBJECTID ':' TYPEID let_args
-   28         | OBJECTID ':' TYPEID ASSIGN expression let_args
+   27 let_args: ',' OBJECTID ':' TYPEID let_args
+   28         | ',' OBJECTID ':' TYPEID ASSIGN expression let_args
    29         | IN expression
    30         | error let_args
 
@@ -89,7 +89,7 @@ $end (0) 0
 ')' (41) 12 13 32 33 34 53
 '*' (42) 46
 '+' (43) 44
-',' (44) 17 20
+',' (44) 17 20 27 28
 '-' (45) 45
 '.' (46) 32 33
 '/' (47) 47
@@ -861,9 +861,9 @@ state 63
 
    40 expression: LET error . let_args
 
-    error     shift, and go to state 88
-    IN        shift, and go to state 89
-    OBJECTID  shift, and go to state 90
+    error  shift, and go to state 88
+    IN     shift, and go to state 89
+    ','    shift, and go to state 90
 
     let_args  go to state 91
 
@@ -1359,9 +1359,9 @@ state 88
 
    30 let_args: error . let_args
 
-    error     shift, and go to state 88
-    IN        shift, and go to state 89
-    OBJECTID  shift, and go to state 90
+    error  shift, and go to state 88
+    IN     shift, and go to state 89
+    ','    shift, and go to state 90
 
     let_args  go to state 115
 
@@ -1390,10 +1390,10 @@ state 89
 
 state 90
 
-   27 let_args: OBJECTID . ':' TYPEID let_args
-   28         | OBJECTID . ':' TYPEID ASSIGN expression let_args
+   27 let_args: ',' . OBJECTID ':' TYPEID let_args
+   28         | ',' . OBJECTID ':' TYPEID ASSIGN expression let_args
 
-    ':'  shift, and go to state 117
+    OBJECTID  shift, and go to state 117
 
 
 state 91
@@ -1814,10 +1814,10 @@ state 116
 
 state 117
 
-   27 let_args: OBJECTID ':' . TYPEID let_args
-   28         | OBJECTID ':' . TYPEID ASSIGN expression let_args
+   27 let_args: ',' OBJECTID . ':' TYPEID let_args
+   28         | ',' OBJECTID . ':' TYPEID ASSIGN expression let_args
 
-    TYPEID  shift, and go to state 131
+    ':'  shift, and go to state 131
 
 
 state 118
@@ -1825,10 +1825,10 @@ state 118
    38 expression: LET OBJECTID ':' TYPEID . let_args
    39           | LET OBJECTID ':' TYPEID . ASSIGN expression let_args
 
-    error     shift, and go to state 88
-    IN        shift, and go to state 89
-    OBJECTID  shift, and go to state 90
-    ASSIGN    shift, and go to state 132
+    error   shift, and go to state 88
+    IN      shift, and go to state 89
+    ASSIGN  shift, and go to state 132
+    ','     shift, and go to state 90
 
     let_args  go to state 133
 
@@ -1987,15 +1987,10 @@ state 130
 
 state 131
 
-   27 let_args: OBJECTID ':' TYPEID . let_args
-   28         | OBJECTID ':' TYPEID . ASSIGN expression let_args
+   27 let_args: ',' OBJECTID ':' . TYPEID let_args
+   28         | ',' OBJECTID ':' . TYPEID ASSIGN expression let_args
 
-    error     shift, and go to state 88
-    IN        shift, and go to state 89
-    OBJECTID  shift, and go to state 90
-    ASSIGN    shift, and go to state 143
-
-    let_args  go to state 144
+    TYPEID  shift, and go to state 143
 
 
 state 132
@@ -2017,7 +2012,7 @@ state 132
     '{'         shift, and go to state 57
     '('         shift, and go to state 58
 
-    expression  go to state 145
+    expression  go to state 144
 
 
 state 133
@@ -2038,7 +2033,7 @@ state 135
 
    24 case: OBJECTID ':' . TYPEID DARROW expression
 
-    TYPEID  shift, and go to state 146
+    TYPEID  shift, and go to state 145
 
 
 state 136
@@ -2059,7 +2054,7 @@ state 138
 
    26 case_list: case_list case . ';'
 
-    ';'  shift, and go to state 147
+    ';'  shift, and go to state 146
 
 
 state 139
@@ -2092,7 +2087,7 @@ state 140
 
    33 expression: expression '@' TYPEID '.' OBJECTID . '(' expr_comma_list ')'
 
-    '('  shift, and go to state 148
+    '('  shift, and go to state 147
 
 
 state 141
@@ -2100,7 +2095,7 @@ state 141
    20 expr_comma_list: expr_comma_list . ',' expression
    32 expression: expression '.' OBJECTID '(' expr_comma_list . ')'
 
-    ')'  shift, and go to state 149
+    ')'  shift, and go to state 148
     ','  shift, and go to state 124
 
 
@@ -2117,7 +2112,7 @@ state 142
    50           | expression . LE expression
    51           | expression . '=' expression
 
-    FI   shift, and go to state 150
+    FI   shift, and go to state 149
     LE   shift, and go to state 76
     '<'  shift, and go to state 77
     '='  shift, and go to state 78
@@ -2131,34 +2126,18 @@ state 142
 
 state 143
 
-   28 let_args: OBJECTID ':' TYPEID ASSIGN . expression let_args
+   27 let_args: ',' OBJECTID ':' TYPEID . let_args
+   28         | ',' OBJECTID ':' TYPEID . ASSIGN expression let_args
 
-    IF          shift, and go to state 45
-    LET         shift, and go to state 46
-    WHILE       shift, and go to state 47
-    CASE        shift, and go to state 48
-    NEW         shift, and go to state 49
-    ISVOID      shift, and go to state 50
-    STR_CONST   shift, and go to state 51
-    INT_CONST   shift, and go to state 52
-    BOOL_CONST  shift, and go to state 53
-    OBJECTID    shift, and go to state 54
-    NOT         shift, and go to state 55
-    '~'         shift, and go to state 56
-    '{'         shift, and go to state 57
-    '('         shift, and go to state 58
+    error   shift, and go to state 88
+    IN      shift, and go to state 89
+    ASSIGN  shift, and go to state 150
+    ','     shift, and go to state 90
 
-    expression  go to state 151
+    let_args  go to state 151
 
 
 state 144
-
-   27 let_args: OBJECTID ':' TYPEID let_args .
-
-    $default  reduce using rule 27 (let_args)
-
-
-state 145
 
    32 expression: expression . '.' OBJECTID '(' expr_comma_list ')'
    33           | expression . '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
@@ -2171,37 +2150,37 @@ state 145
    50           | expression . LE expression
    51           | expression . '=' expression
 
-    error     shift, and go to state 88
-    IN        shift, and go to state 89
-    OBJECTID  shift, and go to state 90
-    LE        shift, and go to state 76
-    '<'       shift, and go to state 77
-    '='       shift, and go to state 78
-    '+'       shift, and go to state 79
-    '-'       shift, and go to state 80
-    '*'       shift, and go to state 81
-    '/'       shift, and go to state 82
-    '@'       shift, and go to state 83
-    '.'       shift, and go to state 84
+    error  shift, and go to state 88
+    IN     shift, and go to state 89
+    LE     shift, and go to state 76
+    '<'    shift, and go to state 77
+    '='    shift, and go to state 78
+    '+'    shift, and go to state 79
+    '-'    shift, and go to state 80
+    '*'    shift, and go to state 81
+    '/'    shift, and go to state 82
+    '@'    shift, and go to state 83
+    '.'    shift, and go to state 84
+    ','    shift, and go to state 90
 
     let_args  go to state 152
 
 
-state 146
+state 145
 
    24 case: OBJECTID ':' TYPEID . DARROW expression
 
     DARROW  shift, and go to state 153
 
 
-state 147
+state 146
 
    26 case_list: case_list case ';' .
 
     $default  reduce using rule 26 (case_list)
 
 
-state 148
+state 147
 
    33 expression: expression '@' TYPEID '.' OBJECTID '(' . expr_comma_list ')'
 
@@ -2224,47 +2203,47 @@ state 148
     expression       go to state 97
 
 
-state 149
+state 148
 
    32 expression: expression '.' OBJECTID '(' expr_comma_list ')' .
 
     $default  reduce using rule 32 (expression)
 
 
-state 150
+state 149
 
    35 expression: IF expression THEN expression ELSE expression FI .
 
     $default  reduce using rule 35 (expression)
 
 
+state 150
+
+   28 let_args: ',' OBJECTID ':' TYPEID ASSIGN . expression let_args
+
+    IF          shift, and go to state 45
+    LET         shift, and go to state 46
+    WHILE       shift, and go to state 47
+    CASE        shift, and go to state 48
+    NEW         shift, and go to state 49
+    ISVOID      shift, and go to state 50
+    STR_CONST   shift, and go to state 51
+    INT_CONST   shift, and go to state 52
+    BOOL_CONST  shift, and go to state 53
+    OBJECTID    shift, and go to state 54
+    NOT         shift, and go to state 55
+    '~'         shift, and go to state 56
+    '{'         shift, and go to state 57
+    '('         shift, and go to state 58
+
+    expression  go to state 155
+
+
 state 151
 
-   28 let_args: OBJECTID ':' TYPEID ASSIGN expression . let_args
-   32 expression: expression . '.' OBJECTID '(' expr_comma_list ')'
-   33           | expression . '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
-   44           | expression . '+' expression
-   45           | expression . '-' expression
-   46           | expression . '*' expression
-   47           | expression . '/' expression
-   49           | expression . '<' expression
-   50           | expression . LE expression
-   51           | expression . '=' expression
+   27 let_args: ',' OBJECTID ':' TYPEID let_args .
 
-    error     shift, and go to state 88
-    IN        shift, and go to state 89
-    OBJECTID  shift, and go to state 90
-    LE        shift, and go to state 76
-    '<'       shift, and go to state 77
-    '='       shift, and go to state 78
-    '+'       shift, and go to state 79
-    '-'       shift, and go to state 80
-    '*'       shift, and go to state 81
-    '/'       shift, and go to state 82
-    '@'       shift, and go to state 83
-    '.'       shift, and go to state 84
-
-    let_args  go to state 155
+    $default  reduce using rule 27 (let_args)
 
 
 state 152
@@ -2307,9 +2286,31 @@ state 154
 
 state 155
 
-   28 let_args: OBJECTID ':' TYPEID ASSIGN expression let_args .
+   28 let_args: ',' OBJECTID ':' TYPEID ASSIGN expression . let_args
+   32 expression: expression . '.' OBJECTID '(' expr_comma_list ')'
+   33           | expression . '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
+   44           | expression . '+' expression
+   45           | expression . '-' expression
+   46           | expression . '*' expression
+   47           | expression . '/' expression
+   49           | expression . '<' expression
+   50           | expression . LE expression
+   51           | expression . '=' expression
 
-    $default  reduce using rule 28 (let_args)
+    error  shift, and go to state 88
+    IN     shift, and go to state 89
+    LE     shift, and go to state 76
+    '<'    shift, and go to state 77
+    '='    shift, and go to state 78
+    '+'    shift, and go to state 79
+    '-'    shift, and go to state 80
+    '*'    shift, and go to state 81
+    '/'    shift, and go to state 82
+    '@'    shift, and go to state 83
+    '.'    shift, and go to state 84
+    ','    shift, and go to state 90
+
+    let_args  go to state 158
 
 
 state 156
@@ -2343,3 +2344,10 @@ state 157
    33 expression: expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')' .
 
     $default  reduce using rule 33 (expression)
+
+
+state 158
+
+   28 let_args: ',' OBJECTID ':' TYPEID ASSIGN expression let_args .
+
+    $default  reduce using rule 28 (let_args)
