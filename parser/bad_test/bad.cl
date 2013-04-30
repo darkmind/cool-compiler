@@ -75,7 +75,7 @@ mystr9
 	:		String 		<- 			"all 				over the place"		;
 
 misc1: <- "no type defined";
-}
+};
 
 Class H inherits A {
 "no ending semi-colon for this class"

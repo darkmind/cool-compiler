@@ -20,18 +20,7 @@
     extern int node_lineno;          /* set before constructing a tree node
     to whatever you want the line number
     for the tree node to be */
-      
 
-    struct let_arg
-    {
-      Symbol objectid;
-      Symbol type;
-      Expression init;
-      struct let_arg *next;
-    };
-
-    struct let_arg *latest_arg = NULL;
-      
       #define YYLLOC_DEFAULT(Current, Rhs, N)         \
       Current = Rhs[1];                             \
       node_lineno = Current;
@@ -111,7 +100,6 @@
       Expression expression;
       Expressions expressions;
       char *error_msg;
-      struct let_arg *let_arg;
     }
     
     /* 
@@ -155,7 +143,7 @@
     %type <expression> expression
     %type <cases> case_list
     %type <case_> case
-    %type <let_arg> let_arg let_arg_list
+    %type <expression> let_args
     
     /* Precedence declarations go here. */
     %right ASSIGN
@@ -267,41 +255,25 @@
     { $$ = append_Cases($1, single_Cases($2)); }
     ;
 
-    let_arg
-    : OBJECTID ':' TYPEID
+    let_args
+    : OBJECTID ':' TYPEID let_args
     {
-      struct let_arg *new_arg = (struct let_arg *)malloc(sizeof(struct let_arg));
-      new_arg->objectid = $1;
-      new_arg->type = $3;
-      new_arg->init = no_expr();
-      new_arg->next = latest_arg;
-      latest_arg = new_arg;
-      $$ = new_arg;
+	$$ = let($1, $3, no_expr(), $4);
     }
-    | OBJECTID ':' TYPEID ASSIGN expression
+    | OBJECTID ':' TYPEID ASSIGN expression let_args
     {
-      struct let_arg *new_arg = (struct let_arg *)malloc(sizeof(struct let_arg));
-      new_arg->objectid = $1;
-      new_arg->type = $3;
-      new_arg->init = $5;
-      new_arg->next = latest_arg;
-      latest_arg = new_arg;
-      $$ = new_arg;
+	$$ = let($1, $3, $5, $6);
     }
-    // | error
-    // { /* Ignore */ }
+    | IN expression
+    {
+	$$ = $2;
+    }
+    | error let_args
+    {
+	$$ = $2;
+    }
     ;
 
-    let_arg_list
-    : let_arg
-    { $$ = $1;  }
-    | let_arg_list ',' let_arg
-    { $$ = $3;  }
-    | let_arg_list ',' error
-    { $$ = $1; /* We skip over the error */ }
-    | error
-    { /* Ignore this */ }
-    ;
 
     expression
     : OBJECTID ASSIGN expression
@@ -318,22 +290,27 @@
     { $$ = loop($2, $4);  }
     | '{' expr_semi_list '}'
     { $$ = block($2);  }
-    | LET let_arg_list IN expression
+
+    | LET OBJECTID ':' TYPEID let_args
     {
-      Expression curr_expr = $4;
-      struct let_arg *curr = $2;
-      while(curr != NULL){
-        curr_expr = let(curr->objectid, curr->type, curr->init, curr_expr);
-        curr = curr->next;
-      }
-      $$ = curr_expr;
+	$$ = let($2, $4, no_expr(), $5);
     }
+    | LET OBJECTID ':' TYPEID ASSIGN expression let_args
+    { 
+	$$ = let($2, $4, $6, $7);
+    }
+    | LET error let_args
+    { 
+	$$ = $3;
+    }
+
     | CASE expression OF case_list ESAC
     { $$ = typcase($2, $4); }
     | NEW TYPEID
     { $$ = new_($2);  }
     | ISVOID expression
     { $$ = isvoid($2);  }
+
     | expression '+' expression
     { $$ = plus($1, $3);  }
     | expression '-' expression
@@ -344,6 +321,7 @@
     { $$ = divide($1, $3);  }
     | '~' expression
     { $$ = neg($2);  }
+
     | expression '<' expression
     { $$ = lt($1, $3);  }
     | expression LE expression
@@ -354,6 +332,7 @@
     { $$ = comp($2);  }
     | '(' expression ')'
     { $$ = $2; }
+
     | OBJECTID
     { $$ = object($1);  }
     | INT_CONST
