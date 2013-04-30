@@ -197,8 +197,6 @@
     { $$ = append_Features($1, single_Features($2)); }    
     | feature_list error ';'
     { $$ = $1; /* Ignore the error */ }
-    | error ';'
-    { $$ = nil_Features(); }
     ;
 
     /* Feature list may be empty, but no empty features in list. */
@@ -211,8 +209,6 @@
     { $$ = attr($1, $3, no_expr()); }
     | OBJECTID ':' TYPEID ASSIGN expression
     { $$ = attr($1, $3, $5); }
-    // | error
-    // /* Ignore */ }
     ;
     
     formal_list 
