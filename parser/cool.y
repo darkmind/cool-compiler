@@ -186,6 +186,9 @@
     parse_results = $$; }
     | class_list error ';'
     { $$ = $1; /* Ignore the error */ }
+    | error ';'
+    { $$ = nil_Classes();
+    parse_results = $$; }
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
@@ -206,6 +209,8 @@
     { $$ = append_Features($1, single_Features($2)); }    
     | feature_list error ';'
     { $$ = $1; /* Ignore the error */ }
+    | error ';'
+    { $$ = nil_Features(); }
     ;
 
     /* Feature list may be empty, but no empty features in list. */
@@ -294,6 +299,8 @@
     { $$ = $3;  }
     | let_arg_list ',' error
     { $$ = $1; /* We skip over the error */ }
+    | error
+    { /* Ignore this */ }
     ;
 
     expression
