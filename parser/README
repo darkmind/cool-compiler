@@ -128,6 +128,7 @@ Extra semicolons
 Empty blocks
 
 10. Error recovery with classes, features, expressions within blocks and arguments within let expressions
+We used the error pseudo-nonterminal available in Bison to write the error handling productions. Essentially, by including the errors as part of our grammar, we were able to make the parser not crash upon encountering an error and carry on to the next input. We specified delimiters that the parser would skip tokens up till, so that it jumps directly to the next valid input. For example, for the class list, the delimiter was the semi-colon, which made the parser skip all next tokens until the class with the error was ended (as designated by its ending semi-colon) and the next class definition in the file started.
 (Further explained in the Error Catching portion of the Grammar Overview above)
 
 (Note: The specific cases mentioned under each of the above 10 cases are just the most important ones. In the actual test files, there are those and more.)
