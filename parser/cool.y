@@ -1,7 +1,10 @@
 /*
 *  cool.y
 *              Parser definition for the COOL language.
-*
+*		
+*		IMPORTANT NOTE: THE COMMENTS IN THIS FILE ARE NOT COMPREHENSIVE.
+*				A MUCH MORE DESCRIPTIVE EXPLANATION OF THE RULES ARE DESCRIBED IN THE README
+*		
 */
 %{
   #include <iostream>
@@ -158,6 +161,7 @@
     %nonassoc IN
     
     %% /* Start of grammar rules */
+
     /* 
     Save the root of the abstract syntax tree in a global variable.
     */
