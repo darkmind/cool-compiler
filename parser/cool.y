@@ -199,7 +199,7 @@
     | feature_list feature ';'
     { $$ = append_Features($1, single_Features($2)); }    
     | feature_list error ';'
-    { $$ = $1; /* Ignore the error */ }
+    { /*yyerrok;*/ $$ = $1; /* Ignore the error */ }
     ;
 
     /* Feature list may be empty, but no empty features in list. */

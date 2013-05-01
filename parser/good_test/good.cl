@@ -1,3 +1,6 @@
+(* Tests for:
+   multiple classes can be defined in the same file
+ *)
 class A {
     ana(): Int {
 	(
@@ -9,7 +12,6 @@ class A {
 	) + 3
     };
     };
-
 
 class Foo { 
     x : Int; 
