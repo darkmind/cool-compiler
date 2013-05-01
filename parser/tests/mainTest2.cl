@@ -107,7 +107,7 @@ CLaSs Blocks inherits Loops {
 
     (* Error recovery *)
 
-    bar(x:Int;y:Int):String { 
+    bar(x:Int, y:Int):String { 
 	{
 	    if true then 4 fi; 
 	    INVALIDasdfasdfasd

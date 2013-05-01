@@ -18,11 +18,8 @@ x:Int <- 5
 
 (* error: class ended prematurely  *)
 Class B {
-
 a:Int <- 5;
 };
-
-Class Test {
 a:String <- "class ended already";
 };
 
@@ -128,7 +125,7 @@ Class J inherits A {
 Feature:String <- "feature beginning with uppercase letter";
 };
 
-(* Errors with features *)
+(* More errors with features *)
 Class K inherits A {
 method1():Int{};
 method1():Int{};
@@ -239,6 +236,8 @@ method1():Int{
 2*5+3/6-4 = 3*5
 2*5+3/6-4 < 3*5
 2*5+3/6-4 <= 3*5
+"hello"+4
+True+False
 5 <= 7
 -4 < 3
 -4 < 3 <= 67
