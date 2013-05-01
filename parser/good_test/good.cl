@@ -24,5 +24,5 @@ Class BB__ inherits A {
 
 class Main {
 main(): Int {
-
+};
 };

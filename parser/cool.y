@@ -186,8 +186,6 @@
     stringtable.add_string(curr_filename)); }
     | CLASS TYPEID INHERITS TYPEID '{' feature_list '}'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
-    // | error
-    // { /* Ignore */ }
     ;
     
     feature_list
@@ -249,6 +247,8 @@
     { $$ = single_Cases($1); }
     | case_list case ';'
     { $$ = append_Cases($1, single_Cases($2)); }
+    | case_list error ';'
+    { $$ = $1; /* Ignore the error */ }
     ;
 
     let_args
