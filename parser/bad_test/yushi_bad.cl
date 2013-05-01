@@ -102,10 +102,19 @@ CLaSs Blocks inherits Loops {
 	  while isvoid ({a + 2; }) loop ((not isvoid ~~~~~~~~~~(a <- 3)))  pool;
 	};
 	};
-	}; -- HERE
+	} -- HERE
     };
 
-    (* Empty block *)
+    (* Error recovery *)
+
+    bar(x:Int, y:Int):String { 
+	{
+	    if true then 4 fi; 
+	    INVALIDasdfasdfasd
+	} 
+    };
+
+   (* Empty block *)
     main() : S {
 	{
 	    {};
@@ -116,7 +125,7 @@ CLaSs Blocks inherits Loops {
 
 };
 
-class UhOh inherits IO {
+class UhOhEmptyCommaList inherits IO {
     mystr:String <- in_string();
     myint:Int <- in_int();
 };
@@ -125,8 +134,25 @@ class CaSes inherits Main {
     
     (* Good syntax *)
     main() : Foo {
-	case 
-    }
+	case foo.bar() of y:Int => 3;
+	z:String => 4;
+	x:Test => 5; esac 
+    };
+
+};
+
+class Lets_Do_Lets {
+
+    (* multiple bindings, errors in the middle *)
+    
+    bar():Int { 
+	let x:Int, y:string (* misspelled! *) , z:Int in x + y + z 
+    };
+
+    (* multiple bindings, no errors *)
+    bar():String { 
+	let x:Int <- 5, y:String <- "asdfasdfads", z:Int in x 
+    };
 
 
 };
