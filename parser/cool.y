@@ -139,7 +139,7 @@
     %type <feature> feature
     %type <formals> formal_list
     %type <formal> formal
-    %type <expressions> expr_comma_list expr_semi_list
+    %type <expressions> expr_comma_list_wrap expr_comma_list expr_semi_list
     %type <expression> expression
     %type <cases> case_list
     %type <case_> case
@@ -221,6 +221,13 @@
     { $$ = formal($1, $3); }
     ;
 
+    expr_comma_list_wrap
+    : /* empty comma list */
+    { $$ = nil_Expressions(); }
+    | expr_comma_list
+    { $$ = $1; }
+    ;
+
     expr_comma_list
     : expression
     { $$ = single_Expressions($1); }
@@ -247,8 +254,8 @@
     { $$ = single_Cases($1); }
     | case_list case ';'
     { $$ = append_Cases($1, single_Cases($2)); }
-    | case_list error ';'
-    { $$ = $1; /* Ignore the error */ }
+    // | case_list error ';'
+    // { $$ = $1; /* Ignore the error */ }
     ;
 
     let_args
@@ -274,12 +281,16 @@
     expression
     : OBJECTID ASSIGN expression
     { $$ = assign($1, $3);  }
-    | expression '.' OBJECTID '(' expr_comma_list ')'
+
+    /* Dispatches */
+    | expression '.' OBJECTID '(' expr_comma_list_wrap ')'
     { $$ = dispatch($1, $3, $5);  }
-    | expression '@' TYPEID '.' OBJECTID '(' expr_comma_list ')'
+    | expression '@' TYPEID '.' OBJECTID '(' expr_comma_list_wrap ')'
     { $$ = static_dispatch($1, $3, $5, $7);  }
-    | OBJECTID '(' expr_comma_list ')' /* implicit self */
+    | OBJECTID '(' expr_comma_list_wrap ')' /* implicit self */
     { $$ = dispatch(object(idtable.add_string("self")), $1, $3);  }
+    
+    
     | IF expression THEN expression ELSE expression FI
     { $$ = cond($2, $4, $6);  }
     | WHILE expression LOOP expression POOL
