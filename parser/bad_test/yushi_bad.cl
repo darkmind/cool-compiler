@@ -107,7 +107,7 @@ CLaSs Blocks inherits Loops {
 
     (* Error recovery *)
 
-    bar(x:Int, y:Int):String { 
+    bar(x:Int;y:Int):String { 
 	{
 	    if true then 4 fi; 
 	    INVALIDasdfasdfasd
@@ -152,6 +152,8 @@ class Lets_Do_Lets {
     (* multiple bindings, no errors *)
     bar():String { 
 	let x:Int <- 5, y:String <- "asdfasdfads", z:Int in x 
+
+	let x:Int <- 5, let y:Int in let z:Int in a
     };
 
 
