@@ -188,6 +188,7 @@
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     ;
     
+    /* A feature list can be empty or have an error anywhere */
     feature_list
     : /* empty */
     { $$ = nil_Features(); }    
@@ -209,6 +210,7 @@
     { $$ = attr($1, $3, $5); }
     ;
     
+    /* List of formals, which never is empty */
     formal_list 
     : formal
     { $$ = single_Formals($1); }
@@ -221,6 +223,7 @@
     { $$ = formal($1, $3); }
     ;
 
+    /* A list of comma separated expressions is never empty. However, this list is sometimes omitted, so we have a possibly empty wrapper. */
     expr_comma_list_wrap
     : /* empty comma list */
     { $$ = nil_Expressions(); }
@@ -228,6 +231,7 @@
     { $$ = $1; }
     ;
 
+    /* Since commas only appear between expressions, we have a strictly non-empty comma list for ease */
     expr_comma_list
     : expression
     { $$ = single_Expressions($1); }
@@ -235,6 +239,7 @@
     { $$ = append_Expressions($1, single_Expressions($3)); }
     ;
 
+    /* This is a list of expressions in a block of expressions. Errors are caught. */
     expr_semi_list
     : expression ';'
     { $$ = single_Expressions($1); }
@@ -249,6 +254,7 @@
     { $$ = branch($1, $3, $5); }
     ;
 
+    /* We were going to catch errors in case lists, but we didn't really have to do it. */
     case_list
     : case ';'
     { $$ = single_Cases($1); }
@@ -258,6 +264,10 @@
     // { $$ = $1; /* Ignore the error */ }
     ;
 
+    /* Let arguments are defined recursively. Whenever we see a "let statement begin,
+     * we take the left-most (outermost let argument) and bind it, then for the body expression
+     * we pass in the result of the rest of the let arguments. The base case for this recursion
+     * is the ending phrase "IN expression", at which point we stop recursing on the body */
     let_args
     : ',' OBJECTID ':' TYPEID let_args
     {
@@ -290,14 +300,17 @@
     | OBJECTID '(' expr_comma_list_wrap ')' /* implicit self */
     { $$ = dispatch(object(idtable.add_string("self")), $1, $3);  }
     
-    
+    /* Multi-part expressions */
     | IF expression THEN expression ELSE expression FI
     { $$ = cond($2, $4, $6);  }
     | WHILE expression LOOP expression POOL
     { $$ = loop($2, $4);  }
+
+    /* Blocks of expressions */
     | '{' expr_semi_list '}'
     { $$ = block($2);  }
 
+    /* Let expressions */
     | LET OBJECTID ':' TYPEID let_args
     {
 	$$ = let($2, $4, no_expr(), $5);
@@ -311,6 +324,7 @@
 	$$ = $3;
     }
 
+    /* Case expressions, new, and isvoid */
     | CASE expression OF case_list ESAC
     { $$ = typcase($2, $4); }
     | NEW TYPEID
@@ -318,6 +332,7 @@
     | ISVOID expression
     { $$ = isvoid($2);  }
 
+    /* Arithmetic expressions */
     | expression '+' expression
     { $$ = plus($1, $3);  }
     | expression '-' expression
@@ -329,6 +344,7 @@
     | '~' expression
     { $$ = neg($2);  }
 
+    /* Comparisons, parantheses */
     | expression '<' expression
     { $$ = lt($1, $3);  }
     | expression LE expression
@@ -340,6 +356,7 @@
     | '(' expression ')'
     { $$ = $2; }
 
+    /* consts and stuff */
     | OBJECTID
     { $$ = object($1);  }
     | INT_CONST
