@@ -1798,6 +1798,16 @@ state 115
    51           | expression . LE expression
    52           | expression . '=' expression
 
+    LE   shift, and go to state 74
+    '<'  shift, and go to state 75
+    '='  shift, and go to state 76
+    '+'  shift, and go to state 77
+    '-'  shift, and go to state 78
+    '*'  shift, and go to state 79
+    '/'  shift, and go to state 80
+    '@'  shift, and go to state 81
+    '.'  shift, and go to state 82
+
     $default  reduce using rule 30 (let_args)
 
 

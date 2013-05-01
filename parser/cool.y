@@ -149,6 +149,7 @@
     %type <expression> let_args
     
     /* Precedence declarations go here. */
+    %left IN
     %right ASSIGN
     %left NOT
     %nonassoc LE '<' '='
@@ -158,7 +159,6 @@
     %left '~'
     %left '@'
     %left '.'
-    %nonassoc IN
     
     %% /* Start of grammar rules */
 
