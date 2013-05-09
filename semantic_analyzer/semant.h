@@ -8,6 +8,8 @@
 #include "symtab.h"
 #include "list.h"
 
+#include <map>
+
 #define TRUE 1
 #define FALSE 0
 
@@ -24,6 +26,12 @@ private:
   int semant_errors;
   void install_basic_classes();
   ostream& error_stream;
+  
+  struct map_val {
+	Symbol parent;
+	Class_ c;
+  };
+  std::map<Symbol, map_val> class_map;
 
 public:
   ClassTable(Classes);
@@ -31,6 +39,8 @@ public:
   ostream& semant_error();
   ostream& semant_error(Class_ c);
   ostream& semant_error(Symbol filename, tree_node *t);
+
+  bool check_for_cycles();
 };
 
 
