@@ -118,7 +118,7 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
 }
 
 bool ClassTable::check_for_cycles() {
-	bool cycle_exists = false;	
+	bool cycle_exists = false;
 	for(std::map<Symbol, map_val>::iterator it=class_map.begin(); it != class_map.end(); ++it) {
 		std::set<Symbol> ancestors;
 		ancestors.insert(it->first);
@@ -300,4 +300,16 @@ void program_class::semant()
 	cerr << "Compilation halted due to static semantic errors." << endl;
 	exit(1);
     }
+}
+
+std::set<Symbol> getMethods(Symbol class_name) {
+
+}
+
+bool setMethods(std::set<Symbol> methods, Symbol class_name) {
+
+}
+
+bool addMethod(Symbol method_name, Symbol class_name) {
+
 }

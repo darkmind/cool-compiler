@@ -9,6 +9,7 @@
 #include "list.h"
 
 #include <map>
+#include <set>
 
 #define TRUE 1
 #define FALSE 0
@@ -43,6 +44,14 @@ public:
   bool check_for_cycles();
 };
 
+class MethodTable {
+private:
+  std::map<Symbol, std::set<Symbol>> class_methods;
+
+public:
+  std::set<Symbol> getMethods(Symbol class_name);
+  bool setMethods(std::set<Symbol> methods, Symbol class_name);
+  bool addMethod(Symbol method_name, Symbol class_name);
+};
 
 #endif
-
