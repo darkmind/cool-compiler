@@ -93,17 +93,17 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
 	} else if(name == Object || name == IO || name == Str || name == Int || name == Bool) { // redefined basic class
 		semant_error(class_ptr) << "Redefinition of basic class " << name << "." << endl;
 	} else {
-		// cannot inherit from Bool, Int or String
-		if(parent == Bool || parent == Int || parent == Str) {
-			semant_error(class_ptr) << "Class " << name << " cannot inherit class " << parent << "." << endl;
-			continue;
-		}
-		// class either inherits from Object or IO or some other user-defined class or from an undefined class (checked below)
-		// add to map		
-		map_val val;
-		val.parent = parent;
-		val.c = class_ptr;
-		class_map[name] = val;
+	    // cannot inherit from Bool, Int or String
+	    if(parent == Bool || parent == Int || parent == Str) {
+		    semant_error(class_ptr) << "Class " << name << " cannot inherit class " << parent << "." << endl;
+		    continue;
+	    }
+	    // class either inherits from Object or IO or some other user-defined class or from an undefined class (checked below)
+	    // add to map		
+	    map_val val;
+	    val.parent = parent;
+	    val.c = class_ptr;
+	    class_map[name] = val;
 	}
     }
 
@@ -111,31 +111,31 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
     for(std::map<Symbol, map_val>::iterator it=class_map.begin(); it != class_map.end(); ++it) {
 	Symbol parent = (it->second).parent;
 	if(class_map.count(parent) == 0 && parent != Object && parent != IO) {
-		// inheriting from a class that is not defined at all so report error
-		semant_error((it->second).c) << "Class " << it->first << " inherits from an undefined class " << (it->second).parent << "." << endl;
+	    // inheriting from a class that is not defined at all so report error
+	    semant_error((it->second).c) << "Class " << it->first << " inherits from an undefined class " << (it->second).parent << "." << endl;
 	}
     }
 }
 
 bool ClassTable::check_for_cycles() {
-	bool cycle_exists = false;
-	for(std::map<Symbol, map_val>::iterator it=class_map.begin(); it != class_map.end(); ++it) {
-		std::set<Symbol> ancestors;
-		ancestors.insert(it->first);
-		Symbol curr_parent = (it->second).parent;
-		while(class_map.count(curr_parent) > 0) { // max count will be 1 because if try to add second one, will already have been caught in main if check
-			map_val val = class_map[curr_parent];
-			if(ancestors.count(val.parent) > 0) { // report error because will introduce cycle
-				semant_error((it->second).c) << "Class " << it->first << ", or an ancestor of " << it->first << ", is involved in an inheritance cycle." << endl;
-				cycle_exists = true;
-				break;
-			} else {
-				ancestors.insert(curr_parent);
-				curr_parent = val.parent;
-			}
-		}
+    bool cycle_exists = false;	
+    for(std::map<Symbol, map_val>::iterator it=class_map.begin(); it != class_map.end(); ++it) {
+	std::set<Symbol> ancestors;
+	ancestors.insert(it->first);
+	Symbol curr_parent = (it->second).parent;
+	while(class_map.count(curr_parent) > 0) { // max count will be 1 because if try to add second one, will already have been caught in main if check
+	    map_val val = class_map[curr_parent];
+	    if(ancestors.count(val.parent) > 0) { // report error because will introduce cycle
+		semant_error((it->second).c) << "Class " << it->first << ", or an ancestor of " << it->first << ", is involved in an inheritance cycle." << endl;
+		cycle_exists = true;
+		break;
+	    } else {
+		ancestors.insert(curr_parent);
+		curr_parent = val.parent;
+	    }
 	}
-	return cycle_exists;
+    }
+    return cycle_exists;
 }
 
 void ClassTable::install_basic_classes() {
