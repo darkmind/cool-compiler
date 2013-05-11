@@ -300,16 +300,27 @@ void program_class::semant()
 	cerr << "Compilation halted due to static semantic errors." << endl;
 	exit(1);
     }
-}
 
-std::set<Symbol> getMethods(Symbol class_name) {
 
 }
 
-bool setMethods(std::set<Symbol> methods, Symbol class_name) {
-
+MethodTable::MethodTable() {
+    // nothing to initialize
 }
 
-bool addMethod(Symbol method_name, Symbol class_name) {
+std::set<Symbol> MethodTable::getMethods(Symbol class_name) {
+    return class_methods[class_name].methods;
+}
 
+bool MethodTable::addMethod(Symbol method_name, Symbol class_name, Class_ c) {
+    if(class_methods.count(class_name) > 0) {
+        class_methods[class_name].methods.insert(method_name);
+    } else {
+	method_val val;
+	std::set<Symbol> methods;
+	methods.insert(method_name);
+	val.methods = methods;
+	val.c = c;
+	class_methods[class_name] = val;
+    }
 }
