@@ -47,7 +47,7 @@ public:
 class MethodTable {
 private:
   struct method_val {
-    std::set<Symbol> methods;
+    std::set<method_class *> methods;
     Class_ c;
   };
   std::map<Symbol, method_val> class_methods;
@@ -55,8 +55,8 @@ private:
 public:
   MethodTable();
   std::set<Symbol> getMethods(Symbol class_name);
-  bool addMethod(Symbol method_name, Symbol class_name, Class_ c);
-  void populate_method_table(Classes);
+  bool addMethod(method_class *method_ptr, Symbol class_name, Class_ c);
+  void populate(Classes);
 };
 
 class MySymbolTable {
