@@ -123,9 +123,6 @@ void ClassTable::populate_symbol_table(SymbolTable<char *,int> *sym_tab) {
 }
 
 
-void MethodTable::populate_method_table(MethodTable *method_tab) {
-
-}
 
 bool ClassTable::check_for_cycles() {
     bool cycle_exists = false;	
@@ -336,5 +333,15 @@ bool MethodTable::addMethod(Symbol method_name, Symbol class_name, Class_ c) {
 	val.methods = methods;
 	val.c = c;
 	class_methods[class_name] = val;
+    }
+}
+
+void MethodTable::populate_method_table(Classes classes) {
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
+	Class_ class_ptr = classes->nth(i);
+	for(int j = class_ptr->features->first(); class_ptr->features->more(j); j = class_ptr->features->next(j)) {
+	    Feature feat_ptr = features->nth(j);
+
+	}
     }
 }
