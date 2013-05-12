@@ -43,7 +43,6 @@ public:
 
   bool check_for_cycles();
   void populate_symbol_table(SymbolTable<char *,int> *sym_tab);
-  void populate_method_table(MethodTable *method_tab);
 
 };
 
@@ -59,6 +58,12 @@ public:
   MethodTable();
   std::set<Symbol> getMethods(Symbol class_name);
   bool addMethod(Symbol method_name, Symbol class_name, Class_ c);
+  void populate_method_table(MethodTable *method_tab);
 };
+
+class MySymbolTable {
+private:
+  Symbol
+}
 
 #endif

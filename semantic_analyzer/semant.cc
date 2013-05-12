@@ -123,7 +123,7 @@ void ClassTable::populate_symbol_table(SymbolTable<char *,int> *sym_tab) {
 }
 
 
-void ClassTable::populate_method_table(MethodTable *method_tab) {
+void MethodTable::populate_method_table(MethodTable *method_tab) {
 
 }
 
@@ -314,8 +314,8 @@ void program_class::semant()
     SymbolTable<char *, int> *sym_tab = new SymbolTable<char *, int>();
     MethodTable *method_tab = new MethodTable();
     
-    classtable->populate_symbol_table(sym_tab);
-    classtable->populate_method_table(method_tab);
+    sym_tab->populate_symbol_table(classes);
+    method_tab->populate_method_table(classes);
 }
 
 MethodTable::MethodTable() {
