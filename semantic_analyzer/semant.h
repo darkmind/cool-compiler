@@ -42,15 +42,13 @@ public:
   ostream& semant_error(Symbol filename, tree_node *t);
 
   bool check_for_cycles();
-  void populate_symbol_table(SymbolTable<char *,int> *sym_tab);
-
 };
 
 class MethodTable {
 private:
   struct method_val {
-	std::set<Symbol> methods;
-	Class_ c;
+    std::set<Symbol> methods;
+    Class_ c;
   };
   std::map<Symbol, method_val> class_methods;
 
@@ -58,12 +56,18 @@ public:
   MethodTable();
   std::set<Symbol> getMethods(Symbol class_name);
   bool addMethod(Symbol method_name, Symbol class_name, Class_ c);
-  void populate_method_table(MethodTable *method_tab);
+  void populate_method_table(Classes);
 };
 
 class MySymbolTable {
 private:
-  Symbol
+  struct dat {
+    // here, put in data about the symbol that we want to store for later retrieval
+  };
+  SymbolTable<Symbol, dat *> *sym_tab;
+
+public:
+  void populate(Classes);
 }
 
 #endif
