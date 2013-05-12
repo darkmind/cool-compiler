@@ -42,6 +42,9 @@ public:
   ostream& semant_error(Symbol filename, tree_node *t);
 
   bool check_for_cycles();
+  void populate_symbol_table(SymbolTable<char *,int> *sym_tab);
+  void populate_method_table(MethodTable *method_tab);
+
 };
 
 class MethodTable {

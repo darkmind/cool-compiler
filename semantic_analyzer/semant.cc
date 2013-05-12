@@ -117,6 +117,16 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
     }
 }
 
+void ClassTable::populate_symbol_table(SymbolTable<char *,int> *sym_tab) {
+
+
+}
+
+
+void ClassTable::populate_method_table(MethodTable *method_tab) {
+
+}
+
 bool ClassTable::check_for_cycles() {
     bool cycle_exists = false;	
     for(std::map<Symbol, map_val>::iterator it=class_map.begin(); it != class_map.end(); ++it) {
@@ -301,7 +311,11 @@ void program_class::semant()
 	exit(1);
     }
 
-
+    SymbolTable<char *, int> *sym_tab = new SymbolTable<char *, int>();
+    MethodTable *method_tab = new MethodTable();
+    
+    classtable->populate_symbol_table(sym_tab);
+    classtable->populate_method_table(method_tab);
 }
 
 MethodTable::MethodTable() {
