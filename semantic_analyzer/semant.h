@@ -61,10 +61,12 @@ public:
 
 class MySymbolTable {
 private:
-  struct dat {
+  struct sym_data {
     // here, put in data about the symbol that we want to store for later retrieval
+    Symbol type;
+    Expression init;
   };
-  SymbolTable<Symbol, dat *> *sym_tab;
+  SymbolTable<Symbol, sym_data *> *sym_tab;
 
 public:
   void populate(Classes);

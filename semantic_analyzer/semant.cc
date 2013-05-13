@@ -325,18 +325,28 @@ MySymbolTable::populate(Classes classes) {
     for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
 	Class_ class_ptr = classes->nth(i);
 	Features features = class_ptr->get_features();
+	sym_tab->enterscope(); // new scope per class
 	for(int j = features->first(); features->more(j); j = features->next(j)) {
 	    Feature feature_ptr = features->nth(j);
 	    // try to cast to attribute class type
-	    attr_class *attr = dynamic_cast<attr_class *>(feature_ptr);
+	    attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
 	    if(attr == 0) {
-	        // not an attribute so must be a method
+		// not an attribute so must be a method
+		method_class *method = dynamic_cast<method_class *>(feature_ptr);
+		sym_tab->enterscope(); // new scope per method
+		sym_tab->addid(method->name, sym_data);
+		sym_tab->exitscope(); // exit scope for method
 	    } else {
-		// an attribute
-		
+		// an attribute - add if not already present in current scope
+		if(sym_tab->lookup(attribute->name) == NULL) {
+		    sym_data *sym_data = new sym_data;
+		    sym_data->type = attribute->type_decl;
+		    sym_data->init = attribute->init;
+		    sym_tab->addid(attribute->name, sym_data);
+		}
 	    }
-	    sym_tab->
 	}
+	sym_tab->exitscope(); // exit the scope for the class
     }
 }
 
