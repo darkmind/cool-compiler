@@ -125,9 +125,6 @@ void ClassTable::populate_symbol_table(SymbolTable<char *,int> *sym_tab) {
 }
 
 
-void MethodTable::populate_method_table(MethodTable *method_tab) {
-
-}
 
 bool ClassTable::check_for_cycles() {
     bool cycle_exists = false;	
@@ -317,7 +314,7 @@ void program_class::semant()
     MethodTable *method_tab = new MethodTable();
     
     sym_tab->populate(classes);
-    method_tab->populate_method_table(classes);
+    method_tab->populate(classes);
 }
 
 MySymbolTable::populate(Classes classes) {
@@ -358,7 +355,7 @@ std::set<Symbol> MethodTable::getMethods(Symbol class_name) {
     return class_methods[class_name].methods;
 }
 
-bool MethodTable::addMethod(Symbol method_name, Symbol class_name, Class_ c) {
+bool MethodTable::addMethod(method_class *method_ptr, Symbol class_name, Class_ c) {
     if(class_methods.count(class_name) > 0) {
         class_methods[class_name].methods.insert(method_name);
     } else {
@@ -368,5 +365,25 @@ bool MethodTable::addMethod(Symbol method_name, Symbol class_name, Class_ c) {
 	val.methods = methods;
 	val.c = c;
 	class_methods[class_name] = val;
+    }
+}
+
+void MethodTable::populate(Classes classes) {
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
+	Class_ class_ptr = classes->nth(i);
+	Features features = class_ptr->get_features();
+	for(int j = features->first(); features->more(j); j = features->next(j)) {
+	    Feature feature_ptr = features->nth(j);
+	    // try to cast to method class type
+	    method_class *meth = dynamic_cast<method_class *>(feature_ptr);
+	    if(method != NULL) {
+	        // a method
+		addMethod(meth, class_ptr->name, class_ptr);
+		cerr << meth->name << "; " << class_ptr->name << endl;
+ 
+	    } else {
+		// not a method, must be attribute
+	    }
+	}
     }
 }
