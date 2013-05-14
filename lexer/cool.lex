@@ -97,8 +97,8 @@ commentBegin = "(*"
 commentEnd = "*)"
 
 quotes = "\""
-strEscapes = [\\].
-legalLineBreak = [\\]{lineTerminator}
+strEscapes = \\.
+legalLineBreak = \\{lineTerminator}
 
 classKeyword = [Cc][Ll][Aa][Ss][Ss]
 elseKeyword = [Ee][Ll][Ss][Ee]
@@ -240,22 +240,23 @@ trueKeyword = [t][Rr][Uu][Ee]
 
 <STRING>{strEscapes}
 {
-	if (curr_strLen >= MAX_STR_CONST) {
+    System.err.println("found an escape");
+	curr_strLen++;
+	if (curr_strLen >= MAX_STR_CONST ) {
 		yybegin(BAD_STRING);
 		return new Symbol(TokenConstants.ERROR, "String constant too long");
 	}
-	if (yytext().equals("\\n")) {
+	if (yytext().equals("\\\n")) {
 		string_buf.append('\n');
-	} else if (yytext().equals("\\t")) {
+	} else if (yytext().equals("\\\t")) {
 		string_buf.append('\t');
-	} else if (yytext().equals("\\f")) {
+	} else if (yytext().equals("\\\f")) {
 		string_buf.append('\f');
-	} else if (yytext().equals("\\b")) {
+	} else if (yytext().equals("\\\b")) {
 		string_buf.append('\b');
 	} else {
 		string_buf.append(yytext().substring(1));
 	}
-	curr_strLen++;
 }
 
 <STRING>{legalLineBreak}
