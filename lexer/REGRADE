@@ -1,0 +1,24 @@
+In our code we had several minor bugs, mostly related to escaped sequences in strings.
+
+Changes:
+
+1. We neglected to account for escaped line terminators in "bad strings", where the string was considered too long or contained invalid characters.
+To fix this, I simply copied over the "LegalLineBreak" rule for the "BAD_STRING" state, and removed the part where it added anything to the buffer.
+This should fix any bugs caused by escaped new lines in bad strings, such as "longstring"
+
+2. I wasn't properly counting the escaped characters in a string, since I was incrementing the character count only after the thing was added, and I forgot the increment the character count for "LegalLineBreak".
+To fix this, I simply moved the increment code to before the string length check, and then copied over these few lines of code over to the "LegalLineBreak" rule:
+
+if (curr_strLen >= MAX_STR_CONST ) {
+	yybegin(BAD_STRING);
+	return new Symbol(TokenConstants.ERROR, "String constant too long");
+}
+
+This should ensure that pathological strings, among others, pass.
+
+3. I forgot to add a slash before both the backslash and the '0' in the rule watching for null characters. Thus, the rule watching for "\0" became a rule for "\\\0"
+
+This should catch all null character tests.
+
+
+
