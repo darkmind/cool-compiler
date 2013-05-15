@@ -114,4 +114,7 @@ virtual Symbol eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class
 void dump_with_types(ostream&,int);        \
 Symbol eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table);
 
+#define branch_EXTRAS                       \
+Symbol get_type() { return type_decl; }
+
 #endif

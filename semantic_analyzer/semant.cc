@@ -295,7 +295,7 @@ bool ClassTable::class_exists(Symbol class_name)
 Symbol ClassTable::lca(Symbol class1, Symbol class2)
 {
     for (Symbol parent = class1; parent != Object; parent = class_map[parent].parent) {
-	if (is_child(class2, class1)) return class1;
+	if (is_child(class2, parent)) return parent;
     }
     return Object;
 }
@@ -333,6 +333,8 @@ void program_class::semant()
     // TODO: check that there is a Main class with a main() method.
     // TODO: check if any differences between archived project 1 test cases and PA1-tests.
     // TODO: also need to add self, and SELF_TYPE in all these places. KV said there are lot of places with self and SELF_TYPE.
+    // QN - in type checking, when assigning expression to attribute, need to check type of expression is valid. then when add to symbol table, add the type of expression or static type of attribute?
+    // TODO: return Object everywhere there is an error reported that prevents the expression from being evaluated properly
 
     // go through classes and collect all methods in a method table
     FeatureTable *feature_table = new FeatureTable();
@@ -491,18 +493,22 @@ FeatureTable::FeatureTable() {
     // nothing to initialize
 }
 
-std::map<Symbol, method_class *> FeatureTable::getMethods(Symbol class_name) {
+std::map<Symbol, method_class *> FeatureTable::get_methods(Symbol class_name) {
     return features[class_name].methods;
 }
 
-std::map<Symbol, Symbol> FeatureTable::getAttributes(Symbol class_name) {
+std::map<Symbol, Symbol> FeatureTable::get_attributes(Symbol class_name) {
     return features[class_name].attributes;
 }
 
-bool FeatureTable::addMethod(Symbol class_name, method_class *method_ptr, Class_ c) {
+bool FeatureTable::method_exists_in_class(Symbol method_name, Symbol class_name) {
+    return features[class_name].methods.count(method_name) > 0;
+}
+
+bool FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class_ c) {
     Symbol method_name = method_ptr->name;
     if(features.count(class_name) > 0) {
-	if (features[class_name].methods.count(method_name) > 0) {
+	if (method_exists_in_class(method_name, class_name)) {
 	    // TODO: Throw error for having the method twice in one class.
         } else { 
 	    features[class_name].methods[method_name] = method_ptr;
@@ -515,7 +521,7 @@ bool FeatureTable::addMethod(Symbol class_name, method_class *method_ptr, Class_
     }
 }
 
-bool FeatureTable::addAttribute(Symbol class_name, attr_class *attr_ptr, Class_ c) {
+bool FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c) {
     Symbol attribute_name = attr_ptr->name;
     if(features.count(class_name) > 0) {
 	if (features[class_name].attributes.count(attribute_name) > 0) {
@@ -574,8 +580,41 @@ Symbol static_dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, Cl
 
 }
 
-Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
+Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table, FeatureTable *feature_table) {
+    // TODO: check that the method exists in the class, and that it has the same arguments
+    Symbol expr_type = expr->eval(symbol_table, class_table);
+    if(!class_table->class_exists(expr_type)) {
+	// TODO: ERROR - class does not exist
+    } else {
+    	if(!feature_table->method_exists_in_class(name, expr_type)) {
+	    // TODO: ERROR - method does not exist in class
+	} else {
+	    // check that args are valid
+	    std::vector<Symbol> arg_types = new std::vector<Symbol>();
+	    for(int j = actual->first(); actual->more(j); j = actual->next(j)) {
+		Expression curr_expr = actual->nth(j);
+		arg_types.push_back(curr_expr->eval(symbol_table, class_table));
+	    }
+	    if(!valid_dispatch_arguments(feature_table->get_methods(expr_type)[name], arg_types) {
+		// TODO: ERROR - invalid arguments being fed into dispatch call
+	    }
+	}
+    	// TODO: check that type of arguments being given to the dispatch is <= declared type of args in method declaration
+    }
+}
 
+bool dispatch_class::valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol>& arg_types) {
+    // check same number of arguments
+    if(list_length(method->formals) != arg_types.size()) return false;
+
+    // check valid args provided
+    Formals formals = method_defn->formals;
+    for(int j = formals->first(); formals->more(j); j = formals->next(j)) {
+	Formal curr_formal = formals->nth(j);
+	if(!class_table->is_child(arg_types[j], curr_formal->type_decl)) return false;
+    }
+
+    return true;
 }
 
 Symbol cond_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
@@ -598,8 +637,37 @@ Symbol loop_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *c
 }
 
 Symbol typcase_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
+    // check that variables in all branches have different types
+    std::set<Symbol> types = new std::set<Symbol>();
+    for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
+	Symbol type = cases->nth(i)->get_type();
+	if(types.count(type) > 0) {
+	    // TODO: ERROR - two branches have the same type declared
+	} else {
+	    types.insert(type);
+	}
+    }
+
+    // QN - since the value of expr0 is assigned to one of the id's, do we need to check that all the id's have types that can be assigned the type of the value of expr0?
+    // QN - do we need to enterscope() here on case branch? I think we need to..implemented below already.
+
     Symbol expr_type = expr->eval(symbol_table, class_table);
-    // go through class table and check if parent of the current class is one of the branches, done. if not, go to parent of parent, and check if that is one of the branches. if yes, done. if not, keep going up.
+
+    // find union class of all the expressions of all the branches
+    symbol_table->enterscope();
+    Case curr_case = cases->nth(cases->first());
+    symbol_table->addid(curr_case->name, expr_type);
+    Symbol ret_type = curr_case->expr->eval(symbol_table, class_table);
+    symbol_table->exitscope();
+    for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
+	symbol_table->enterscope();
+	Case curr_case = cases->nth(i);
+    	symbol_table->addid(curr_case->name, expr_type);
+	ret_type = class_table->lca(ret_type, curr_case->expr->eval(symbol_table, class_table));
+	symbol_table->exitscope();
+    }
+
+    return ret_type;
 }
 
 Symbol block_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
