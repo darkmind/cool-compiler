@@ -290,7 +290,15 @@ ostream& ClassTable::semant_error()
 bool ClassTable::class_exists(Symbol class_name)
 {
     return class_map.count(class_name) > 0;
-} 
+}
+
+Symbol ClassTable::lca(Symbol class1, Symbol class2)
+{
+    for (Symbol parent = class1; parent != Object; parent = class_map[parent]) {
+	if (is_child(class2, class1)) return class1;
+    }
+    return Object;
+}
 
 /*   This is the entry point to the semantic checker.
 
@@ -562,7 +570,13 @@ Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
 }
 
 Symbol cond_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Yushi
+    Symbol pred_type = pred->eval(symbol_table);
+    if (pred_type != Bool) {
+	// TODO: Error about the predicate not being boolean.
+    }
+    Symbol then_type = then_exp->eval(symbol_table);
+    Symbol else_type = else_exp->eval(symbol_table);
+    return class_table->lca(then_type, else_type);
 }
 
 Symbol loop_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
@@ -574,7 +588,10 @@ Symbol typcase_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
 }
 
 Symbol block_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Yushi
+    for(int i = body->first(); body->more(i); i = body->next(i)) {
+	if (!(body->more(body->next(i))) return body->nth(i)->eval(symbol_table);
+	body->nth(i)->eval(symbol_table);
+    }
 }
 
 Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
@@ -665,11 +682,12 @@ Symbol string_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
 }
 
 Symbol new__class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Yushi
+    // TODO: change the signature
 }
 
 Symbol isvoid_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Yushi
+    e1->eval(symbol_table);
+    return Bool;
 }
 
 Symbol no_expr_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
@@ -677,5 +695,14 @@ Symbol no_expr_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
 }
 
 Symbol object_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Yushi
+    Symbol obj_type = symbol_table->lookup(name);
+    if (obj_type == NULL) {
+	// TODO: print error about undefined object
+	return Object;
+    }
+    if (obj_type == Object) {
+	// TODO: print error about bad type
+	return Object;
+    }
+    return obj_type;
 }
