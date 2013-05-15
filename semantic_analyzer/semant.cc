@@ -14,6 +14,11 @@
 extern int semant_debug;
 extern char *curr_filename;
 
+enum feature_type {
+    ATTRIBUTE,
+    METHOD
+};
+
 //////////////////////////////////////////////////////////////////////
 //
 // Symbols
@@ -119,12 +124,14 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
     }
 }
 
-void ClassTable::populate_symbol_table(SymbolTable<char *,int> *sym_tab) {
-
-
+bool ClassTable::is_child(Symbol child_name, Symbol class_name) {
+    if(child_name == class_name) return true;
+    while(class_map[child_name] != Object) {
+	if (class_map[child_name] == class_name) return true;
+	child_name = class_map[child_name];
+    }
+    return false;
 }
-
-
 
 bool ClassTable::check_for_cycles() {
     bool cycle_exists = false;	
@@ -278,6 +285,11 @@ ostream& ClassTable::semant_error()
 {                                                 
     semant_errors++;                            
     return error_stream;
+}
+
+bool ClassTable::class_exists(Symbol class_name)
+{
+    return class_map.count(class_name) > 0;
 } 
 
 /*   This is the entry point to the semantic checker.
@@ -298,92 +310,239 @@ void program_class::semant()
     initialize_constants();
 
     /* ClassTable constructor may do some semantic analysis */
-    ClassTable *classtable = new ClassTable(classes);
-    if (classtable->errors()) {
+    ClassTable *class_table = new ClassTable(classes);
+    if (class_table->errors()) {
 	cerr << "Compilation halted due to static semantic errors." << endl;
 	exit(1);
     }
 
     // if code reaches here, then the map is well-formed so now check for cycles
-    if (classtable->check_for_cycles()){
+    if (class_table->check_for_cycles()){
 	cerr << "Compilation halted due to static semantic errors." << endl;
 	exit(1);
     }
 
-    SymbolTable<char *, int> *sym_tab = new SymbolTable<char *, int>();
-    MethodTable *method_tab = new MethodTable();
-    
-    sym_tab->populate(classes);
-    method_tab->populate(classes);
+    // TODO: check that there is a Main class with a main() method.
+    // TODO: check if any differences between archived project 1 test cases and PA1-tests.
+    // TODO: also need to add self, and SELF_TYPE in all these places. KV said there are lot of places with self and SELF_TYPE.
+
+    // go through classes and collect all methods in a method table
+    FeatureTable *feature_table = new FeatureTable();
+    feature_table->populate(classes);
+
+    SymbolTable<Symbol, Symbol> *symbol_table = new SymbolTable<Symbol, Symbol>();
+    symbol_table->class_table = class_table;
+    symbol_table->feature_table = feature_table;
+    symbol_table->traverse(classes);
 }
 
-MySymbolTable::populate(Classes classes) {
-    // here iterate through all the classes and populate the symbol table
-    for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
-	Class_ class_ptr = classes->nth(i);
-	Features features = class_ptr->get_features();
-	sym_tab->enterscope(); // new scope per class
-	for(int j = features->first(); features->more(j); j = features->next(j)) {
-	    Feature feature_ptr = features->nth(j);
-	    // try to cast to attribute class type
-	    attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
-	    if(attr == 0) {
-		// not an attribute so must be a method
-		method_class *method = dynamic_cast<method_class *>(feature_ptr);
-		sym_tab->enterscope(); // new scope per method
-		sym_tab->addid(method->name, sym_data);
-		sym_tab->exitscope(); // exit scope for method
-	    } else {
-		// an attribute - add if not already present in current scope
-		if(sym_tab->lookup(attribute->name) == NULL) {
-		    sym_data *sym_data = new sym_data;
-		    sym_data->type = attribute->type_decl;
-		    sym_data->init = attribute->init;
-		    sym_tab->addid(attribute->name, sym_data);
-		}
-	    }
-	}
-	sym_tab->exitscope(); // exit the scope for the class
-    }
-}
-
-MethodTable::MethodTable() {
+MySymbolTable::MySymbolTable() {
     // nothing to initialize
 }
 
-std::set<Symbol> MethodTable::getMethods(Symbol class_name) {
-    return class_methods[class_name].methods;
-}
-
-bool MethodTable::addMethod(method_class *method_ptr, Symbol class_name, Class_ c) {
-    if(class_methods.count(class_name) > 0) {
-        class_methods[class_name].methods.insert(method_name);
-    } else {
-	method_val val;
-	std::set<Symbol> methods;
-	methods.insert(method_name);
-	val.methods = methods;
-	val.c = c;
-	class_methods[class_name] = val;
+void MySymbolTable::traverse(Classes classes) {
+    // here iterate through all the classes and populate the symbol table
+    for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
+	symbol_table->enterscope(); // new scope per class	
+	Class_ class_ptr = classes->nth(i);
+	Features features = class_ptr->get_features();
+	check_attributes(features, class_ptr->getname()); // first, check all attributes
+	check_methods(features, class_ptr->getname()); // then go through methods one by one
+	symbol_table->exitscope(); // exit the scope for the class
     }
 }
 
-void MethodTable::populate(Classes classes) {
+void MySymbolTable::check_attributes(Features features, Symbol class_name) {
+    for(int j = features->first(); features->more(j); j = features->next(j)) {
+	Feature feature_ptr = features->nth(j);
+	int type = get_type_of_feature(feature_ptr);
+	if(type == ATTRIBUTE) {
+	    attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
+	    check_attribute(attribute, class_name);
+	}
+    }
+}
+
+void MySymbolTable::check_attribute(attr_class *attribute, Symbol class_name) {
+    // check whether exists in parent classes or not
+    if(is_attr_in_parent_classes(attribute, class_name)) {
+	// TODO: ERROR - attribute already defined in parent classes
+    } else {
+    	// check in same class whether attribute has been defined or not
+    	if(symbol_table->lookup(attribute->name) == NULL) {
+	    Symbol expr_type = check_expression(attribute->init);
+	    if(class_table->is_child(expr_type, attribute->type_decl)) {
+	        symbol_table->addid(attribute->name, expr_type);
+	    } else {
+	        // TODO: ERROR - initializing attribute with type that is not <= of static type
+	    }
+        } else {
+	    // TODO: ERROR - attribute already defined
+        }
+    }
+}
+
+bool MySymbolTable::is_attr_in_parent_classes(attr_class *attribute, Symbol class_name) {
+    while(class_map[child_name] != Object) {
+	Symbol parent_name = class_map[child_name];
+	if (feature_table[parent_name].attributes.count(attribute->name) > 0) return true;
+	child_name = parent_name;
+    }
+    return false;
+}
+
+feature_type MySymbolTable::get_type_of_feature(Feature feature) {
+    attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
+    if(attribute == 0) {
+	return METHOD;
+    } else {
+	return ATTRIBUTE;
+    }
+}
+
+void MySymbolTable::check_methods(Features features) {
+    for(int j = features->first(); features->more(j); j = features->next(j)) {
+	Feature feature_ptr = features->nth(j);
+	int type = get_type_of_feature(feature_ptr);
+	if(type == METHOD) {
+	    attr_method *method = dynamic_cast<attr_method *>(feature_ptr);
+	    check_method(method);
+	}
+    }
+}
+
+void MySymbolTable::check_method(method_class *method, Symbol class_name) {
+    symbol_table->enterscope(); // new scope per method
+    // check whether exists in parent classes or not
+    if(method_redefined_with_different_signature(method, class_name)) {
+	// TODO: ERROR - method from ancestor class redefined with different signature
+    } else {
+	// get formals (arguments) and add to current scope so that they are defined in the expression
+	Formals formals = method->formals;	
+	for (int j = formals->first(); formals->more(j); j = formals->next(j)) {
+	    Formal curr_formal = formals->nth(j);
+	    if (symbol_table->probe(curr_formal->get_name() == NULL) {
+		if (valid_type(curr_formal->get_type())) {
+  	    	    symbol_table->addid(curr_formal->get_name(), curr_formal->get_type());
+		} else {
+		    symbol_table->addid(curr_formal->get_name(), Object);
+		    // TODO: ERROR - undefined type of formal
+		}
+	    } else {
+	        // TODO: ERROR - formal defined again
+	    }
+	}
+        Symbol expr_type = check_expression(method->expr);
+	if(class_table->is_child(expr_type, method->return_type)) {
+	    symbol_table->addid(method->name, expr_type);
+	} else {
+	    // TODO: ERROR - type of expression returned by method is not <= of declared return type
+	}
+    }
+    symbol_table->exitscope(); // exit scope for method
+}
+
+bool MySymbolTable::valid_type(Symbol type) {
+    return (class_table->class_exists(type));
+}
+
+bool MySymbolTable::method_redefined_with_different_signature(method_class *method, Symbol class_name) {
+    while(class_map[child_name] != Object) {
+	Symbol parent_name = class_map[child_name];
+	if(feature_table[parent_name].methods.count(method->name) > 0) {
+	    method_class *other_method = feature_table[parent_name].methods[method->name];
+	    if(!have_identical_signatures(method, other_method)) return true;	
+	}
+	child_name = parent_name;
+    }
+    return false;
+}
+
+bool MySymbolTable::have_identical_signatures(method_class *method_one, method_class *method_two) {
+    // check same length of arguments
+    if(list_length(method_one->formals) != list_length(method_two->formals)) return false;
+    
+    // check same types of arguments
+    Formals formals_one = method_one->formals;
+    Formals formals_two = method_two->formals;
+    for(int j = formals_one->first(); formals_one->more(j); j = formals_one->next(j)) {
+	Formal curr_formal = formals_one->nth(j);
+	Formal other_formal = formals_two->nth(j);
+	if(curr_formal->get_type() != other_formal->get_type()) return false;
+    }
+
+    // check return type is the same for both methods
+    if(method_one->return_type != method_two->return_type) return false;
+
+    return true;
+}
+
+FeatureTable::FeatureTable() {
+    // nothing to initialize
+}
+
+std::map<Symbol, method_class *> FeatureTable::getMethods(Symbol class_name) {
+    return features[class_name].methods;
+}
+
+std::map<Symbol, Symbol> FeatureTable::getAttributes(Symbol class_name) {
+    return features[class_name].attributes;
+}
+
+bool FeatureTable::addMethod(Symbol class_name, method_class *method_ptr, Class_ c) {
+    Symbol method_name = method_ptr->name;
+    if(features.count(class_name) > 0) {
+	if (features[class_name].methods.count(method_name) > 0) {
+	    // TODO: Throw error for having the method twice in one class.
+        } else { 
+	    features[class_name].methods[method_name] = method_ptr;
+	}
+    } else {
+	features_struct new_features;
+	new_features.methods[method_name] = method_ptr;
+	new_features.c = c;
+	features[class_name] = new_features;
+    }
+}
+
+bool FeatureTable::addAttribute(Symbol class_name, attr_class *attr_ptr, Class_ c) {
+    Symbol attribute_name = attr_ptr->name;
+    if(features.count(class_name) > 0) {
+	if (features[class_name].attributes.count(attribute_name) > 0) {
+	    // TODO: Throw error for having the attribute twice in one class.
+        } else { 
+	    features[class_name].attributes[attribute_name] = attr_ptr->type_decl;
+	}
+    } else {
+	features_struct new_features;
+	new_features.attributes[attribute_name] = attr_ptr->type_decl;
+	new_features.c = c;
+	features[class_name] = new_features;
+    }
+}
+
+void FeatureTable::populate(Classes classes) {
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
 	Class_ class_ptr = classes->nth(i);
 	Features features = class_ptr->get_features();
 	for(int j = features->first(); features->more(j); j = features->next(j)) {
 	    Feature feature_ptr = features->nth(j);
 	    // try to cast to method class type
-	    method_class *meth = dynamic_cast<method_class *>(feature_ptr);
-	    if(method != NULL) {
+	    method_class *method_ptr = dynamic_cast<method_class *>(feature_ptr);
+	    if(method != 0) {
 	        // a method
-		addMethod(meth, class_ptr->name, class_ptr);
-		cerr << meth->name << "; " << class_ptr->name << endl;
- 
+		addMethod(class_ptr->name, method_ptr, class_ptr);
+		//cerr << meth->name << "; " << class_ptr->name << endl;
 	    } else {
 		// not a method, must be attribute
+		attr_ptr = dynamic_cast<attr_class *>(feature_ptr);
+		addAttribute(class_ptr->name, attr_ptr, class_ptr);
 	    }
 	}
     }
+}
+
+Symbol MySymbolTable::eval_expression(Expression expr){
+    // use case to check what type of expression it is
+    
 }

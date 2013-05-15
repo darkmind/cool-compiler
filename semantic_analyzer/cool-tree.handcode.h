@@ -82,10 +82,14 @@ void dump_with_types(ostream&,int);
 
 
 #define Formal_EXTRAS                              \
+virtual Symbol get_name() = 0;          	   \
+virtual Symbol get_type() = 0;                     \
 virtual void dump_with_types(ostream&,int) = 0;
 
 
 #define formal_EXTRAS                           \
+Symbol get_name() { return name; }          	\
+Symbol get_type() { return type_decl; }         \
 void dump_with_types(ostream&,int);
 
 

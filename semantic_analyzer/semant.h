@@ -40,36 +40,37 @@ public:
   ostream& semant_error();
   ostream& semant_error(Class_ c);
   ostream& semant_error(Symbol filename, tree_node *t);
+  bool class_exists(Symbol class_name);
 
   bool check_for_cycles();
 };
 
-class MethodTable {
+class FeatureTable {
 private:
-  struct method_val {
-    std::set<method_class *> methods;
+  struct features_struct {
+    std::map<Symbol, method_class *> methods;
+    std::map<Symbol, Symbol> attributes;
     Class_ c;
   };
-  std::map<Symbol, method_val> class_methods;
+  std::map<Symbol, features_struct> features;
 
 public:
-  MethodTable();
-  std::set<Symbol> getMethods(Symbol class_name);
-  bool addMethod(method_class *method_ptr, Symbol class_name, Class_ c);
+  FeatureTable();
+  std::map<Symbol, method_class *> getMethods(Symbol class_name);
+  std::map<Symbol, Symbol> getAttributes(Symbol class_name);
+  bool addMethod(Symbol class_name, method_class *method_ptr, Class_ c);
+  bool addAttribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
   void populate(Classes);
 };
 
 class MySymbolTable {
 private:
-  struct sym_data {
-    // here, put in data about the symbol that we want to store for later retrieval
-    Symbol type;
-    Expression init;
-  };
-  SymbolTable<Symbol, sym_data *> *sym_tab;
-
+  SymbolTable<Symbol, Symbol> *symbol_table;
+  ClassTable *class_table;
+  FeatureTable *feature_table;
 public:
-  void populate(Classes);
+  MySymbolTable();
+  void traverse(Classes);
 }
 
 #endif
