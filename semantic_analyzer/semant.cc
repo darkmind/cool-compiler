@@ -126,9 +126,9 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
 
 bool ClassTable::is_child(Symbol child_name, Symbol class_name) {
     if(child_name == class_name) return true;
-    while(class_map[child_name] != Object) {
-	if (class_map[child_name] == class_name) return true;
-	child_name = class_map[child_name];
+    while(class_map[child_name].parent != Object) {
+	if (class_map[child_name].parent == class_name) return true;
+	child_name = class_map[child_name].parent;
     }
     return false;
 }
@@ -294,7 +294,7 @@ bool ClassTable::class_exists(Symbol class_name)
 
 Symbol ClassTable::lca(Symbol class1, Symbol class2)
 {
-    for (Symbol parent = class1; parent != Object; parent = class_map[parent]) {
+    for (Symbol parent = class1; parent != Object; parent = class_map[parent].parent) {
 	if (is_child(class2, class1)) return class1;
     }
     return Object;
@@ -424,14 +424,14 @@ void SemanticAnalyzer::check_methods(Features features) {
 void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
     symbol_table->enterscope(); // new scope per method
     // check whether exists in parent classes or not
-    if(method_redefined_with_different_signature(method, class_name)) {
+    if (method_redefined_with_different_signature(method, class_name)) {
 	// TODO: ERROR - method from ancestor class redefined with different signature
     } else {
 	// get formals (arguments) and add to current scope so that they are defined in the expression
 	Formals formals = method->formals;	
 	for (int j = formals->first(); formals->more(j); j = formals->next(j)) {
 	    Formal curr_formal = formals->nth(j);
-	    if (symbol_table->probe(curr_formal->get_name() == NULL) {
+	    if (symbol_table->probe(curr_formal->get_name() == NULL)) {
 		if (valid_type(curr_formal->get_type())) {
   	    	    symbol_table->addid(curr_formal->get_name(), curr_formal->get_type());
 		} else {
@@ -615,7 +615,7 @@ Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cl
     Symbol init_expr_type = init->eval(symbol_table);
     Symbol type_of_attr = symbol_table->lookup(identifier);
     // check valid type
-    if(!is_child(init_expr_type, type_of_attr)) {
+    if(!class_table->is_child(init_expr_type, type_of_attr)) {
 	// TODO: ERROR - assigning a non-child value to the attribute
     } else {
 	// add to symbol table
@@ -722,7 +722,11 @@ Symbol string_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, Class
 }
 
 Symbol new__class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    // TODO: change the signature
+    if (class_table->class_exists(type_name)) return type_name;
+    else {
+	// TODO: error about undefined type
+	return Object;
+    }
 }
 
 Symbol isvoid_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
