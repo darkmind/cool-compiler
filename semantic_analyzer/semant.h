@@ -40,9 +40,12 @@ public:
   ostream& semant_error();
   ostream& semant_error(Class_ c);
   ostream& semant_error(Symbol filename, tree_node *t);
-  bool class_exists(Symbol class_name);
 
+  bool class_exists(Symbol class_name);
   bool check_for_cycles();
+  bool is_child(Symbol child_name, Symbol class_name);
+
+  Symbol lca(Symbol class1, Symbol class2);
 };
 
 class FeatureTable {
