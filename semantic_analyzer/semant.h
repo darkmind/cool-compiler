@@ -63,7 +63,7 @@ public:
   void populate(Classes);
 };
 
-class MySymbolTable {
+class SemanticAnalyzer {
 private:
   SymbolTable<Symbol, Symbol> *symbol_table;
   ClassTable *class_table;

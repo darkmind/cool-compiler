@@ -330,17 +330,18 @@ void program_class::semant()
     FeatureTable *feature_table = new FeatureTable();
     feature_table->populate(classes);
 
-    SymbolTable<Symbol, Symbol> *symbol_table = new SymbolTable<Symbol, Symbol>();
-    symbol_table->class_table = class_table;
-    symbol_table->feature_table = feature_table;
-    symbol_table->traverse(classes);
+    SemanticAnalyzer *semantic_analyzer = new SemanticAnalyzer();
+    semantic_analyzer->symbol_table = new SymbolTable<Symbol, Symbol>();
+    semantic_analyzer->class_table = class_table;
+    semantic_analyzer->feature_table = feature_table;
+    semantic_analyzer->traverse(classes);
 }
 
-MySymbolTable::MySymbolTable() {
+SemanticAnalyzer::MySymbolTable() {
     // nothing to initialize
 }
 
-void MySymbolTable::traverse(Classes classes) {
+void SemanticAnalyzer::traverse(Classes classes) {
     // here iterate through all the classes and populate the symbol table
     for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
 	symbol_table->enterscope(); // new scope per class	
@@ -352,7 +353,7 @@ void MySymbolTable::traverse(Classes classes) {
     }
 }
 
-void MySymbolTable::check_attributes(Features features, Symbol class_name) {
+void SemanticAnalyzer::check_attributes(Features features, Symbol class_name) {
     for(int j = features->first(); features->more(j); j = features->next(j)) {
 	Feature feature_ptr = features->nth(j);
 	int type = get_type_of_feature(feature_ptr);
@@ -363,14 +364,14 @@ void MySymbolTable::check_attributes(Features features, Symbol class_name) {
     }
 }
 
-void MySymbolTable::check_attribute(attr_class *attribute, Symbol class_name) {
+void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name) {
     // check whether exists in parent classes or not
     if(is_attr_in_parent_classes(attribute, class_name)) {
 	// TODO: ERROR - attribute already defined in parent classes
     } else {
     	// check in same class whether attribute has been defined or not
     	if(symbol_table->lookup(attribute->name) == NULL) {
-	    Symbol expr_type = check_expression(attribute->init);
+	    Symbol expr_type = (attribute->init)->eval(symbol_table);
 	    if(class_table->is_child(expr_type, attribute->type_decl)) {
 	        symbol_table->addid(attribute->name, expr_type);
 	    } else {
@@ -382,7 +383,7 @@ void MySymbolTable::check_attribute(attr_class *attribute, Symbol class_name) {
     }
 }
 
-bool MySymbolTable::is_attr_in_parent_classes(attr_class *attribute, Symbol class_name) {
+bool SemanticAnalyzer::is_attr_in_parent_classes(attr_class *attribute, Symbol class_name) {
     while(class_map[child_name] != Object) {
 	Symbol parent_name = class_map[child_name];
 	if (feature_table[parent_name].attributes.count(attribute->name) > 0) return true;
@@ -391,7 +392,7 @@ bool MySymbolTable::is_attr_in_parent_classes(attr_class *attribute, Symbol clas
     return false;
 }
 
-feature_type MySymbolTable::get_type_of_feature(Feature feature) {
+feature_type SemanticAnalyzer::get_type_of_feature(Feature feature) {
     attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
     if(attribute == 0) {
 	return METHOD;
@@ -400,7 +401,7 @@ feature_type MySymbolTable::get_type_of_feature(Feature feature) {
     }
 }
 
-void MySymbolTable::check_methods(Features features) {
+void SemanticAnalyzer::check_methods(Features features) {
     for(int j = features->first(); features->more(j); j = features->next(j)) {
 	Feature feature_ptr = features->nth(j);
 	int type = get_type_of_feature(feature_ptr);
@@ -411,7 +412,7 @@ void MySymbolTable::check_methods(Features features) {
     }
 }
 
-void MySymbolTable::check_method(method_class *method, Symbol class_name) {
+void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
     symbol_table->enterscope(); // new scope per method
     // check whether exists in parent classes or not
     if(method_redefined_with_different_signature(method, class_name)) {
@@ -432,7 +433,7 @@ void MySymbolTable::check_method(method_class *method, Symbol class_name) {
 	        // TODO: ERROR - formal defined again
 	    }
 	}
-        Symbol expr_type = check_expression(method->expr);
+        Symbol expr_type = (method->expr)->eval(symbol_table);
 	if(class_table->is_child(expr_type, method->return_type)) {
 	    symbol_table->addid(method->name, expr_type);
 	} else {
@@ -442,11 +443,11 @@ void MySymbolTable::check_method(method_class *method, Symbol class_name) {
     symbol_table->exitscope(); // exit scope for method
 }
 
-bool MySymbolTable::valid_type(Symbol type) {
+bool SemanticAnalyzer::valid_type(Symbol type) {
     return (class_table->class_exists(type));
 }
 
-bool MySymbolTable::method_redefined_with_different_signature(method_class *method, Symbol class_name) {
+bool SemanticAnalyzer::method_redefined_with_different_signature(method_class *method, Symbol class_name) {
     while(class_map[child_name] != Object) {
 	Symbol parent_name = class_map[child_name];
 	if(feature_table[parent_name].methods.count(method->name) > 0) {
@@ -458,7 +459,7 @@ bool MySymbolTable::method_redefined_with_different_signature(method_class *meth
     return false;
 }
 
-bool MySymbolTable::have_identical_signatures(method_class *method_one, method_class *method_two) {
+bool SemanticAnalyzer::have_identical_signatures(method_class *method_one, method_class *method_two) {
     // check same length of arguments
     if(list_length(method_one->formals) != list_length(method_two->formals)) return false;
     
@@ -542,7 +543,139 @@ void FeatureTable::populate(Classes classes) {
     }
 }
 
-Symbol MySymbolTable::eval_expression(Expression expr){
-    // use case to check what type of expression it is
-    
+Symbol assign_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    // Jay
+    // check that name is defined in symbol table, and that expression is valid type
+    Symbol expr_type = expr->eval(symbol_table);
+    Symbol type_of_attr = symbol_table->lookup(name);
+    if(type_of_attr) {
+	// the attribute being assigned to is defined in the symbol table
+    }
+}
+
+Symbol static_dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+
+}
+
+Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+
+}
+
+Symbol cond_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Yushi
+}
+
+Symbol loop_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Yushi
+}
+
+Symbol typcase_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Yushi
+}
+
+Symbol block_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Yushi
+}
+
+Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Jay
+}
+
+Symbol plus_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(symbol_table);
+    Symbol e2_type = e2->eval(symbol_table);
+    if(e1_type != Int || e2_type != Int) {
+	// TODO: ERROR - cannot add non-int values
+    }
+    return Int;
+}
+
+Symbol sub_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(symbol_table);
+    Symbol e2_type = e2->eval(symbol_table);
+    if(e1_type != Int || e2_type != Int) {
+	// TODO: ERROR - cannot subtract non-int values
+    }
+    return Int;
+}
+
+Symbol mul_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(symbol_table);
+    Symbol e2_type = e2->eval(symbol_table);
+    if(e1_type != Int || e2_type != Int) {
+	// TODO: ERROR - cannot multiply non-int values
+    }
+    return Int;
+}
+
+Symbol divide_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(symbol_table);
+    Symbol e2_type = e2->eval(symbol_table);
+    if(e1_type != Int || e2_type != Int) {
+	// TODO: ERROR - cannot divide non-int values
+    }
+    return Int;
+}
+
+Symbol neg_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Jay
+}
+
+Symbol lt_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(symbol_table);
+    Symbol e2_type = e2->eval(symbol_table);
+    if(e1_type != Int || e2_type != Int) {
+	// TODO: ERROR - cannot order non-int values
+    }
+    return Bool;
+}
+
+Symbol eq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(symbol_table);
+    Symbol e2_type = e2->eval(symbol_table);
+    if(e1_type != e2_type) {
+	// TODO: ERROR - cannot compare values of different types
+    }
+    return Bool;
+}
+
+Symbol leq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(symbol_table);
+    Symbol e2_type = e2->eval(symbol_table);
+    if(e1_type != Int || e2_type != Int) {
+	// TODO: ERROR - cannot order non-int values
+    }
+    return Bool;
+}
+
+Symbol comp_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Jay
+}
+
+Symbol int_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    return Int;
+}
+
+Symbol bool_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    return Bool;
+}
+
+Symbol string_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    return Str;
+}
+
+Symbol new__class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Yushi
+}
+
+Symbol isvoid_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Yushi
+}
+
+Symbol no_expr_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+    return No_type;
+}
+
+Symbol object_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+// Yushi
 }
