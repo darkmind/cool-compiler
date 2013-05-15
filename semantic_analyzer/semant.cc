@@ -380,7 +380,7 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
     } else {
     	// check in same class whether attribute has been defined or not
     	if(symbol_table->lookup(attribute->name) == NULL) {
-	    Symbol expr_type = (attribute->init)->eval(symbol_table);
+	    Symbol expr_type = (attribute->init)->eval(symbol_table, class_table);
 	    if(class_table->is_child(expr_type, attribute->type_decl)) {
 	        symbol_table->addid(attribute->name, expr_type);
 	    } else {
@@ -442,7 +442,7 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	        // TODO: ERROR - formal defined again
 	    }
 	}
-        Symbol expr_type = (method->expr)->eval(symbol_table);
+        Symbol expr_type = (method->expr)->eval(symbol_table, class_table);
 	if(class_table->is_child(expr_type, method->return_type)) {
 	    symbol_table->addid(method->name, expr_type);
 	} else {
@@ -554,7 +554,7 @@ void FeatureTable::populate(Classes classes) {
 
 Symbol assign_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     // check that name is defined in symbol table, and that expression is valid type
-    Symbol expr_type = expr->eval(symbol_table);
+    Symbol expr_type = expr->eval(symbol_table, class_table);
     Symbol type_of_attr = symbol_table->lookup(name);
     if(type_of_attr) {
 	// the attribute being assigned to is defined in the symbol table
@@ -579,40 +579,40 @@ Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTabl
 }
 
 Symbol cond_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol pred_type = pred->eval(symbol_table);
+    Symbol pred_type = pred->eval(symbol_table, class_table);
     if (pred_type != Bool) {
 	// TODO: Error about the predicate not being boolean.
     }
-    Symbol then_type = then_exp->eval(symbol_table);
-    Symbol else_type = else_exp->eval(symbol_table);
+    Symbol then_type = then_exp->eval(symbol_table, class_table);
+    Symbol else_type = else_exp->eval(symbol_table, class_table);
     return class_table->lca(then_type, else_type);
 }
 
 Symbol loop_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol pred_type = pred->eval(symbol_table);
+    Symbol pred_type = pred->eval(symbol_table, class_table);
     if(pred_type != Bool) {
 	// TODO: ERROR - predicate type has to be Bool
     }
-    Symbol body_type = body->eval(symbol_table);
+    Symbol body_type = body->eval(symbol_table, class_table);
     return Object;
 }
 
 Symbol typcase_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol expr_type = expr->eval(symbol_table);
+    Symbol expr_type = expr->eval(symbol_table, class_table);
     // go through class table and check if parent of the current class is one of the branches, done. if not, go to parent of parent, and check if that is one of the branches. if yes, done. if not, keep going up.
 }
 
 Symbol block_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     for(int i = body->first(); body->more(i); i = body->next(i)) {
-	if (!(body->more(body->next(i))) return body->nth(i)->eval(symbol_table);
-	body->nth(i)->eval(symbol_table);
+	if (!(body->more(body->next(i))) return body->nth(i)->eval(symbol_table, class_table);
+	body->nth(i)->eval(symbol_table, class_table);
     }
 }
 
 Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     symbol_table->enterscope();
     // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
-    Symbol init_expr_type = init->eval(symbol_table);
+    Symbol init_expr_type = init->eval(symbol_table, class_table);
     Symbol type_of_attr = symbol_table->lookup(identifier);
     // check valid type
     if(!class_table->is_child(init_expr_type, type_of_attr)) {
@@ -623,14 +623,14 @@ Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cl
     }
 
     // at this point, all the formals have been added to the symbol table
-    Symbol let_return_type = body->eval(symbol_table);
+    Symbol let_return_type = body->eval(symbol_table, class_table);
     symbol_table->exitscope();
     return let_return_type;
 }
 
 Symbol plus_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol e1_type = e1->eval(symbol_table);
-    Symbol e2_type = e2->eval(symbol_table);
+    Symbol e1_type = e1->eval(symbol_table, class_table);
+    Symbol e2_type = e2->eval(symbol_table, class_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot add non-int values
     }
@@ -638,8 +638,8 @@ Symbol plus_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *c
 }
 
 Symbol sub_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol e1_type = e1->eval(symbol_table);
-    Symbol e2_type = e2->eval(symbol_table);
+    Symbol e1_type = e1->eval(symbol_table, class_table);
+    Symbol e2_type = e2->eval(symbol_table, class_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot subtract non-int values
     }
@@ -647,8 +647,8 @@ Symbol sub_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cl
 }
 
 Symbol mul_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol e1_type = e1->eval(symbol_table);
-    Symbol e2_type = e2->eval(symbol_table);
+    Symbol e1_type = e1->eval(symbol_table, class_table);
+    Symbol e2_type = e2->eval(symbol_table, class_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot multiply non-int values
     }
@@ -656,8 +656,8 @@ Symbol mul_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cl
 }
 
 Symbol divide_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol e1_type = e1->eval(symbol_table);
-    Symbol e2_type = e2->eval(symbol_table);
+    Symbol e1_type = e1->eval(symbol_table, class_table);
+    Symbol e2_type = e2->eval(symbol_table, class_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot divide non-int values
     }
@@ -666,7 +666,7 @@ Symbol divide_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable 
 
 Symbol neg_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     // applies to integers
-    Symbol expr_type = e1->eval(symbol_table);
+    Symbol expr_type = e1->eval(symbol_table, class_table);
     if(expr_type != Int) {
 	// TODO: ERROR - cannot take negation of non-integer
     }
@@ -674,8 +674,8 @@ Symbol neg_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cl
 }
 
 Symbol lt_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol e1_type = e1->eval(symbol_table);
-    Symbol e2_type = e2->eval(symbol_table);
+    Symbol e1_type = e1->eval(symbol_table, class_table);
+    Symbol e2_type = e2->eval(symbol_table, class_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot order non-int values
     }
@@ -683,8 +683,8 @@ Symbol lt_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cla
 }
 
 Symbol eq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol e1_type = e1->eval(symbol_table);
-    Symbol e2_type = e2->eval(symbol_table);
+    Symbol e1_type = e1->eval(symbol_table, class_table);
+    Symbol e2_type = e2->eval(symbol_table, class_table);
     if(e1_type != e2_type) {
 	// TODO: ERROR - cannot compare values of different types
     }
@@ -692,8 +692,8 @@ Symbol eq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cla
 }
 
 Symbol leq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    Symbol e1_type = e1->eval(symbol_table);
-    Symbol e2_type = e2->eval(symbol_table);
+    Symbol e1_type = e1->eval(symbol_table, class_table);
+    Symbol e2_type = e2->eval(symbol_table, class_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot order non-int values
     }
@@ -702,7 +702,7 @@ Symbol leq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cl
 
 Symbol comp_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     // applies to booleans
-    Symbol expr_type = e1->eval(symbol_table);
+    Symbol expr_type = e1->eval(symbol_table, class_table);
     if(expr_type != Bool) {
 	// TODO: ERROR - cannot take complement of non-boolean
     }
@@ -730,7 +730,7 @@ Symbol new__class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *c
 }
 
 Symbol isvoid_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
-    e1->eval(symbol_table);
+    e1->eval(symbol_table, class_table);
     return Bool;
 }
 
