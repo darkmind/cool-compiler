@@ -344,6 +344,7 @@ SemanticAnalyzer::MySymbolTable() {
 void SemanticAnalyzer::traverse(Classes classes) {
     // here iterate through all the classes and populate the symbol table
     for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
+	// TODO: add 
 	symbol_table->enterscope(); // new scope per class	
 	Class_ class_ptr = classes->nth(i);
 	Features features = class_ptr->get_features();
@@ -544,13 +545,21 @@ void FeatureTable::populate(Classes classes) {
 }
 
 Symbol assign_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-    // Jay
     // check that name is defined in symbol table, and that expression is valid type
     Symbol expr_type = expr->eval(symbol_table);
     Symbol type_of_attr = symbol_table->lookup(name);
     if(type_of_attr) {
 	// the attribute being assigned to is defined in the symbol table
+	if(!is_child(expr_type, type_of_attr)) {
+	    // TODO: ERROR - assigning a non-child value to the attribute
+	} else {
+	    // add to symbol table
+	    symbol_table->addid(name, expr_type);
+	}
+    } else {
+	// TODO: ERROR - attribute being assigned to is not defined
     }
+    return expr_type;
 }
 
 Symbol static_dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
@@ -566,11 +575,17 @@ Symbol cond_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
 }
 
 Symbol loop_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Yushi
+    Symbol pred_type = pred->eval(symbol_table);
+    if(pred_type != Bool) {
+	// TODO: ERROR - predicate type has to be Bool
+    }
+    Symbol body_type = body->eval(symbol_table);
+    return Object;
 }
 
 Symbol typcase_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Yushi
+    Symbol expr_type = expr->eval(symbol_table);
+    // go through class table and check if parent of the current class is one of the branches, done. if not, go to parent of parent, and check if that is one of the branches. if yes, done. if not, keep going up.
 }
 
 Symbol block_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
@@ -578,7 +593,22 @@ Symbol block_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
 }
 
 Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Jay
+    symbol_table->enterscope();
+    // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
+    Symbol init_expr_type = init->eval(symbol_table);
+    Symbol type_of_attr = symbol_table->lookup(identifier);
+    // check valid type
+    if(!is_child(init_expr_type, type_of_attr)) {
+	// TODO: ERROR - assigning a non-child value to the attribute
+    } else {
+	// add to symbol table
+	symbol_table->addid(identifier, init_expr_type);
+    }
+
+    // at this point, all the formals have been added to the symbol table
+    Symbol let_return_type = body->eval(symbol_table);
+    symbol_table->exitscope();
+    return let_return_type;
 }
 
 Symbol plus_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
@@ -618,7 +648,12 @@ Symbol divide_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
 }
 
 Symbol neg_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Jay
+    // applies to integers
+    Symbol expr_type = e1->eval(symbol_table);
+    if(expr_type != Int) {
+	// TODO: ERROR - cannot take negation of non-integer
+    }
+    return Int;
 }
 
 Symbol lt_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
@@ -649,7 +684,12 @@ Symbol leq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
 }
 
 Symbol comp_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
-// Jay
+    // applies to booleans
+    Symbol expr_type = e1->eval(symbol_table);
+    if(expr_type != Bool) {
+	// TODO: ERROR - cannot take complement of non-boolean
+    }
+    return Bool;
 }
 
 Symbol int_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
