@@ -552,7 +552,7 @@ void FeatureTable::populate(Classes classes) {
     }
 }
 
-Symbol assign_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol assign_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     // check that name is defined in symbol table, and that expression is valid type
     Symbol expr_type = expr->eval(symbol_table);
     Symbol type_of_attr = symbol_table->lookup(name);
@@ -570,15 +570,15 @@ Symbol assign_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return expr_type;
 }
 
-Symbol static_dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol static_dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
 
 }
 
-Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
 
 }
 
-Symbol cond_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol cond_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol pred_type = pred->eval(symbol_table);
     if (pred_type != Bool) {
 	// TODO: Error about the predicate not being boolean.
@@ -588,7 +588,7 @@ Symbol cond_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return class_table->lca(then_type, else_type);
 }
 
-Symbol loop_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol loop_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol pred_type = pred->eval(symbol_table);
     if(pred_type != Bool) {
 	// TODO: ERROR - predicate type has to be Bool
@@ -597,19 +597,19 @@ Symbol loop_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Object;
 }
 
-Symbol typcase_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol typcase_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol expr_type = expr->eval(symbol_table);
     // go through class table and check if parent of the current class is one of the branches, done. if not, go to parent of parent, and check if that is one of the branches. if yes, done. if not, keep going up.
 }
 
-Symbol block_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol block_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     for(int i = body->first(); body->more(i); i = body->next(i)) {
 	if (!(body->more(body->next(i))) return body->nth(i)->eval(symbol_table);
 	body->nth(i)->eval(symbol_table);
     }
 }
 
-Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     symbol_table->enterscope();
     // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
     Symbol init_expr_type = init->eval(symbol_table);
@@ -628,7 +628,7 @@ Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return let_return_type;
 }
 
-Symbol plus_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol plus_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol e1_type = e1->eval(symbol_table);
     Symbol e2_type = e2->eval(symbol_table);
     if(e1_type != Int || e2_type != Int) {
@@ -637,7 +637,7 @@ Symbol plus_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Int;
 }
 
-Symbol sub_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol sub_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol e1_type = e1->eval(symbol_table);
     Symbol e2_type = e2->eval(symbol_table);
     if(e1_type != Int || e2_type != Int) {
@@ -646,7 +646,7 @@ Symbol sub_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Int;
 }
 
-Symbol mul_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol mul_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol e1_type = e1->eval(symbol_table);
     Symbol e2_type = e2->eval(symbol_table);
     if(e1_type != Int || e2_type != Int) {
@@ -655,7 +655,7 @@ Symbol mul_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Int;
 }
 
-Symbol divide_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol divide_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol e1_type = e1->eval(symbol_table);
     Symbol e2_type = e2->eval(symbol_table);
     if(e1_type != Int || e2_type != Int) {
@@ -664,7 +664,7 @@ Symbol divide_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Int;
 }
 
-Symbol neg_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol neg_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     // applies to integers
     Symbol expr_type = e1->eval(symbol_table);
     if(expr_type != Int) {
@@ -673,7 +673,7 @@ Symbol neg_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Int;
 }
 
-Symbol lt_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol lt_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol e1_type = e1->eval(symbol_table);
     Symbol e2_type = e2->eval(symbol_table);
     if(e1_type != Int || e2_type != Int) {
@@ -682,7 +682,7 @@ Symbol lt_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Bool;
 }
 
-Symbol eq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol eq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol e1_type = e1->eval(symbol_table);
     Symbol e2_type = e2->eval(symbol_table);
     if(e1_type != e2_type) {
@@ -691,7 +691,7 @@ Symbol eq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Bool;
 }
 
-Symbol leq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol leq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol e1_type = e1->eval(symbol_table);
     Symbol e2_type = e2->eval(symbol_table);
     if(e1_type != Int || e2_type != Int) {
@@ -700,7 +700,7 @@ Symbol leq_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Bool;
 }
 
-Symbol comp_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol comp_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     // applies to booleans
     Symbol expr_type = e1->eval(symbol_table);
     if(expr_type != Bool) {
@@ -709,32 +709,32 @@ Symbol comp_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
     return Bool;
 }
 
-Symbol int_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol int_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     return Int;
 }
 
-Symbol bool_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol bool_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     return Bool;
 }
 
-Symbol string_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol string_const_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     return Str;
 }
 
-Symbol new__class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol new__class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     // TODO: change the signature
 }
 
-Symbol isvoid_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol isvoid_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     e1->eval(symbol_table);
     return Bool;
 }
 
-Symbol no_expr_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol no_expr_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     return No_type;
 }
 
-Symbol object_class::eval(SymbolTable<Symbol, Symbol> *symbol_table) {
+Symbol object_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table) {
     Symbol obj_type = symbol_table->lookup(name);
     if (obj_type == NULL) {
 	// TODO: print error about undefined object
