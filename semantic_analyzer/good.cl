@@ -11,7 +11,9 @@ class C {
 };
 
 Class Main {
+	a:Int;
 	main():C {
-	  (new C).init(1,true)
+	  a <- 5;
+	  --(new C).init(1,true)
 	};
 };

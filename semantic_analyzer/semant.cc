@@ -562,7 +562,7 @@ void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_
     }
 }
 
-bool FeatureTable::valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types) {
+bool FeatureTable::valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table) {
     // check same number of arguments
     if((size_t)method_defn->get_formals()->len() != arg_types->size()) return false;
 
@@ -570,7 +570,7 @@ bool FeatureTable::valid_dispatch_arguments(method_class *method_defn, std::vect
     Formals formals = method_defn->get_formals();
     for(int j = formals->first(); formals->more(j); j = formals->next(j)) {
 	Formal curr_formal = formals->nth(j);
-	if(!class_table->is_child((*arg_types)[j], curr_formal->type_decl)) return false;
+	if(!class_table->is_child((*arg_types)[j], curr_formal->get_type())) return false;
     }
 
     return true;
@@ -636,7 +636,7 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
 		Expression curr_expr = actual->nth(j);
 		arg_types->push_back(curr_expr->eval(class_table, feature_table, symbol_table));
 	    }
-	    if(!feature_table->valid_dispatch_arguments(feature_table->get_methods(specified_parent)[name], arg_types)) {
+	    if(!feature_table->valid_dispatch_arguments(feature_table->get_methods(specified_parent)[name], arg_types, class_table)) {
 		// TODO: ERROR - invalid arguments being fed into dispatch call
 	    }
 	}
@@ -681,7 +681,7 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 		Expression curr_expr = actual->nth(j);
 		arg_types->push_back(curr_expr->eval(class_table, feature_table, symbol_table));
 	    }
-	    if(!feature_table->valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types)) {
+	    if(!feature_table->valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types, class_table)) {
 		// TODO: ERROR - invalid arguments being fed into dispatch call
 	    }
 	}
@@ -727,13 +727,13 @@ Symbol loop_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sy
 
 Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // check that variables in all branches have different types
-    std::set<Symbol> types = new std::set<Symbol>();
+    std::set<Symbol> *types = new std::set<Symbol>();
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
 	Symbol type = cases->nth(i)->get_type();
-	if(types.count(type) > 0) {
+	if(types->count(type) > 0) {
 	    // TODO: ERROR - two branches have the same type declared
 	} else {
-	    types.insert(type);
+	    types->insert(type);
 	}
     }
 
@@ -745,14 +745,14 @@ Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table,
     // find union class of all the expressions of all the branches
     symbol_table->enterscope();
     Case curr_case = cases->nth(cases->first());
-    symbol_table->addid(curr_case->name, new Symbol(expr_type));
-    Symbol ret_type = curr_case->expr->eval(class_table, feature_table, symbol_table);
+    symbol_table->addid(curr_case->get_name(), new Symbol(expr_type));
+    Symbol ret_type = curr_case->get_expr()->eval(class_table, feature_table, symbol_table);
     symbol_table->exitscope();
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
 	symbol_table->enterscope();
 	Case curr_case = cases->nth(i);
-    	symbol_table->addid(curr_case->name, new Symbol(expr_type));
-	ret_type = class_table->lca(ret_type, curr_case->expr->eval(class_table, feature_table, symbol_table));
+    	symbol_table->addid(curr_case->get_name(), new Symbol(expr_type));
+	ret_type = class_table->lca(ret_type, curr_case->get_expr()->eval(class_table, feature_table, symbol_table));
 	symbol_table->exitscope();
     }
 
@@ -762,19 +762,22 @@ Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table,
 }
 
 Symbol block_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol last;
     for(int i = body->first(); body->more(i); i = body->next(i)) {
 	if ( !(body->more(body->next(i))) ) {
 	    set_type(body->nth(i)->eval(class_table, feature_table, symbol_table));
-	    return body->nth(i)->eval(class_table, feature_table, symbol_table);
+	    last = body->nth(i)->eval(class_table, feature_table, symbol_table);
+	    break;
 	}
 	body->nth(i)->eval(class_table, feature_table, symbol_table);
     }
+    return last;
 }
 
 Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     symbol_table->enterscope();
     // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
-    Symbol init_expr_type = init->eval(symbol_table, class_table, feature_table);
+    Symbol init_expr_type = init->eval(class_table, feature_table, symbol_table);
     Symbol type_of_attr;
     if (type_decl == SELF_TYPE) type_of_attr = *(symbol_table->lookup(self));
     else type_of_attr = *(symbol_table->lookup(type_decl));
