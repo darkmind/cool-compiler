@@ -31,7 +31,6 @@ enum feature_type {
 class ClassTable {
 private:
   int semant_errors;
-  void install_basic_classes();
   ostream& error_stream;
   
   struct map_val {
@@ -48,6 +47,9 @@ public:
   ostream& semant_error(Class_ c);
   ostream& semant_error(Symbol filename, tree_node *t);
 
+  void install_basic_classes();
+  void add_class(Symbol name, Symbol parent, Class_ c);
+
   bool class_exists(Symbol class_name);
   bool check_for_cycles();
   bool is_child(Symbol child_name, Symbol class_name);
@@ -55,6 +57,7 @@ public:
   void set_curr_class_ptr(Class_ class_ptr);
   Class_ curr_class_ptr();
 
+  Symbol get_parent(Symbol class_name);
   Symbol lca(Symbol class1, Symbol class2);
 };
 
