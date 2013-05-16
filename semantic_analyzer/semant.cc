@@ -351,6 +351,21 @@ void program_class::semant()
     FeatureTable *feature_table = new FeatureTable();
     feature_table->populate(classes);
 
+    // check for existence of Main class and main() method with no args within it
+    if(!class_table->class_exists(Main)) {
+	cerr << "<Main class not defined." << endl;
+    } else {
+        // check that main method exists in it using feature table
+	if(!feature_table->method_exists_in_class(main_meth, Main)) {
+	    cerr << "main() method not defined." << endl;
+	} else {
+	    method_class *main_method = feature_table->get_methods(Main)[main_meth];
+	    if(main_method->get_formals()->len() != 0) {
+		cerr << "main() method should not have any arguments." << endl;
+	    }	
+	}
+    }
+
     SemanticAnalyzer *semantic_analyzer = new SemanticAnalyzer();
     SymbolTable<Symbol, Symbol> *symbol_table = new SymbolTable<Symbol, Symbol>();
     semantic_analyzer->set_symbol_table(symbol_table);
