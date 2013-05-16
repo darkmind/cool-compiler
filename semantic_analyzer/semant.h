@@ -39,6 +39,7 @@ private:
 	Class_ c;
   };
   std::map<Symbol, map_val> class_map;
+  Class_ curr_class_ptr;
 
 public:
   ClassTable(Classes);
@@ -51,6 +52,8 @@ public:
   bool check_for_cycles();
   bool is_child(Symbol child_name, Symbol class_name);
   Symbol get_parent(Symbol class_name);
+  void set_curr_class_ptr(Class_ class_ptr);
+  Class_ curr_class_ptr();
 
   Symbol lca(Symbol class1, Symbol class2);
 };

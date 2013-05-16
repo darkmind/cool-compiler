@@ -299,6 +299,14 @@ Symbol ClassTable::get_parent(Symbol class_name) {
     return class_map[class_name].parent;
 }
 
+void ClassTable::set_curr_class_ptr(Class_ class_ptr) {
+    curr_class_ptr = class_ptr;
+}
+
+Class_ ClassTable::curr_class_ptr() {
+    return curr_class_ptr;
+}
+
 /*   This is the entry point to the semantic checker.
 
      Your checker should do the following two things:
@@ -339,21 +347,21 @@ void program_class::semant()
 	exit(1);
     }
 
-    // TODO: check that there is a Main class with a main() method.
     // TODO: check if any differences between archived project 1 test cases and PA1-tests.
     // TODO: also need to add self, and SELF_TYPE in all these places. KV said there are lot of places with self and SELF_TYPE.
     // QN - in type checking, when assigning expression to attribute, need to check type of expression is valid. then when add to symbol table, add the type of expression or static type of attribute?
     // TODO: return Object everywhere there is an error reported that prevents the expression from being evaluated properly
     // TODO: KV said something about adding the parent's methods/attributes into the current scope/local table
-    // TODO: check that code
+    // TODO: check static type vs dynamic type - thing that I spoke to Michael about
 
     // go through classes and collect all methods in a method table
     FeatureTable *feature_table = new FeatureTable();
     feature_table->populate(classes);
 
     // check for existence of Main class and main() method with no args within it
+    // TODO: label Main in AST?
     if(!class_table->class_exists(Main)) {
-	cerr << "<Main class not defined." << endl;
+	cerr << "Main class not defined." << endl;
     } else {
         // check that main method exists in it using feature table
 	if(!feature_table->method_exists_in_class(main_meth, Main)) {
@@ -399,7 +407,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	symbol_table->addid(self, new Symbol(class_ptr->get_name()));
 	Features features = class_ptr->get_features();
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
-	check_methods(features, class_ptr->get_name()); // then go through methods one by one
+	//check_methods(features, class_ptr->get_name()); // then go through methods one by one
 	symbol_table->exitscope(); // exit the scope for the class
     }
 }
@@ -418,18 +426,18 @@ void SemanticAnalyzer::check_attributes(Features features, Symbol class_name) {
 void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name) {
     // check whether exists in parent classes or not
     if(is_attr_in_parent_classes(attribute, class_name)) {
-	// TODO: ERROR - attribute already defined in parent classes
+	semant_error(class_table->curr_class_ptr()) << "Attribute " << attribute->get_name() << " already defined in ancestor classes." << endl;
     } else {
     	// check in same class whether attribute has been defined or not
-    	if(*(symbol_table->lookup(attribute->get_name())) == NULL) {
+    	if(symbol_table->lookup(attribute->get_name()) == NULL) {
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
 	    if(class_table->is_child(expr_type, attribute->get_type())) {
 	        symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
 	    } else {
-	        // TODO: ERROR - initializing attribute with type that is not <= of static type
+		semant_error(class_table->curr_class_ptr()) << "Assigning expression of type " << expr_type << " to attribute of static type " << attribute->get_type() << "." << endl;
 	    }
         } else {
-	    // TODO: ERROR - attribute already defined
+	    semant_error(class_table->curr_class_ptr()) << "Redefining attribute " << attribute->get_name() << " not allowed." << endl;
         }
     }
 }
@@ -467,7 +475,7 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
     symbol_table->enterscope(); // new scope per method
     // check whether exists in parent classes or not
     if (method_redefined_with_different_signature(method, class_name)) {
-	// TODO: ERROR - method from ancestor class redefined with different signature
+	semant_error(class_table->curr_class_ptr()) << "Overridden method from parent with different signature." << endl;
     } else {
 	// get formals (arguments) and add to current scope so that they are defined in the expression
 	Formals formals = method->get_formals();	
@@ -478,17 +486,17 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
   	    	    symbol_table->addid(curr_formal->get_name(), new Symbol(curr_formal->get_type()));
 		} else {
 		    symbol_table->addid(curr_formal->get_name(), new Symbol(Object));
-		    // TODO: ERROR - undefined type of formal
+		    semant_error(class_table->curr_class_ptr()) << "Formal " << curr_formal->get_name() << " has a type that is not defined." << endl;
 		}
 	    } else {
-	        // TODO: ERROR - formal defined again
+		semant_error(class_table->curr_class_ptr()) << "Redefining formal " << curr_formal->get_name() << " not allowed." << endl;
 	    }
 	}
         Symbol expr_type = (method->get_expr())->eval(class_table, feature_table, symbol_table);
 	if(class_table->is_child(expr_type, method->get_return_type())) {
 	    symbol_table->addid(method->get_name(), new Symbol(expr_type));
 	} else {
-	    // TODO: ERROR - type of expression returned by method is not <= of declared return type
+	    semant_error(class_table->curr_class_ptr()) << "Type " << expr_type << " of expression returned by method is not a child of expected static type " << method->get_return_type() << "." << endl;
 	}
     }
     symbol_table->exitscope(); // exit scope for method
@@ -549,7 +557,7 @@ void FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class
     Symbol method_name = method_ptr->get_name();
     if(features.count(class_name) > 0) {
 	if (method_exists_in_class(method_name, class_name)) {
-	    // TODO: Throw error for having the method twice in one class.
+	    semant_error(class_table->curr_class_ptr()) << "Method " << method_name << " redefined in class." << endl;
         } else { 
 	    features[class_name].methods[method_name] = method_ptr;
 	}
@@ -565,7 +573,7 @@ void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_
     Symbol attribute_name = attr_ptr->get_name();
     if(features.count(class_name) > 0) {
 	if (features[class_name].attributes.count(attribute_name) > 0) {
-	    // TODO: Throw error for having the attribute twice in one class.
+	    semant_error(class_table->curr_class_ptr()) << "Attribute " << method_name << " redefined in class." << endl;
         } else { 
 	    features[class_name].attributes[attribute_name] = attr_ptr->get_type();
 	}
@@ -602,7 +610,6 @@ void FeatureTable::populate(Classes classes) {
 	    if(method_ptr != 0) {
 	        // a method
 		add_method(class_ptr->get_name(), method_ptr, class_ptr);
-		//cerr << meth->get_name() << "; " << class_ptr->get_name() << endl;
 	    } else {
 		// not a method, must be attribute
 		attr_class *attr_ptr = dynamic_cast<attr_class *>(feature_ptr);
@@ -619,13 +626,13 @@ Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
     if(type_of_attr) {
 	// the attribute being assigned to is defined in the symbol table
 	if(!class_table->is_child(expr_type, type_of_attr)) {
-	    // TODO: ERROR - assigning a non-child value to the attribute
+	    semant_error(class_table->curr_class_ptr()) << "Assigning expression of type " << expr_type << " to attribute of static type " << type_of_attr << "." << endl;
 	} else {
 	    // add to symbol table
 	    symbol_table->addid(name, new Symbol(expr_type));
 	}
     } else {
-	// TODO: ERROR - attribute being assigned to is not defined
+	semant_error(class_table->curr_class_ptr()) << "Attribute " << name << " being assigned to is not defined." << endl;
     }
     set_type(expr_type);
     return expr_type;
@@ -636,14 +643,14 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
     // check whether expr_type is <= of the explicitly defined parent type
     if(!class_table->is_child(expr_type, specified_parent)) {
-	// TODO: ERROR - left-most expression is not a child of specified parent type
+	semant_error(class_table->curr_class_ptr()) << "Dispatch type " << expr_type << " is not a child of specified static type " << specified_parent << "." << endl;
     }
 
     if(!class_table->class_exists(specified_parent)) {
-	// TODO: ERROR - specified parent does not exist
+	semant_error(class_table->curr_class_ptr()) << "Specified static type is not defined." << endl;
     } else {
     	if(!feature_table->method_exists_in_class(name, specified_parent)) {
-	    // TODO: ERROR - method does not exist in class
+	    semant_error(class_table->curr_class_ptr()) << "Method " << name << " not defined in class " << specified_parent << "." << endl;
 	} else {
 	    // check that args are valid
 	    std::vector<Symbol> *arg_types = new std::vector<Symbol>();
@@ -652,7 +659,7 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
 		arg_types->push_back(curr_expr->eval(class_table, feature_table, symbol_table));
 	    }
 	    if(!feature_table->valid_dispatch_arguments(feature_table->get_methods(specified_parent)[name], arg_types, class_table)) {
-		// TODO: ERROR - invalid arguments being fed into dispatch call
+		semant_error(class_table->curr_class_ptr()) << "Arguments to dispatch are invalid." << endl;
 	    }
 	}
     }
@@ -667,6 +674,7 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
 	    ret_type = method_ret_type;
 	} else {
 	    // TODO: ERROR - return type of dispatch is not a defined class
+	    semant_error(class_table->curr_class_ptr()) << "Return type of dispatch is a type that is not defined."
 	    ret_type = Object;
 	}
     }

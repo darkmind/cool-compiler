@@ -10,10 +10,9 @@ class C {
 	};
 };
 
-Class Main {
+Class Ain {
 	a:Int;
 	main():C {
-	  a <- 5;
-	  --(new C).init(1,true)
+	  a <- 5
 	};
 };
