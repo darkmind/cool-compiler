@@ -96,12 +96,14 @@ private:
   FeatureTable *feature_table;
 public:
   SemanticAnalyzer();
+
   void set_symbol_table(SymbolTable<Symbol, Symbol> *symbol_table);
   void set_class_table(ClassTable *class_table);
   void set_feature_table(FeatureTable *feature_table);
   void check_attributes(Features features, Symbol class_name);
   void check_attribute(attr_class *attribute, Symbol class_name);
   bool is_attr_in_parent_classes(attr_class *attribute, Symbol class_name);
+  void add_inherited_attributes(Symbol class_name);
   feature_type get_type_of_feature(Feature feature);
   void check_methods(Features features, Symbol class_name);
   void check_method(method_class *method, Symbol class_name);
