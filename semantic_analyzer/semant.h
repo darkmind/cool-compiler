@@ -71,8 +71,10 @@ private:
     std::map<Symbol, Symbol> attributes;
     Class_ c;
   };
-  std::map<Symbol, features_struct> features;
+  std::map<Symbol, features_struct *> features;
   ClassTable *class_table;
+  
+  features_struct add_missing_features(features_struct *child_features, features_struct *anc_features);
 
 public:
   FeatureTable();
@@ -83,6 +85,7 @@ public:
   void add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
   bool valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table);
   void set_class_table(ClassTable *class_table);
+  void add_inherited_features(ClassTable *class_table);
   void populate(Classes);
 };
 
