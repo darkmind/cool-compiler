@@ -89,9 +89,9 @@ static void initialize_constants(void)
 
 // Construct for class table
 ClassTable::ClassTable(Classes classes) {
-
     // Before we go onto our own classes, first install basic classes
     install_basic_classes();
+
     for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
 	Class_ class_ptr = classes->nth(i);
 	Symbol name = class_ptr->get_name();
@@ -129,7 +129,11 @@ bool ClassTable::is_child(Symbol child_name, Symbol class_name) {
 	cerr << child_name << endl; //DEBUG
 	if (class_map[child_name].parent == class_name) return true;
 	child_name = class_map[child_name].parent;
+	cerr << "child_name now is: " << child_name << endl;
+	Symbol temp = class_map[child_name].parent;
+	cerr << "class_map[child_name]: " << temp << endl;
     }
+    cerr << "returning false" << endl;
     return false;
 }
 
@@ -421,9 +425,10 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	cerr << "currently on class: " << class_ptr->get_name() << endl; //DEBUG
 	// add current class to symbol table
 	symbol_table->addid(self, new Symbol(class_ptr->get_name()));
+	class_table->set_curr_class_ptr(class_ptr);
 	Features features = class_ptr->get_features();
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
-	//check_methods(features, class_ptr->get_name()); // then go through methods one by one
+	check_methods(features, class_ptr->get_name()); // then go through methods one by one
 	symbol_table->exitscope(); // exit the scope for the class
     }
 }
@@ -441,26 +446,32 @@ void SemanticAnalyzer::check_attributes(Features features, Symbol class_name) {
 
 void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name) {
     // check whether exists in parent classes or not
-
     attribute->dump_with_types(cerr, 0);
     if(is_attr_in_parent_classes(attribute, class_name)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attribute " << attribute->get_name() << " already defined in ancestor classes." << endl;
     } else {
     	// check in same class whether attribute has been defined or not
     	if(symbol_table->lookup(attribute->get_name()) == NULL) {
+	    cerr << "evaling init expression.." << endl;
+	    cerr << "init expr: " << attribute->get_init_expr() << endl;
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
-	    if (expr_type != No_type) {
-		// cerr << "checked that attr is not defined. has type: " << expr_type << endl; //DEBUG
+	    cerr << "here" << endl;
+	    if (expr_type != No_type) { // init expression is defined
+		cerr << "init expression is defined. has type: " << expr_type << endl; //DEBUG
 		if(class_table->is_child(expr_type, attribute->get_type())) {
-		    // cerr << "is child" << endl; //DEBUG
+		    cerr << "is child" << endl; //DEBUG
 		    cerr << "adding attribute: " << attribute->get_name() << " of type: " << expr_type << endl; //DEBUG
 		    symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
 		} else {
-		    // TODO: ERROR - initializing attribute with type that is not <= of static type
+		    cerr << "is_child returned false: " << expr_type << " " << attribute->get_type() << endl;
+		    cerr << "curr_class_ptr: " << class_table->get_curr_class_ptr() << endl;
+		    cerr << "yo" << endl;
+		    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Assigning expression of type " << expr_type << " to attribute of static type " << attribute->get_type() << "." << endl;
+		    cerr << "blah" << endl;
 		}
-	    } else {
-		error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Assigning expression of type " << expr_type << " to attribute of static type " << attribute->get_type() << "." << endl;
-		symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
+	    } else { // init expression not defined
+		cerr << "init expression not defined." << endl;
+		symbol_table->addid(attribute->get_name(), new Symbol(attribute->get_type()));
 	    }
         } else {
 	    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Redefining attribute " << attribute->get_name() << " not allowed." << endl;
@@ -733,11 +744,13 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
     // check that the method exists in the class, and that it has the same arguments
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
     Symbol curr_class;
+    cerr << "expr_type: " << expr_type << endl;
     if(expr_type == SELF_TYPE) {
 	curr_class = *(symbol_table->lookup(self));
     } else {
 	curr_class = expr_type;
     }
+    cerr << "a" << endl;
 
     if(!class_table->class_exists(curr_class)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Class " << curr_class << " is not defined." << endl;
@@ -756,6 +769,8 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 	    }
 	}
     }
+
+    cerr << "b" << endl;
     
     // figure out what type to return
     Symbol ret_type;
@@ -770,6 +785,7 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 	    ret_type = Object;
 	}
     }
+    cerr << "c" << endl;
     set_type(ret_type);
     return ret_type;
 }
