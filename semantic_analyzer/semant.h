@@ -28,11 +28,21 @@ enum feature_type {
 // you like: it is only here to provide a container for the supplied
 // methods.
 
-class ClassTable {
+class ErrorReporter {
 private:
   int semant_errors;
   ostream& error_stream;
-  
+
+public:
+  ErrorReporter();
+  int errors() { return semant_errors; }
+  ostream& semant_error();
+  ostream& semant_error(Class_ c);
+  ostream& semant_error(Symbol filename, tree_node *t);
+};
+
+class ClassTable {
+private:
   struct map_val {
 	Symbol parent;
 	Class_ c;
@@ -42,11 +52,6 @@ private:
 
 public:
   ClassTable(Classes);
-  int errors() { return semant_errors; }
-  ostream& semant_error();
-  ostream& semant_error(Class_ c);
-  ostream& semant_error(Symbol filename, tree_node *t);
-
   void install_basic_classes();
   void add_class(Symbol name, Symbol parent, Class_ c);
 
@@ -55,9 +60,7 @@ public:
   bool is_child(Symbol child_name, Symbol class_name);
   Symbol get_parent(Symbol class_name);
   void set_curr_class_ptr(Class_ class_ptr);
-  Class_ curr_class_ptr();
-
-  Symbol get_parent(Symbol class_name);
+  Class_ get_curr_class_ptr();
   Symbol lca(Symbol class1, Symbol class2);
 };
 
@@ -69,6 +72,7 @@ private:
     Class_ c;
   };
   std::map<Symbol, features_struct> features;
+  ClassTable *class_table;
 
 public:
   FeatureTable();
@@ -78,6 +82,7 @@ public:
   void add_method(Symbol class_name, method_class *method_ptr, Class_ c);
   void add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
   bool valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table);
+  void set_class_table(ClassTable *class_table);
   void populate(Classes);
 };
 
