@@ -740,10 +740,10 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
     }
 
     if(!class_table->class_exists(curr_class)) {
-	// TODO: ERROR - class does not exist
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Class " << curr_class << " is not defined." << endl;
     } else {
     	if(!feature_table->method_exists_in_class(name, curr_class)) {
-	    // TODO: ERROR - method does not exist in class
+	    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Method " << name << " is not defined." << endl;
 	} else {
 	    // check that args are valid
 	    std::vector<Symbol> *arg_types = new std::vector<Symbol>();
@@ -752,7 +752,7 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 		arg_types->push_back(curr_expr->eval(class_table, feature_table, symbol_table));
 	    }
 	    if(!feature_table->valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types, class_table)) {
-		// TODO: ERROR - invalid arguments being fed into dispatch call
+		error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Invalid arguments passed to " << name << " dispatch call." << endl;
 	    }
 	}
     }
@@ -766,7 +766,7 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 	if(class_table->class_exists(method_ret_type)) {
 	    ret_type = method_ret_type;
 	} else {
-	    // TODO: ERROR - return type of dispatch is not a defined class
+	    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Return type " << method_ret_type << "of dispatch is not a defined class." << endl;
 	    ret_type = Object;
 	}
     }
@@ -777,7 +777,7 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 Symbol cond_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     Symbol pred_type = pred->eval(class_table, feature_table, symbol_table);
     if (pred_type != Bool) {
-	// TODO: Error about the predicate not being boolean.
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Predicate of if-then must be a boolean." << endl;
     }
     Symbol then_type = then_exp->eval(class_table, feature_table, symbol_table);
     Symbol else_type = else_exp->eval(class_table, feature_table, symbol_table);
@@ -788,7 +788,7 @@ Symbol cond_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sy
 Symbol loop_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     Symbol pred_type = pred->eval(class_table, feature_table, symbol_table);
     if(pred_type != Bool) {
-	// TODO: ERROR - predicate type has to be Bool
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Predicate of while loop must be a boolean." << endl;
     }
     Symbol body_type = body->eval(class_table, feature_table, symbol_table);
     set_type(Object);
@@ -801,7 +801,7 @@ Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table,
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
 	Symbol type = cases->nth(i)->get_type();
 	if(types->count(type) > 0) {
-	    // TODO: ERROR - two branches have the same type declared
+	    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Two or more branches have the same type defined." << endl;
 	} else {
 	    types->insert(type);
 	}
@@ -854,7 +854,7 @@ Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
     else type_of_attr = *(symbol_table->lookup(type_decl));
     // check valid type
     if(!class_table->is_child(init_expr_type, type_decl)) {
-	// TODO: ERROR - assigning a non-child value to the attribute
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Assigning expression of type " << init_expr_type << " to attribute of static type " << type_decl << "." << endl;
     } else {
 	// add to symbol table
 	symbol_table->addid(identifier, new Symbol(init_expr_type));
@@ -871,7 +871,7 @@ Symbol plus_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sy
     Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
     Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
-	// TODO: ERROR - cannot add non-int values
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot add non-int values." << endl;
     }
     set_type(Int);
     return Int;
@@ -881,7 +881,7 @@ Symbol sub_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
     Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
     Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
-	// TODO: ERROR - cannot subtract non-int values
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot subtract non-int values." << endl;
     }
     set_type(Int);
     return Int;
@@ -891,7 +891,7 @@ Symbol mul_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
     Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
     Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
-	// TODO: ERROR - cannot multiply non-int values
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot multiply non-int values." << endl;
     }
     set_type(Int);
     return Int;
@@ -901,7 +901,7 @@ Symbol divide_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
     Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
     Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
-	// TODO: ERROR - cannot divide non-int values
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot divide non-int values." << endl;
     }
     set_type(Int);
     return Int;
@@ -911,7 +911,7 @@ Symbol neg_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
     // applies to integers
     Symbol expr_type = e1->eval(class_table, feature_table, symbol_table);
     if(expr_type != Int) {
-	// TODO: ERROR - cannot take negation of non-integer
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot take negation of non-integer." << endl;
     }
     set_type(Int);
     return Int;
@@ -921,7 +921,7 @@ Symbol lt_class::eval(ClassTable *class_table, FeatureTable *feature_table, Symb
     Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
     Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
-	// TODO: ERROR - cannot order non-int values
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot compare/order non-int values using 'less than' operator." << endl;
     }
     set_type(Bool);
     return Bool;
@@ -931,7 +931,7 @@ Symbol eq_class::eval(ClassTable *class_table, FeatureTable *feature_table, Symb
     Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
     Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != e2_type) {
-	// TODO: ERROR - cannot compare values of different types
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot compare values of different types using 'equal to' operator." << endl;
     }
     set_type(Bool);
     return Bool;
@@ -941,7 +941,7 @@ Symbol leq_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
     Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
     Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
-	// TODO: ERROR - cannot order non-int values
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot compare/order non-int values using 'less than or equal to' operator." << endl;
     }
     set_type(Bool);
     return Bool;
@@ -951,7 +951,7 @@ Symbol comp_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sy
     // applies to booleans
     Symbol expr_type = e1->eval(class_table, feature_table, symbol_table);
     if(expr_type != Bool) {
-	// TODO: ERROR - cannot take complement of non-boolean
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Cannot take complement of non-boolean." << endl;
     }
     set_type(Bool);
     return Bool;
@@ -982,7 +982,7 @@ Symbol new__class::eval(ClassTable *class_table, FeatureTable *feature_table, Sy
 	return type_name;
     }
     else {
-	// TODO: error about undefined type
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to call new on an undefined class." << endl;
 	set_type(Object);
 	return Object;
     }
@@ -1004,12 +1004,14 @@ Symbol object_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
     cerr << "looking up an object" << endl; //DEBUG
     cerr << obj_type << endl; //DEBUG
     if (obj_type == NULL) {
-	// TODO: print error about undefined object
+	// TODO: ???
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Object is not defined." << endl;
 	set_type(Object);
 	return Object;
     }
     if (obj_type == Object) {
-	// TODO: print error about bad type
+	// TODO: ???
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Object cannot have type Object." << endl;
 	set_type(Object);
 	return Object;
     }
