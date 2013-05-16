@@ -2,10 +2,10 @@
 #define SEMANT_H_
 
 #include <assert.h>
-#include <iostream>  
+#include <iostream>
 #include "cool-tree.h"
-#include "stringtab.h"
 #include "symtab.h"
+#include "stringtab.h"
 #include "list.h"
 
 #include <map>
@@ -49,6 +49,7 @@ public:
   bool class_exists(Symbol class_name);
   bool check_for_cycles();
   bool is_child(Symbol child_name, Symbol class_name);
+  Symbol get_parent(Symbol class_name);
 
   Symbol lca(Symbol class1, Symbol class2);
 };
@@ -64,9 +65,8 @@ private:
 
 public:
   FeatureTable();
-  std::map<Symbol, method_class *> *get_methods(Symbol class_name);
-  std::map<Symbol, Symbol> *get_attributes(Symbol class_name);
-  std::map<Symbol, features_struct> *get_features_map();
+  std::map<Symbol, method_class *> get_methods(Symbol class_name);
+  std::map<Symbol, Symbol> get_attributes(Symbol class_name);
   bool method_exists_in_class(Symbol method_name, Symbol class_name);
   bool add_method(Symbol class_name, method_class *method_ptr, Class_ c);
   bool add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
