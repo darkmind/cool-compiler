@@ -362,7 +362,7 @@ void program_class::semant()
 SemanticAnalyzer::SemanticAnalyzer() {
     // nothing to initialize
 }
-/*
+
 void SemanticAnalyzer::set_symbol_table(SymbolTable<Symbol, Symbol> *symbol_tab) {
     symbol_table = symbol_tab;
 }
@@ -374,7 +374,6 @@ void SemanticAnalyzer::set_class_table(ClassTable *class_tab) {
 void SemanticAnalyzer::set_feature_table(FeatureTable *feature_tab) {
     feature_table = feature_tab;
 }
-*/
 
 void SemanticAnalyzer::traverse(Classes classes) {
     // here iterate through all the classes and populate the symbol table
