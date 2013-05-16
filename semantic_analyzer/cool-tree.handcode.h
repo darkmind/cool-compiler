@@ -105,7 +105,8 @@ Symbol get_type() { return type_decl; }
 #define method_EXTRAS                                   \
 Symbol get_name() { return name; }                      \
 Symbol get_return_type() { return return_type; }        \
-Formals get_formals() { return formals; }
+Formals get_formals() { return formals; }               \
+Expression get_expr() { return expr; }
 
 
 #define attr_EXTRAS                                   \

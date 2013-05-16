@@ -14,11 +14,6 @@
 extern int semant_debug;
 extern char *curr_filename;
 
-enum feature_type {
-    ATTRIBUTE,
-    METHOD
-};
-
 //////////////////////////////////////////////////////////////////////
 //
 // Symbols
@@ -54,7 +49,7 @@ static Symbol
     str_field,
     substr,
     type_name,
-    val,
+    val;
 //
 // Initializing the predefined symbols.
 //
@@ -319,7 +314,7 @@ Symbol ClassTable::get_parent(Symbol class_name) {
  */
 ClassTable *class_table;
 FeatureTable *feature_table;
-SymbolTable<Symbol, Symbol> *symbol_table;
+SymbolTable<Symbol, Symbol *> *symbol_table;
 
 void program_class::semant()
 {
@@ -351,7 +346,7 @@ void program_class::semant()
     feature_table->populate(classes);
 
     SemanticAnalyzer *semantic_analyzer = new SemanticAnalyzer();
-    symbol_table = new SymbolTable<Symbol, Symbol>();
+    symbol_table = new SymbolTable<Symbol, Symbol *>();
     //semantic_analyzer->set_symbol_table(new SymbolTable<Symbol, Symbol>());
     //semantic_analyzer->set_class_table(class_table);
     //semantic_analyzer->set_feature_table(feature_table);
@@ -381,7 +376,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	symbol_table->enterscope(); // new scope per class
 	Class_ class_ptr = classes->nth(i);
 	// add current class to symbol table
-	symbol_table->addid(self, class_ptr->get_name());
+	symbol_table->addid(self, new Symbol(class_ptr->get_name()));
 	Features features = class_ptr->get_features();
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
 	check_methods(features, class_ptr->get_name()); // then go through methods one by one
@@ -409,7 +404,7 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
     	if(symbol_table->lookup(attribute->get_name()) == NULL) {
 	    Symbol expr_type = (attribute->get_init_expr())->eval();
 	    if(class_table->is_child(expr_type, attribute->get_type())) {
-	        symbol_table->addid(attribute->get_name(), expr_type);
+	        symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
 	    } else {
 	        // TODO: ERROR - initializing attribute with type that is not <= of static type
 	    }
@@ -420,16 +415,16 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 }
 
 bool SemanticAnalyzer::is_attr_in_parent_classes(attr_class *attribute, Symbol class_name) {
-    while(class_table->class_map[child_name] != Object) {
-	Symbol parent_name = class_table->class_map[child_name];
-	if (feature_table->features[parent_name].attributes.count(attribute->get_name()) > 0) return true;
-	child_name = parent_name;
+    while(class_table->get_parent(class_name) != Object) {
+	Symbol parent_name = class_table->get_parent(class_name);
+	if (feature_table->get_attributes(parent_name).count(attribute->get_name()) > 0) return true;
+	class_name = parent_name;
     }
     return false;
 }
 
 feature_type SemanticAnalyzer::get_type_of_feature(Feature feature) {
-    attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
+    attr_class *attribute = dynamic_cast<attr_class *>(feature);
     if(attribute == 0) {
 	return METHOD;
     } else {
@@ -437,13 +432,13 @@ feature_type SemanticAnalyzer::get_type_of_feature(Feature feature) {
     }
 }
 
-void SemanticAnalyzer::check_methods(Features features) {
+void SemanticAnalyzer::check_methods(Features features, Symbol class_name) {
     for(int j = features->first(); features->more(j); j = features->next(j)) {
 	Feature feature_ptr = features->nth(j);
 	int type = get_type_of_feature(feature_ptr);
 	if(type == METHOD) {
-	    attr_method *method = dynamic_cast<attr_method *>(feature_ptr);
-	    check_method(method);
+	    method_class *method = dynamic_cast<method_class *>(feature_ptr);
+	    check_method(method, class_name);
 	}
     }
 }
@@ -460,18 +455,18 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	    Formal curr_formal = formals->nth(j);
 	    if (symbol_table->probe(curr_formal->get_name()) == NULL) {
 		if (valid_type(curr_formal->get_type())) {
-  	    	    symbol_table->addid(curr_formal->get_name(), curr_formal->get_type());
+  	    	    symbol_table->addid(curr_formal->get_name(), new Symbol(curr_formal->get_type()));
 		} else {
-		    symbol_table->addid(curr_formal->get_name(), Object);
+		    symbol_table->addid(curr_formal->get_name(), new Symbol(Object));
 		    // TODO: ERROR - undefined type of formal
 		}
 	    } else {
 	        // TODO: ERROR - formal defined again
 	    }
 	}
-        Symbol expr_type = (method->expr)->eval();
+        Symbol expr_type = (method->get_expr())->eval();
 	if(class_table->is_child(expr_type, method->get_return_type())) {
-	    symbol_table->addid(method->get_name(), expr_type);
+	    symbol_table->addid(method->get_name(), new Symbol(expr_type));
 	} else {
 	    // TODO: ERROR - type of expression returned by method is not <= of declared return type
 	}
@@ -484,8 +479,8 @@ bool SemanticAnalyzer::valid_type(Symbol type) {
 }
 
 bool SemanticAnalyzer::method_redefined_with_different_signature(method_class *method, Symbol class_name) {
-    while(class_table->class_map[class_name] != Object) {
-	Symbol parent_name = class_table->class_map[class_name];
+    while(class_table->get_parent(class_name) != Object) {
+	Symbol parent_name = class_table->get_parent(class_name);
 	if(feature_table->get_methods(parent_name).count(method->get_name()) > 0) {
 	    method_class *other_method = feature_table->get_methods(parent_name)[method->get_name()];
 	    if(!have_identical_signatures(method, other_method)) return true;	
@@ -497,7 +492,7 @@ bool SemanticAnalyzer::method_redefined_with_different_signature(method_class *m
 
 bool SemanticAnalyzer::have_identical_signatures(method_class *method_one, method_class *method_two) {
     // check same length of arguments
-    if(list_length(method_one->get_formals()) != list_length(method_two->get_formals())) return false;
+    if(method_one->get_formals()->len() != method_two->get_formals()->len()) return false;
     
     // check same types of arguments
     Formals formals_one = method_one->get_formals();
@@ -593,7 +588,7 @@ Symbol assign_class::eval() {
 	    // TODO: ERROR - assigning a non-child value to the attribute
 	} else {
 	    // add to symbol table
-	    symbol_table->addid(name, expr_type);
+	    symbol_table->addid(name, new Symbol(expr_type));
 	}
     } else {
 	// TODO: ERROR - attribute being assigned to is not defined
@@ -689,7 +684,7 @@ Symbol dispatch_class::eval() {
 
 bool dispatch_class::valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol>& arg_types) {
     // check same number of arguments
-    if(list_length(method->get_formals()) != arg_types.size()) return false;
+    if(method->get_formals()->len() != arg_types.size()) return false;
 
     // check valid args provided
     Formals formals = method_defn->get_formals();
@@ -740,13 +735,13 @@ Symbol typcase_class::eval() {
     // find union class of all the expressions of all the branches
     symbol_table->enterscope();
     Case curr_case = cases->nth(cases->first());
-    symbol_table->addid(curr_case->name, expr_type);
+    symbol_table->addid(curr_case->name, new Symbol(expr_type));
     Symbol ret_type = curr_case->expr->eval();
     symbol_table->exitscope();
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
 	symbol_table->enterscope();
 	Case curr_case = cases->nth(i);
-    	symbol_table->addid(curr_case->name, expr_type);
+    	symbol_table->addid(curr_case->name, new Symbol(expr_type));
 	ret_type = class_table->lca(ret_type, curr_case->expr->eval());
 	symbol_table->exitscope();
     }
@@ -771,7 +766,7 @@ Symbol let_class::eval() {
 	// TODO: ERROR - assigning a non-child value to the attribute
     } else {
 	// add to symbol table
-	symbol_table->addid(identifier, init_expr_type);
+	symbol_table->addid(identifier, new Symbol(init_expr_type));
     }
 
     // at this point, all the formals have been added to the symbol table

@@ -68,8 +68,8 @@ public:
   std::map<Symbol, method_class *> get_methods(Symbol class_name);
   std::map<Symbol, Symbol> get_attributes(Symbol class_name);
   bool method_exists_in_class(Symbol method_name, Symbol class_name);
-  bool add_method(Symbol class_name, method_class *method_ptr, Class_ c);
-  bool add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
+  void add_method(Symbol class_name, method_class *method_ptr, Class_ c);
+  void add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
   void populate(Classes);
 };
 
