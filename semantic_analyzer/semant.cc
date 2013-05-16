@@ -373,8 +373,9 @@ void program_class::semant()
 
     // go through classes and collect all methods in a method table
     FeatureTable *feature_table = new FeatureTable();
-    feature_table->populate(classes);
     feature_table->set_class_table(class_table);
+    feature_table->populate(classes);
+    feature_table->add_inherited_features(class_table);
 
     // check for existence of Main class and main() method with no args within it
     if(!class_table->class_exists(Main)) {
@@ -428,6 +429,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	class_table->set_curr_class_ptr(class_ptr);
 	Features features = class_ptr->get_features();
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
+	add_inherited_attributes(class_ptr->get_name());
 	check_methods(features, class_ptr->get_name()); // then go through methods one by one
 	symbol_table->exitscope(); // exit the scope for the class
     }
@@ -453,10 +455,10 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
     } else {
     	// check in same class whether attribute has been defined or not
     	if(symbol_table->lookup(attribute->get_name()) == NULL) {
-	    cerr << "evaling init expression.." << endl;
-	    cerr << "init expr: " << attribute->get_init_expr() << endl;
+	    cerr << "evaling init expression.." << endl; //DEBUG
+	    cerr << "init expr: " << attribute->get_init_expr() << endl; //DEBUG
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
-	    cerr << "here" << endl;
+	    cerr << "here" << endl; //DEBUG
 	    if (expr_type != No_type) { // init expression is defined
 		cerr << "init expression is defined. has type: " << expr_type << endl; //DEBUG
 		if(class_table->is_child(expr_type, attribute->get_type())) {
@@ -480,6 +482,15 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
         }
     }
     // cerr << "checked the attribute" << endl; // DEBUG
+}
+
+// Adds all the attributes inherited but not put in scope yet. No error checking required here.
+void SemanticAnalyzer::add_inherited_attributes(Symbol class_name) {
+    std::map<Symbol, Symbol> all_attributes = feature_table->get_attributes(class_name);
+    for(std::map<Symbol, Symbol>::iterator it = all_attributes.begin(); it != all_attributes.end(); ++it) {
+	if (symbol_table->lookup(it->first) == NULL)
+	    symbol_table->addid(it->second);
+    }
 }
 
 bool SemanticAnalyzer::is_attr_in_parent_classes(attr_class *attribute, Symbol class_name) {
@@ -590,15 +601,15 @@ FeatureTable::FeatureTable() {
 }
 
 std::map<Symbol, method_class *> FeatureTable::get_methods(Symbol class_name) {
-    return features[class_name].methods;
+    return features[class_name]->methods;
 }
 
 std::map<Symbol, Symbol> FeatureTable::get_attributes(Symbol class_name) {
-    return features[class_name].attributes;
+    return features[class_name]->attributes;
 }
 
 bool FeatureTable::method_exists_in_class(Symbol method_name, Symbol class_name) {
-    return features[class_name].methods.count(method_name) > 0;
+    return features[class_name]->methods.count(method_name) > 0;
 }
 
 void FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class_ c) {
@@ -607,12 +618,12 @@ void FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class
 	if (method_exists_in_class(method_name, class_name)) {
 	    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Method " << method_name << " redefined in class." << endl;
         } else { 
-	    features[class_name].methods[method_name] = method_ptr;
+	    features[class_name]->methods[method_name] = method_ptr;
 	}
     } else {
-	features_struct new_features;
-	new_features.methods[method_name] = method_ptr;
-	new_features.c = c;
+	features_struct *new_features = new features_struct;
+	new_features->methods[method_name] = method_ptr;
+	new_features->c = c;
 	features[class_name] = new_features;
     }
 }
@@ -620,15 +631,15 @@ void FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class
 void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c) {
     Symbol attribute_name = attr_ptr->get_name();
     if(features.count(class_name) > 0) {
-	if (features[class_name].attributes.count(attribute_name) > 0) {
+	if (features[class_name]->attributes.count(attribute_name) > 0) {
 	    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attribute " << attribute_name << " redefined in class." << endl;
         } else { 
-	    features[class_name].attributes[attribute_name] = attr_ptr->get_type();
+	    features[class_name]->attributes[attribute_name] = attr_ptr->get_type();
 	}
     } else {
-	features_struct new_features;
-	new_features.attributes[attribute_name] = attr_ptr->get_type();
-	new_features.c = c;
+	features_struct *new_features = new features_struct;
+	new_features->attributes[attribute_name] = attr_ptr->get_type();
+	new_features->c = c;
 	features[class_name] = new_features;
     }
 }
@@ -670,6 +681,36 @@ void FeatureTable::populate(Classes classes) {
 
 void FeatureTable::set_class_table(ClassTable *class_tab) {
     class_table = class_tab;
+}
+
+// We pass in the feature maps for a child and an ancestor. Any missing methods or attributes in the child_features are added.
+// No error checking is done here.
+void FeatureTable::add_missing_features(features_struct *child_features, features_struct *anc_features) {
+    anc_methods = anc_features->methods;
+    anc_attr = anc_features->attributes;
+    //methods
+    for (std::map<Symbol, method_class *>::iterator it = anc_methods.begin(); it != anc_methods.end(); ++it) {
+	if (child_features->methods.count(it->first) == 0)
+	    child_features->methods[it->first] = it->second;
+    }
+    //attributes
+    for (std::map<Symbol, Symbol>::iterator it = anc_attr.begin(); it != anc_attr.end(); ++it) {
+	if (child_features->attributes.count(it->first) == 0)
+	    child_features->attributes[it->first] = it->second;
+    }    
+}
+
+
+// Goes through each class in our feature table
+// For each class, we go through its ancestors and add all methods and attributes not already in its features map. 
+// We do not need to do any error checking here, since any inheritance problems are checked in traverse.
+void FeatureTable::add_inherited_features(ClassTable *class_tab) {
+    for(std::map<Symbol, features_struct>::iterator it = features.begin(); it != features.end(); ++it) {
+	Symbol curr_class = it->first;
+	for (Symbol parent = class_tab->get_parent(curr_class); parent != Object; parent = class_tab->get_parent(parent)) {
+	    add_missing_features(features[curr_class], features[parent]);
+	}
+    }
 }
 
 Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
