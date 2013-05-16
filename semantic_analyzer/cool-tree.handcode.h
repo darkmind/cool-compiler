@@ -8,9 +8,6 @@
 #include "tree.h"
 #include "cool.h"
 #include "stringtab.h"
-#include "symtab.h"
-#include "classtable.h"
-#include "featuretable.h"
 #define yylineno curr_lineno;
 extern int yylineno;
 
@@ -103,6 +100,18 @@ virtual void dump_with_types(ostream& ,int) = 0;
 #define branch_EXTRAS                                   \
 void dump_with_types(ostream& ,int);                    \
 Symbol get_type() { return type_decl; }
+
+
+#define method_EXTRAS                                   \
+Symbol get_name() { return name; }                      \
+Symbol get_return_type() { return return_type; }        \
+Formals get_formals() { return formals; }
+
+
+#define attr_EXTRAS                                   \
+Symbol get_name() { return name; }                    \
+Symbol get_type() { return type_decl; }               \
+Expression get_init_expr() { return init; }
 
 
 #define Expression_EXTRAS                                \

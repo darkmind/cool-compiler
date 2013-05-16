@@ -9,6 +9,7 @@
 #include <exception>
 
 #include <set>
+#include <vector>
 
 
 extern int semant_debug;
@@ -343,14 +344,26 @@ void program_class::semant()
     feature_table->populate(classes);
 
     SemanticAnalyzer *semantic_analyzer = new SemanticAnalyzer();
-    semantic_analyzer->symbol_table = new SymbolTable<Symbol, Symbol>();
-    semantic_analyzer->class_table = class_table;
-    semantic_analyzer->feature_table = feature_table;
+    semantic_analyzer->set_symbol_table(new SymbolTable<Symbol, Symbol>());
+    semantic_analyzer->set_class_table(class_table);
+    semantic_analyzer->set_feature_table(feature_table);
     semantic_analyzer->traverse(classes);
 }
 
 SemanticAnalyzer::SemanticAnalyzer() {
     // nothing to initialize
+}
+
+void SemanticAnalyzer::set_symbol_table(SymbolTable<Symbol, Symbol> *symbol_tab) {
+    symbol_table = symbol_tab;
+}
+
+void SemanticAnalyzer::set_class_table(ClassTable *class_tab) {
+    class_table = class_tab;
+}
+
+void SemanticAnalyzer::set_feature_table(FeatureTable *feature_tab) {
+    feature_table = feature_tab;
 }
 
 void SemanticAnalyzer::traverse(Classes classes) {
@@ -359,10 +372,10 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	symbol_table->enterscope(); // new scope per class
 	Class_ class_ptr = classes->nth(i);
 	// add current class to symbol table
-	symbol_table->addid(curr_class_symbol, class_ptr->getname());
+	symbol_table->addid(curr_class_symbol, class_ptr->get_name());
 	Features features = class_ptr->get_features();
-	check_attributes(features, class_ptr->getname()); // first, check all attributes
-	check_methods(features, class_ptr->getname()); // then go through methods one by one
+	check_attributes(features, class_ptr->get_name()); // first, check all attributes
+	check_methods(features, class_ptr->get_name()); // then go through methods one by one
 	symbol_table->exitscope(); // exit the scope for the class
     }
 }
@@ -384,10 +397,10 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 	// TODO: ERROR - attribute already defined in parent classes
     } else {
     	// check in same class whether attribute has been defined or not
-    	if(symbol_table->lookup(attribute->name) == NULL) {
-	    Symbol expr_type = (attribute->init)->eval(symbol_table, class_table, feature_table);
-	    if(class_table->is_child(expr_type, attribute->type_decl)) {
-	        symbol_table->addid(attribute->name, expr_type);
+    	if(symbol_table->lookup(attribute->get_name()) == NULL) {
+	    Symbol expr_type = (attribute->get_init_expr())->eval(symbol_table, class_table, feature_table);
+	    if(class_table->is_child(expr_type, attribute->get_type())) {
+	        symbol_table->addid(attribute->get_name(), expr_type);
 	    } else {
 	        // TODO: ERROR - initializing attribute with type that is not <= of static type
 	    }
@@ -398,9 +411,9 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 }
 
 bool SemanticAnalyzer::is_attr_in_parent_classes(attr_class *attribute, Symbol class_name) {
-    while(class_map[child_name] != Object) {
-	Symbol parent_name = class_map[child_name];
-	if (feature_table[parent_name].attributes.count(attribute->name) > 0) return true;
+    while(class_table[child_name] != Object) {
+	Symbol parent_name = class_table[child_name];
+	if (feature_table[parent_name].attributes.count(attribute->get_name()) > 0) return true;
 	child_name = parent_name;
     }
     return false;
@@ -433,7 +446,7 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	// TODO: ERROR - method from ancestor class redefined with different signature
     } else {
 	// get formals (arguments) and add to current scope so that they are defined in the expression
-	Formals formals = method->formals;	
+	Formals formals = method->get_formals();	
 	for (int j = formals->first(); formals->more(j); j = formals->next(j)) {
 	    Formal curr_formal = formals->nth(j);
 	    if (symbol_table->probe(curr_formal->get_name() == NULL)) {
@@ -448,8 +461,8 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	    }
 	}
         Symbol expr_type = (method->expr)->eval(symbol_table, class_table, feature_table);
-	if(class_table->is_child(expr_type, method->return_type)) {
-	    symbol_table->addid(method->name, expr_type);
+	if(class_table->is_child(expr_type, method->get_return_type())) {
+	    symbol_table->addid(method->get_name(), expr_type);
 	} else {
 	    // TODO: ERROR - type of expression returned by method is not <= of declared return type
 	}
@@ -462,24 +475,24 @@ bool SemanticAnalyzer::valid_type(Symbol type) {
 }
 
 bool SemanticAnalyzer::method_redefined_with_different_signature(method_class *method, Symbol class_name) {
-    while(class_map[child_name] != Object) {
-	Symbol parent_name = class_map[child_name];
-	if(feature_table[parent_name].methods.count(method->name) > 0) {
-	    method_class *other_method = feature_table[parent_name].methods[method->name];
+    while(class_table[class_name] != Object) {
+	Symbol parent_name = class_table[class_name];
+	if(feature_table[parent_name].methods.count(method->get_name()) > 0) {
+	    method_class *other_method = feature_table[parent_name].methods[method->get_name()];
 	    if(!have_identical_signatures(method, other_method)) return true;	
 	}
-	child_name = parent_name;
+	class_name = parent_name;
     }
     return false;
 }
 
 bool SemanticAnalyzer::have_identical_signatures(method_class *method_one, method_class *method_two) {
     // check same length of arguments
-    if(list_length(method_one->formals) != list_length(method_two->formals)) return false;
+    if(list_length(method_one->get_formals()) != list_length(method_two->get_formals())) return false;
     
     // check same types of arguments
-    Formals formals_one = method_one->formals;
-    Formals formals_two = method_two->formals;
+    Formals formals_one = method_one->get_formals();
+    Formals formals_two = method_two->get_formals();
     for(int j = formals_one->first(); formals_one->more(j); j = formals_one->next(j)) {
 	Formal curr_formal = formals_one->nth(j);
 	Formal other_formal = formals_two->nth(j);
@@ -487,7 +500,7 @@ bool SemanticAnalyzer::have_identical_signatures(method_class *method_one, metho
     }
 
     // check return type is the same for both methods
-    if(method_one->return_type != method_two->return_type) return false;
+    if(method_one->get_return_type() != method_two->get_return_type()) return false;
 
     return true;
 }
@@ -509,7 +522,7 @@ bool FeatureTable::method_exists_in_class(Symbol method_name, Symbol class_name)
 }
 
 bool FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class_ c) {
-    Symbol method_name = method_ptr->name;
+    Symbol method_name = method_ptr->get_name();
     if(features.count(class_name) > 0) {
 	if (method_exists_in_class(method_name, class_name)) {
 	    // TODO: Throw error for having the method twice in one class.
@@ -525,16 +538,16 @@ bool FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class
 }
 
 bool FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c) {
-    Symbol attribute_name = attr_ptr->name;
+    Symbol attribute_name = attr_ptr->get_name();
     if(features.count(class_name) > 0) {
 	if (features[class_name].attributes.count(attribute_name) > 0) {
 	    // TODO: Throw error for having the attribute twice in one class.
         } else { 
-	    features[class_name].attributes[attribute_name] = attr_ptr->type_decl;
+	    features[class_name].attributes[attribute_name] = attr_ptr->get_type();
 	}
     } else {
 	features_struct new_features;
-	new_features.attributes[attribute_name] = attr_ptr->type_decl;
+	new_features.attributes[attribute_name] = attr_ptr->get_type();
 	new_features.c = c;
 	features[class_name] = new_features;
     }
@@ -548,14 +561,14 @@ void FeatureTable::populate(Classes classes) {
 	    Feature feature_ptr = features->nth(j);
 	    // try to cast to method class type
 	    method_class *method_ptr = dynamic_cast<method_class *>(feature_ptr);
-	    if(method != 0) {
+	    if(method_ptr != 0) {
 	        // a method
-		addMethod(class_ptr->name, method_ptr, class_ptr);
-		//cerr << meth->name << "; " << class_ptr->name << endl;
+		add_method(class_ptr->get_name(), method_ptr, class_ptr);
+		//cerr << meth->get_name() << "; " << class_ptr->get_name() << endl;
 	    } else {
 		// not a method, must be attribute
-		attr_ptr = dynamic_cast<attr_class *>(feature_ptr);
-		addAttribute(class_ptr->name, attr_ptr, class_ptr);
+		attr_class *attr_ptr = dynamic_cast<attr_class *>(feature_ptr);
+		add_attribute(class_ptr->get_name(), attr_ptr, class_ptr);
 	    }
 	}
     }
@@ -607,7 +620,7 @@ Symbol static_dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, Cl
     
     // figure out what type to return
     Symbol ret_type;
-    Symbol method_ret_type = feature_table->get_methods(specified_parent)[name]->return_type;
+    Symbol method_ret_type = feature_table->get_methods(specified_parent)[name]->get_return_type();
     if(method_ret_type == SELF_TYPE) {
 	ret_type = expr_type;
     } else {
@@ -651,7 +664,7 @@ Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTabl
     
     // figure out what type to return
     Symbol ret_type;
-    Symbol method_ret_type = feature_table->get_methods(curr_class)[name]->return_type;
+    Symbol method_ret_type = feature_table->get_methods(curr_class)[name]->get_return_type();
     if(method_ret_type == SELF_TYPE) {
 	ret_type = curr_class;
     } else {
@@ -667,10 +680,10 @@ Symbol dispatch_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTabl
 
 bool dispatch_class::valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol>& arg_types) {
     // check same number of arguments
-    if(list_length(method->formals) != arg_types.size()) return false;
+    if(list_length(method->get_formals()) != arg_types.size()) return false;
 
     // check valid args provided
-    Formals formals = method_defn->formals;
+    Formals formals = method_defn->get_formals();
     for(int j = formals->first(); formals->more(j); j = formals->next(j)) {
 	Formal curr_formal = formals->nth(j);
 	if(!class_table->is_child(arg_types[j], curr_formal->type_decl)) return false;
