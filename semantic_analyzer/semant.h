@@ -74,7 +74,7 @@ private:
   std::map<Symbol, features_struct *> features;
   ClassTable *class_table;
   
-  features_struct add_missing_features(features_struct *child_features, features_struct *anc_features);
+  void add_missing_features(features_struct *child_features, features_struct *anc_features);
 
 public:
   FeatureTable();

@@ -491,7 +491,7 @@ void SemanticAnalyzer::add_inherited_attributes(Symbol class_name) {
     std::map<Symbol, Symbol> all_attributes = feature_table->get_attributes(class_name);
     for(std::map<Symbol, Symbol>::iterator it = all_attributes.begin(); it != all_attributes.end(); ++it) {
 	if (symbol_table->lookup(it->first) == NULL)
-	    symbol_table->addid(it->second);
+	    symbol_table->addid(it->first, new Symbol(it->second));
     }
 }
 
@@ -693,8 +693,8 @@ void FeatureTable::set_class_table(ClassTable *class_tab) {
 // We pass in the feature maps for a child and an ancestor. Any missing methods or attributes in the child_features are added.
 // No error checking is done here.
 void FeatureTable::add_missing_features(features_struct *child_features, features_struct *anc_features) {
-    anc_methods = anc_features->methods;
-    anc_attr = anc_features->attributes;
+    std::map<Symbol, method_class *> anc_methods = anc_features->methods;
+    std::map<Symbol, Symbol> anc_attr = anc_features->attributes;
     //methods
     for (std::map<Symbol, method_class *>::iterator it = anc_methods.begin(); it != anc_methods.end(); ++it) {
 	if (child_features->methods.count(it->first) == 0)
@@ -712,7 +712,7 @@ void FeatureTable::add_missing_features(features_struct *child_features, feature
 // For each class, we go through its ancestors and add all methods and attributes not already in its features map. 
 // We do not need to do any error checking here, since any inheritance problems are checked in traverse.
 void FeatureTable::add_inherited_features(ClassTable *class_tab) {
-    for(std::map<Symbol, features_struct>::iterator it = features.begin(); it != features.end(); ++it) {
+    for(std::map<Symbol, features_struct *>::iterator it = features.begin(); it != features.end(); ++it) {
 	Symbol curr_class = it->first;
 	for (Symbol parent = class_tab->get_parent(curr_class); parent != Object; parent = class_tab->get_parent(parent)) {
 	    add_missing_features(features[curr_class], features[parent]);
