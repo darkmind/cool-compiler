@@ -17,6 +17,11 @@
 class ClassTable;
 typedef ClassTable *ClassTableP;
 
+enum feature_type {
+    ATTRIBUTE,
+    METHOD
+};
+
 // This is a structure that may be used to contain the semantic
 // information such as the inheritance graph.  You may use it or not as
 // you like: it is only here to provide a container for the supplied
@@ -59,8 +64,9 @@ private:
 
 public:
   FeatureTable();
-  std::map<Symbol, method_class *> get_methods(Symbol class_name);
-  std::map<Symbol, Symbol> get_attributes(Symbol class_name);
+  std::map<Symbol, method_class *> *get_methods(Symbol class_name);
+  std::map<Symbol, Symbol> *get_attributes(Symbol class_name);
+  std::map<Symbol, features_struct> *get_features_map();
   bool method_exists_in_class(Symbol method_name, Symbol class_name);
   bool add_method(Symbol class_name, method_class *method_ptr, Class_ c);
   bool add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);

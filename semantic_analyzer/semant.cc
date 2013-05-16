@@ -411,9 +411,9 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 }
 
 bool SemanticAnalyzer::is_attr_in_parent_classes(attr_class *attribute, Symbol class_name) {
-    while(class_table[child_name] != Object) {
-	Symbol parent_name = class_table[child_name];
-	if (feature_table[parent_name].attributes.count(attribute->get_name()) > 0) return true;
+    while(class_table->class_map[child_name] != Object) {
+	Symbol parent_name = class_table->class_map[child_name];
+	if (feature_table->features[parent_name].attributes.count(attribute->get_name()) > 0) return true;
 	child_name = parent_name;
     }
     return false;
@@ -449,7 +449,7 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	Formals formals = method->get_formals();	
 	for (int j = formals->first(); formals->more(j); j = formals->next(j)) {
 	    Formal curr_formal = formals->nth(j);
-	    if (symbol_table->probe(curr_formal->get_name() == NULL)) {
+	    if (symbol_table->probe(curr_formal->get_name()) == NULL) {
 		if (valid_type(curr_formal->get_type())) {
   	    	    symbol_table->addid(curr_formal->get_name(), curr_formal->get_type());
 		} else {
@@ -475,10 +475,10 @@ bool SemanticAnalyzer::valid_type(Symbol type) {
 }
 
 bool SemanticAnalyzer::method_redefined_with_different_signature(method_class *method, Symbol class_name) {
-    while(class_table[class_name] != Object) {
-	Symbol parent_name = class_table[class_name];
-	if(feature_table[parent_name].methods.count(method->get_name()) > 0) {
-	    method_class *other_method = feature_table[parent_name].methods[method->get_name()];
+    while(class_table->class_map[class_name] != Object) {
+	Symbol parent_name = class_table->class_map[class_name];
+	if(feature_table->features[parent_name].methods.count(method->get_name()) > 0) {
+	    method_class *other_method = feature_table->features[parent_name].methods[method->get_name()];
 	    if(!have_identical_signatures(method, other_method)) return true;	
 	}
 	class_name = parent_name;
