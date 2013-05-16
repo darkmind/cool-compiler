@@ -121,10 +121,10 @@ Expression set_type(Symbol s) { type = s; return this; } \
 virtual void dump_with_types(ostream&,int) = 0;          \
 void dump_type(ostream&, int);                           \
 Expression_class() { type = (Symbol) NULL; }             \
-virtual Symbol eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table, FeatureTable *feature_table) = 0;
+virtual Symbol eval() = 0;
 
 #define Expression_SHARED_EXTRAS           \
 void dump_with_types(ostream&,int);        \
-Symbol eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *class_table, FeatureTable *feature_table);
+Symbol eval();
 
 #endif
