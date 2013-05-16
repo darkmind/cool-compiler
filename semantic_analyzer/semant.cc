@@ -55,7 +55,7 @@ static Symbol
     str_field,
     substr,
     type_name,
-    val,
+    val;
 //
 // Initializing the predefined symbols.
 //
@@ -755,7 +755,9 @@ Symbol let_class::eval(SymbolTable<Symbol, Symbol> *symbol_table, ClassTable *cl
     symbol_table->enterscope();
     // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
     Symbol init_expr_type = init->eval(symbol_table, class_table, feature_table);
-    Symbol type_of_attr = symbol_table->lookup(identifier);
+    Symbol type_of_attr;
+    if (type_decl == SELF_TYPE) type_of_attr = symbol_table->lookup(self);
+    else type_of_attr = symbol_table->lookup(type_decl);
     // check valid type
     if(!class_table->is_child(init_expr_type, type_of_attr)) {
 	// TODO: ERROR - assigning a non-child value to the attribute
