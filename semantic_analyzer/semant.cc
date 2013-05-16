@@ -55,7 +55,6 @@ static Symbol
     substr,
     type_name,
     val,
-    curr_class_symbol;
 //
 // Initializing the predefined symbols.
 //
@@ -98,7 +97,7 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
 	Symbol parent = class_ptr->get_parent();
 	if(class_map.count(name) > 0) { // redefining user-defined class
 		semant_error(class_ptr) << "Class " << name << " was previously defined." << endl;
-	} else if(name == Object || name == IO || name == Str || name == Int || name == Bool) { // redefined basic class
+	} else if(name == Object || name == IO || name == Str || name == Int || name == Bool || name == SELF_TYPE) { // redefined basic class
 		semant_error(class_ptr) << "Redefinition of basic class " << name << "." << endl;
 	} else {
 	    // cannot inherit from Bool, Int or String
@@ -382,7 +381,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	symbol_table->enterscope(); // new scope per class
 	Class_ class_ptr = classes->nth(i);
 	// add current class to symbol table
-	symbol_table->addid(curr_class_symbol, class_ptr->get_name());
+	symbol_table->addid(self, class_ptr->get_name());
 	Features features = class_ptr->get_features();
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
 	check_methods(features, class_ptr->get_name()); // then go through methods one by one
@@ -622,7 +621,7 @@ Symbol static_dispatch_class::eval() {
 		Expression curr_expr = actual->nth(j);
 		arg_types.push_back(curr_expr->eval());
 	    }
-	    if(!valid_dispatch_arguments(feature_table->get_methods(specified_parent)[name], arg_types) {
+	    if(!valid_dispatch_arguments(feature_table->get_methods(specified_parent)[name], arg_types)) {
 		// TODO: ERROR - invalid arguments being fed into dispatch call
 	    }
 	}
@@ -649,7 +648,7 @@ Symbol dispatch_class::eval() {
     Symbol expr_type = expr->eval();
     Symbol curr_class;
     if(expr_type == SELF_TYPE) {
-	curr_class = symbol_table->lookup(curr_class_symbol);
+	curr_class = symbol_table->lookup(self);
     } else {
 	curr_class = expr_type;
     }
@@ -666,7 +665,7 @@ Symbol dispatch_class::eval() {
 		Expression curr_expr = actual->nth(j);
 		arg_types.push_back(curr_expr->eval());
 	    }
-	    if(!valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types) {
+	    if(!valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types)) {
 		// TODO: ERROR - invalid arguments being fed into dispatch call
 	    }
 	}
@@ -875,7 +874,7 @@ Symbol string_const_class::eval() {
 }
 
 Symbol new__class::eval() {
-    if(type_name == SELF_TYPE) return symbol_table->lookup(curr_class_symbol);
+    if(type_name == SELF_TYPE) return symbol_table->lookup(self);
     if (class_table->class_exists(type_name)) return type_name;
     else {
 	// TODO: error about undefined type
