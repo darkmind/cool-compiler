@@ -317,16 +317,17 @@ Symbol ClassTable::get_parent(Symbol class_name) {
 /*
  * Global variables for class table, features table, and scoped symbol table here.
  * This way, we don't have cyclic
-ClassTable *class_table;
-FeatureTable *feature_table;
-SymbolTable<Symbol, Symbol *> *symbol_table;
+*/
+//ClassTable *class_table;
+//FeatureTable *feature_table;
+//SymbolTable<Symbol, Symbol *> *symbol_table;
 
 void program_class::semant()
 {
     initialize_constants();
 
     /* ClassTable constructor may do some semantic analysis */
-    class_table = new ClassTable(classes);
+    ClassTable *class_table = new ClassTable(classes);
     if (class_table->errors()) {
 	cerr << "Compilation halted due to static semantic errors." << endl;
 	exit(1);
@@ -347,14 +348,14 @@ void program_class::semant()
     // TODO: check that code
 
     // go through classes and collect all methods in a method table
-    feature_table = new FeatureTable();
+    FeatureTable *feature_table = new FeatureTable();
     feature_table->populate(classes);
 
     SemanticAnalyzer *semantic_analyzer = new SemanticAnalyzer();
-    symbol_table = new SymbolTable<Symbol, Symbol *>();
-    //semantic_analyzer->set_symbol_table(new SymbolTable<Symbol, Symbol>());
-    //semantic_analyzer->set_class_table(class_table);
-    //semantic_analyzer->set_feature_table(feature_table);
+    SymbolTable<Symbol, Symbol> *symbol_table = new SymbolTable<Symbol, Symbol>();
+    semantic_analyzer->set_symbol_table(symbol_table);
+    semantic_analyzer->set_class_table(class_table);
+    semantic_analyzer->set_feature_table(feature_table);
     semantic_analyzer->traverse(classes);
 }
 
@@ -406,8 +407,8 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 	// TODO: ERROR - attribute already defined in parent classes
     } else {
     	// check in same class whether attribute has been defined or not
-    	if(symbol_table->lookup(attribute->get_name()) == NULL) {
-	    Symbol expr_type = (attribute->get_init_expr())->eval();
+    	if(*(symbol_table->lookup(attribute->get_name())) == NULL) {
+	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
 	    if(class_table->is_child(expr_type, attribute->get_type())) {
 	        symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
 	    } else {
@@ -469,7 +470,7 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	        // TODO: ERROR - formal defined again
 	    }
 	}
-        Symbol expr_type = (method->get_expr())->eval();
+        Symbol expr_type = (method->get_expr())->eval(class_table, feature_table, symbol_table);
 	if(class_table->is_child(expr_type, method->get_return_type())) {
 	    symbol_table->addid(method->get_name(), new Symbol(expr_type));
 	} else {
@@ -562,6 +563,20 @@ void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_
     }
 }
 
+bool FeatureTable::valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types) {
+    // check same number of arguments
+    if((size_t)method_defn->get_formals()->len() != arg_types->size()) return false;
+
+    // check valid args provided
+    Formals formals = method_defn->get_formals();
+    for(int j = formals->first(); formals->more(j); j = formals->next(j)) {
+	Formal curr_formal = formals->nth(j);
+	if(!class_table->is_child((*arg_types)[j], curr_formal->type_decl)) return false;
+    }
+
+    return true;
+}
+
 void FeatureTable::populate(Classes classes) {
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
 	Class_ class_ptr = classes->nth(i);
@@ -583,13 +598,13 @@ void FeatureTable::populate(Classes classes) {
     }
 }
 
-Symbol assign_class::eval() {
+Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // check that name is defined in symbol table, and that expression is valid type
-    Symbol expr_type = expr->eval();
-    Symbol type_of_attr = symbol_table->lookup(name);
+    Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
+    Symbol type_of_attr = *(symbol_table->lookup(name));
     if(type_of_attr) {
 	// the attribute being assigned to is defined in the symbol table
-	if(!is_child(expr_type, type_of_attr)) {
+	if(!class_table->is_child(expr_type, type_of_attr)) {
 	    // TODO: ERROR - assigning a non-child value to the attribute
 	} else {
 	    // add to symbol table
@@ -602,9 +617,9 @@ Symbol assign_class::eval() {
     return expr_type;
 }
 
-Symbol static_dispatch_class::eval() {
+Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     Symbol specified_parent = type_name;
-    Symbol expr_type = expr->eval();
+    Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
     // check whether expr_type is <= of the explicitly defined parent type
     if(!class_table->is_child(expr_type, specified_parent)) {
 	// TODO: ERROR - left-most expression is not a child of specified parent type
@@ -617,12 +632,12 @@ Symbol static_dispatch_class::eval() {
 	    // TODO: ERROR - method does not exist in class
 	} else {
 	    // check that args are valid
-	    std::vector<Symbol> arg_types = new std::vector<Symbol>();
+	    std::vector<Symbol> *arg_types = new std::vector<Symbol>();
 	    for(int j = actual->first(); actual->more(j); j = actual->next(j)) {
 		Expression curr_expr = actual->nth(j);
-		arg_types.push_back(curr_expr->eval());
+		arg_types->push_back(curr_expr->eval(class_table, feature_table, symbol_table));
 	    }
-	    if(!valid_dispatch_arguments(feature_table->get_methods(specified_parent)[name], arg_types)) {
+	    if(!feature_table->valid_dispatch_arguments(feature_table->get_methods(specified_parent)[name], arg_types)) {
 		// TODO: ERROR - invalid arguments being fed into dispatch call
 	    }
 	}
@@ -645,12 +660,12 @@ Symbol static_dispatch_class::eval() {
     return ret_type;
 }
 
-Symbol dispatch_class::eval() {
+Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // check that the method exists in the class, and that it has the same arguments
-    Symbol expr_type = expr->eval();
+    Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
     Symbol curr_class;
     if(expr_type == SELF_TYPE) {
-	curr_class = symbol_table->lookup(self);
+	curr_class = *(symbol_table->lookup(self));
     } else {
 	curr_class = expr_type;
     }
@@ -662,12 +677,12 @@ Symbol dispatch_class::eval() {
 	    // TODO: ERROR - method does not exist in class
 	} else {
 	    // check that args are valid
-	    std::vector<Symbol> arg_types = new std::vector<Symbol>();
+	    std::vector<Symbol> *arg_types = new std::vector<Symbol>();
 	    for(int j = actual->first(); actual->more(j); j = actual->next(j)) {
 		Expression curr_expr = actual->nth(j);
-		arg_types.push_back(curr_expr->eval());
+		arg_types->push_back(curr_expr->eval(class_table, feature_table, symbol_table));
 	    }
-	    if(!valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types)) {
+	    if(!feature_table->valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types)) {
 		// TODO: ERROR - invalid arguments being fed into dispatch call
 	    }
 	}
@@ -690,42 +705,28 @@ Symbol dispatch_class::eval() {
     return ret_type;
 }
 
-bool dispatch_class::valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol>& arg_types) {
-    // check same number of arguments
-    if(method->get_formals()->len() != arg_types.size()) return false;
-
-    // check valid args provided
-    Formals formals = method_defn->get_formals();
-    for(int j = formals->first(); formals->more(j); j = formals->next(j)) {
-	Formal curr_formal = formals->nth(j);
-	if(!class_table->is_child(arg_types[j], curr_formal->type_decl)) return false;
-    }
-
-    return true;
-}
-
-Symbol cond_class::eval() {
-    Symbol pred_type = pred->eval();
+Symbol cond_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol pred_type = pred->eval(class_table, feature_table, symbol_table);
     if (pred_type != Bool) {
 	// TODO: Error about the predicate not being boolean.
     }
-    Symbol then_type = then_exp->eval();
-    Symbol else_type = else_exp->eval();
+    Symbol then_type = then_exp->eval(class_table, feature_table, symbol_table);
+    Symbol else_type = else_exp->eval(class_table, feature_table, symbol_table);
     set_type(class_table->lca(then_type, else_type));
     return class_table->lca(then_type, else_type);
 }
 
-Symbol loop_class::eval() {
-    Symbol pred_type = pred->eval();
+Symbol loop_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol pred_type = pred->eval(class_table, feature_table, symbol_table);
     if(pred_type != Bool) {
 	// TODO: ERROR - predicate type has to be Bool
     }
-    Symbol body_type = body->eval();
+    Symbol body_type = body->eval(class_table, feature_table, symbol_table);
     set_type(Object);
     return Object;
 }
 
-Symbol typcase_class::eval() {
+Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // check that variables in all branches have different types
     std::set<Symbol> types = new std::set<Symbol>();
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
@@ -740,19 +741,19 @@ Symbol typcase_class::eval() {
     // QN - since the value of expr0 is assigned to one of the id's, do we need to check that all the id's have types that can be assigned the type of the value of expr0?
     // QN - do we need to enterscope() here on case branch? I think we need to..implemented below already.
 
-    Symbol expr_type = expr->eval();
+    Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
 
     // find union class of all the expressions of all the branches
     symbol_table->enterscope();
     Case curr_case = cases->nth(cases->first());
     symbol_table->addid(curr_case->name, new Symbol(expr_type));
-    Symbol ret_type = curr_case->expr->eval();
+    Symbol ret_type = curr_case->expr->eval(class_table, feature_table, symbol_table);
     symbol_table->exitscope();
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
 	symbol_table->enterscope();
 	Case curr_case = cases->nth(i);
     	symbol_table->addid(curr_case->name, new Symbol(expr_type));
-	ret_type = class_table->lca(ret_type, curr_case->expr->eval());
+	ret_type = class_table->lca(ret_type, curr_case->expr->eval(class_table, feature_table, symbol_table));
 	symbol_table->exitscope();
     }
 
@@ -761,23 +762,23 @@ Symbol typcase_class::eval() {
     return ret_type;
 }
 
-Symbol block_class::eval() {
+Symbol block_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     for(int i = body->first(); body->more(i); i = body->next(i)) {
 	if ( !(body->more(body->next(i))) ) {
-	    set_type(body->nth(i)->eval());
-	    return body->nth(i)->eval();
+	    set_type(body->nth(i)->eval(class_table, feature_table, symbol_table));
+	    return body->nth(i)->eval(class_table, feature_table, symbol_table);
 	}
-	body->nth(i)->eval();
+	body->nth(i)->eval(class_table, feature_table, symbol_table);
     }
 }
 
-Symbol let_class::eval() {
+Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     symbol_table->enterscope();
     // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
     Symbol init_expr_type = init->eval(symbol_table, class_table, feature_table);
     Symbol type_of_attr;
-    if (type_decl == SELF_TYPE) type_of_attr = symbol_table->lookup(self);
-    else type_of_attr = symbol_table->lookup(type_decl);
+    if (type_decl == SELF_TYPE) type_of_attr = *(symbol_table->lookup(self));
+    else type_of_attr = *(symbol_table->lookup(type_decl));
     // check valid type
     if(!class_table->is_child(init_expr_type, type_decl)) {
 	// TODO: ERROR - assigning a non-child value to the attribute
@@ -787,15 +788,15 @@ Symbol let_class::eval() {
     }
 
     // at this point, all the formals have been added to the symbol table
-    Symbol let_return_type = body->eval();
+    Symbol let_return_type = body->eval(class_table, feature_table, symbol_table);
     symbol_table->exitscope();
     set_type(let_return_type);
     return let_return_type;
 }
 
-Symbol plus_class::eval() {
-    Symbol e1_type = e1->eval();
-    Symbol e2_type = e2->eval();
+Symbol plus_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
+    Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot add non-int values
     }
@@ -803,9 +804,9 @@ Symbol plus_class::eval() {
     return Int;
 }
 
-Symbol sub_class::eval() {
-    Symbol e1_type = e1->eval();
-    Symbol e2_type = e2->eval();
+Symbol sub_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
+    Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot subtract non-int values
     }
@@ -813,9 +814,9 @@ Symbol sub_class::eval() {
     return Int;
 }
 
-Symbol mul_class::eval() {
-    Symbol e1_type = e1->eval();
-    Symbol e2_type = e2->eval();
+Symbol mul_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
+    Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot multiply non-int values
     }
@@ -823,9 +824,9 @@ Symbol mul_class::eval() {
     return Int;
 }
 
-Symbol divide_class::eval() {
-    Symbol e1_type = e1->eval();
-    Symbol e2_type = e2->eval();
+Symbol divide_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
+    Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot divide non-int values
     }
@@ -833,9 +834,9 @@ Symbol divide_class::eval() {
     return Int;
 }
 
-Symbol neg_class::eval() {
+Symbol neg_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // applies to integers
-    Symbol expr_type = e1->eval();
+    Symbol expr_type = e1->eval(class_table, feature_table, symbol_table);
     if(expr_type != Int) {
 	// TODO: ERROR - cannot take negation of non-integer
     }
@@ -843,9 +844,9 @@ Symbol neg_class::eval() {
     return Int;
 }
 
-Symbol lt_class::eval() {
-    Symbol e1_type = e1->eval();
-    Symbol e2_type = e2->eval();
+Symbol lt_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
+    Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot order non-int values
     }
@@ -853,9 +854,9 @@ Symbol lt_class::eval() {
     return Bool;
 }
 
-Symbol eq_class::eval() {
-    Symbol e1_type = e1->eval();
-    Symbol e2_type = e2->eval();
+Symbol eq_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
+    Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != e2_type) {
 	// TODO: ERROR - cannot compare values of different types
     }
@@ -863,9 +864,9 @@ Symbol eq_class::eval() {
     return Bool;
 }
 
-Symbol leq_class::eval() {
-    Symbol e1_type = e1->eval();
-    Symbol e2_type = e2->eval();
+Symbol leq_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol e1_type = e1->eval(class_table, feature_table, symbol_table);
+    Symbol e2_type = e2->eval(class_table, feature_table, symbol_table);
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot order non-int values
     }
@@ -873,9 +874,9 @@ Symbol leq_class::eval() {
     return Bool;
 }
 
-Symbol comp_class::eval() {
+Symbol comp_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // applies to booleans
-    Symbol expr_type = e1->eval();
+    Symbol expr_type = e1->eval(class_table, feature_table, symbol_table);
     if(expr_type != Bool) {
 	// TODO: ERROR - cannot take complement of non-boolean
     }
@@ -883,25 +884,25 @@ Symbol comp_class::eval() {
     return Bool;
 }
 
-Symbol int_const_class::eval() {
+Symbol int_const_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     set_type(Int);
     return Int;
 }
 
-Symbol bool_const_class::eval() {
+Symbol bool_const_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     set_type(Bool);
     return Bool;
 }
 
-Symbol string_const_class::eval() {
+Symbol string_const_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     set_type(Str);
     return Str;
 }
 
-Symbol new__class::eval() {
+Symbol new__class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     if(type_name == SELF_TYPE) {
-	set_type(symbol_table->lookup(self));
-	return symbol_table->lookup(self);
+	set_type(*(symbol_table->lookup(self)));
+	return *(symbol_table->lookup(self));
     }
     if (class_table->class_exists(type_name)) {
 	set_type(type_name);
@@ -914,19 +915,19 @@ Symbol new__class::eval() {
     }
 }
 
-Symbol isvoid_class::eval() {
-    e1->eval();
+Symbol isvoid_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    e1->eval(class_table, feature_table, symbol_table);
     set_type(Bool);
     return Bool;
 }
 
-Symbol no_expr_class::eval() {
+Symbol no_expr_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     set_type(No_type);
     return No_type;
 }
 
-Symbol object_class::eval() {
-    Symbol obj_type = symbol_table->lookup(name);
+Symbol object_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    Symbol obj_type = *(symbol_table->lookup(name));
     if (obj_type == NULL) {
 	// TODO: print error about undefined object
 	set_type(Object);

@@ -10,6 +10,7 @@
 
 #include <map>
 #include <set>
+#include <vector>
 
 #define TRUE 1
 #define FALSE 0
@@ -70,6 +71,7 @@ public:
   bool method_exists_in_class(Symbol method_name, Symbol class_name);
   void add_method(Symbol class_name, method_class *method_ptr, Class_ c);
   void add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
+  bool valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types);
   void populate(Classes);
 };
 
@@ -93,6 +95,7 @@ public:
   bool method_redefined_with_different_signature(method_class *method, Symbol class_name);
   bool have_identical_signatures(method_class *method_one, method_class *method_two);
   void traverse(Classes);
+  Symbol lookup_symbol_table(Symbol class_name);
 };
 
 #endif

@@ -33,6 +33,11 @@ typedef Expression_class *Expression;
 class Case_class;
 typedef Case_class *Case;
 
+class ClassTable;
+class FeatureTable;
+template <class SYM, class DAT>
+class SymbolTable;
+
 typedef list_node<Class_> Classes_class;
 typedef Classes_class *Classes;
 typedef list_node<Feature> Features_class;
@@ -122,10 +127,10 @@ Expression set_type(Symbol s) { type = s; return this; } \
 virtual void dump_with_types(ostream&,int) = 0;          \
 void dump_type(ostream&, int);                           \
 Expression_class() { type = (Symbol) NULL; }             \
-virtual Symbol eval() = 0;
+virtual Symbol eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) = 0;
 
 #define Expression_SHARED_EXTRAS           \
 void dump_with_types(ostream&,int);        \
-Symbol eval();
+Symbol eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table);
 
 #endif
