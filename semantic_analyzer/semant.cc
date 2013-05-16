@@ -312,6 +312,11 @@ Symbol ClassTable::get_parent(Symbol class_name) {
      errors. Part 2) can be done in a second stage, when you want
      to build mycoolc.
  */
+
+
+/*
+ * Global variables for class table, features table, and scoped symbol table here.
+ * This way, we don't have cyclic
 ClassTable *class_table;
 FeatureTable *feature_table;
 SymbolTable<Symbol, Symbol *> *symbol_table;
@@ -593,6 +598,7 @@ Symbol assign_class::eval() {
     } else {
 	// TODO: ERROR - attribute being assigned to is not defined
     }
+    set_type(expr_type);
     return expr_type;
 }
 
@@ -635,6 +641,7 @@ Symbol static_dispatch_class::eval() {
 	    ret_type = Object;
 	}
     }
+    set_type(ret_type);
     return ret_type;
 }
 
@@ -679,6 +686,7 @@ Symbol dispatch_class::eval() {
 	    ret_type = Object;
 	}
     }
+    set_type(ret_type);
     return ret_type;
 }
 
@@ -703,6 +711,7 @@ Symbol cond_class::eval() {
     }
     Symbol then_type = then_exp->eval();
     Symbol else_type = else_exp->eval();
+    set_type(class_table->lca(then_type, else_type));
     return class_table->lca(then_type, else_type);
 }
 
@@ -712,6 +721,7 @@ Symbol loop_class::eval() {
 	// TODO: ERROR - predicate type has to be Bool
     }
     Symbol body_type = body->eval();
+    set_type(Object);
     return Object;
 }
 
@@ -746,12 +756,17 @@ Symbol typcase_class::eval() {
 	symbol_table->exitscope();
     }
 
+    set_type(ret_type);
+
     return ret_type;
 }
 
 Symbol block_class::eval() {
     for(int i = body->first(); body->more(i); i = body->next(i)) {
-	if (!(body->more(body->next(i))) return body->nth(i)->eval();
+	if ( !(body->more(body->next(i))) ) {
+	    set_type(body->nth(i)->eval());
+	    return body->nth(i)->eval();
+	}
 	body->nth(i)->eval();
     }
 }
@@ -759,8 +774,10 @@ Symbol block_class::eval() {
 Symbol let_class::eval() {
     symbol_table->enterscope();
     // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
-    Symbol init_expr_type = init->eval();
-    //Symbol type_of_attr = symbol_table->lookup(identifier);
+    Symbol init_expr_type = init->eval(symbol_table, class_table, feature_table);
+    Symbol type_of_attr;
+    if (type_decl == SELF_TYPE) type_of_attr = symbol_table->lookup(self);
+    else type_of_attr = symbol_table->lookup(type_decl);
     // check valid type
     if(!class_table->is_child(init_expr_type, type_decl)) {
 	// TODO: ERROR - assigning a non-child value to the attribute
@@ -772,6 +789,7 @@ Symbol let_class::eval() {
     // at this point, all the formals have been added to the symbol table
     Symbol let_return_type = body->eval();
     symbol_table->exitscope();
+    set_type(let_return_type);
     return let_return_type;
 }
 
@@ -781,6 +799,7 @@ Symbol plus_class::eval() {
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot add non-int values
     }
+    set_type(Int);
     return Int;
 }
 
@@ -790,6 +809,7 @@ Symbol sub_class::eval() {
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot subtract non-int values
     }
+    set_type(Int);
     return Int;
 }
 
@@ -799,6 +819,7 @@ Symbol mul_class::eval() {
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot multiply non-int values
     }
+    set_type(Int);
     return Int;
 }
 
@@ -808,6 +829,7 @@ Symbol divide_class::eval() {
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot divide non-int values
     }
+    set_type(Int);
     return Int;
 }
 
@@ -817,6 +839,7 @@ Symbol neg_class::eval() {
     if(expr_type != Int) {
 	// TODO: ERROR - cannot take negation of non-integer
     }
+    set_type(Int);
     return Int;
 }
 
@@ -826,6 +849,7 @@ Symbol lt_class::eval() {
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot order non-int values
     }
+    set_type(Bool);
     return Bool;
 }
 
@@ -835,6 +859,7 @@ Symbol eq_class::eval() {
     if(e1_type != e2_type) {
 	// TODO: ERROR - cannot compare values of different types
     }
+    set_type(Bool);
     return Bool;
 }
 
@@ -844,6 +869,7 @@ Symbol leq_class::eval() {
     if(e1_type != Int || e2_type != Int) {
 	// TODO: ERROR - cannot order non-int values
     }
+    set_type(Bool);
     return Bool;
 }
 
@@ -853,36 +879,49 @@ Symbol comp_class::eval() {
     if(expr_type != Bool) {
 	// TODO: ERROR - cannot take complement of non-boolean
     }
+    set_type(Bool);
     return Bool;
 }
 
 Symbol int_const_class::eval() {
+    set_type(Int);
     return Int;
 }
 
 Symbol bool_const_class::eval() {
+    set_type(Bool);
     return Bool;
 }
 
 Symbol string_const_class::eval() {
+    set_type(Str);
     return Str;
 }
 
 Symbol new__class::eval() {
-    if(type_name == SELF_TYPE) return symbol_table->lookup(self);
-    if (class_table->class_exists(type_name)) return type_name;
+    if(type_name == SELF_TYPE) {
+	set_type(symbol_table->lookup(self));
+	return symbol_table->lookup(self);
+    }
+    if (class_table->class_exists(type_name)) {
+	set_type(type_name);
+	return type_name;
+    }
     else {
 	// TODO: error about undefined type
+	set_type(Object);
 	return Object;
     }
 }
 
 Symbol isvoid_class::eval() {
     e1->eval();
+    set_type(Bool);
     return Bool;
 }
 
 Symbol no_expr_class::eval() {
+    set_type(No_type);
     return No_type;
 }
 
@@ -890,11 +929,14 @@ Symbol object_class::eval() {
     Symbol obj_type = symbol_table->lookup(name);
     if (obj_type == NULL) {
 	// TODO: print error about undefined object
+	set_type(Object);
 	return Object;
     }
     if (obj_type == Object) {
 	// TODO: print error about bad type
+	set_type(Object);
 	return Object;
     }
+    set_type(obj_type);
     return obj_type;
 }
