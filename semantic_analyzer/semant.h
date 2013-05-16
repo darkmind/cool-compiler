@@ -62,6 +62,8 @@ public:
   void set_curr_class_ptr(Class_ class_ptr);
   Class_ get_curr_class_ptr();
   Symbol lca(Symbol class1, Symbol class2);
+
+  Class_ get_class(Symbol class_name);
 };
 
 class FeatureTable {
@@ -80,12 +82,16 @@ public:
   FeatureTable();
   std::map<Symbol, method_class *> get_methods(Symbol class_name);
   std::map<Symbol, Symbol> get_attributes(Symbol class_name);
+  
   bool method_exists_in_class(Symbol method_name, Symbol class_name);
   void add_method(Symbol class_name, method_class *method_ptr, Class_ c);
   void add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
   bool valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table);
+
   void set_class_table(ClassTable *class_table);
   void add_inherited_features(ClassTable *class_table);
+  
+  void install_features_from_class(Class_ class_ptr);
   void populate(Classes);
 };
 

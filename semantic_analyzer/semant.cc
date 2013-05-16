@@ -332,6 +332,10 @@ Class_ ClassTable::get_curr_class_ptr() {
     return curr_class_ptr;
 }
 
+Class_ ClassTable::get_class(Symbol class_name) {
+    return class_map[class_name].c;
+}
+
 /*   This is the entry point to the semantic checker.
 
      Your checker should do the following two things:
@@ -374,9 +378,17 @@ void program_class::semant()
 
     // go through classes and collect all methods in a method table
     FeatureTable *feature_table = new FeatureTable();
+    
+    // Install all of our classes in the feature, starting with the basic classes 
     feature_table->set_class_table(class_table);
     feature_table->populate(classes);
+    
+    cerr << "populated feature_table" << endl; //DEBUG
+
+
     feature_table->add_inherited_features(class_table);
+
+    cerr << "added inherited features" << endl; //DEBUG
 
     // check for existence of Main class and main() method with no args within it
     if(!class_table->class_exists(Main)) {
@@ -665,24 +677,38 @@ bool FeatureTable::valid_dispatch_arguments(method_class *method_defn, std::vect
     return true;
 }
 
+void FeatureTable::install_features_from_class(Class_ class_ptr) {
+    Features features = class_ptr->get_features();
+    for(int j = features->first(); features->more(j); j = features->next(j)) {
+	Feature feature_ptr = features->nth(j);
+	// try to cast to method class type
+	method_class *method_ptr = dynamic_cast<method_class *>(feature_ptr);
+	if(method_ptr != 0) {
+	    // a method
+	    add_method(class_ptr->get_name(), method_ptr, class_ptr);
+		//cerr << meth->get_name() << "; " << class_ptr->get_name() << endl; //DEBUG
+	} else {
+	    // not a method, must be attribute
+	    attr_class *attr_ptr = dynamic_cast<attr_class *>(feature_ptr);
+	    add_attribute(class_ptr->get_name(), attr_ptr, class_ptr);
+	}
+    }
+}
+
 void FeatureTable::populate(Classes classes) {
+
+    // First, populate with basic classes
+
+    install_features_from_class(class_table->get_class(IO));
+    install_features_from_class(class_table->get_class(Object));
+    install_features_from_class(class_table->get_class(Int));
+    install_features_from_class(class_table->get_class(Bool));
+    install_features_from_class(class_table->get_class(Str));
+
+    // Then the rest of the classes
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
 	Class_ class_ptr = classes->nth(i);
-	Features features = class_ptr->get_features();
-	for(int j = features->first(); features->more(j); j = features->next(j)) {
-	    Feature feature_ptr = features->nth(j);
-	    // try to cast to method class type
-	    method_class *method_ptr = dynamic_cast<method_class *>(feature_ptr);
-	    if(method_ptr != 0) {
-	        // a method
-		add_method(class_ptr->get_name(), method_ptr, class_ptr);
-		//cerr << meth->get_name() << "; " << class_ptr->get_name() << endl; //DEBUG
-	    } else {
-		// not a method, must be attribute
-		attr_class *attr_ptr = dynamic_cast<attr_class *>(feature_ptr);
-		add_attribute(class_ptr->get_name(), attr_ptr, class_ptr);
-	    }
-	}
+	install_features_from_class(class_ptr);
     }
 }
 
@@ -713,8 +739,11 @@ void FeatureTable::add_missing_features(features_struct *child_features, feature
 // We do not need to do any error checking here, since any inheritance problems are checked in traverse.
 void FeatureTable::add_inherited_features(ClassTable *class_tab) {
     for(std::map<Symbol, features_struct *>::iterator it = features.begin(); it != features.end(); ++it) {
+    cerr << "here" << endl; //DEBUG
 	Symbol curr_class = it->first;
-	for (Symbol parent = class_tab->get_parent(curr_class); parent != Object; parent = class_tab->get_parent(parent)) {
+	cerr << curr_class << endl; //DEBUG
+	for (Symbol parent = class_tab->get_parent(curr_class); parent != Object && curr_class != Object; parent = class_tab->get_parent(parent)) {
+	    cerr << "parents of " << curr_class << ": " << parent << endl;
 	    add_missing_features(features[curr_class], features[parent]);
 	}
     }
