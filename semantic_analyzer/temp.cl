@@ -7,5 +7,5 @@ class Main {
 			b <- 5;
 		}
 	};
-	a:Int <- "hello" + 5;
+	a:Int <- 8 + 5;
 };
