@@ -670,7 +670,7 @@ void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_
 void FeatureTable::check_valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table, tree_node *t) {
     // check same number of arguments
     if((size_t)method_defn->get_formals()->len() != arg_types->size()) {
-	error_reporter->semant_error(class_table->get_curr_class_ptr(), t) << "Method " << t->get_name() << " called with wrong number of arguments." << endl;
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), t) << "Method " << method_defn->get_name() << " called with wrong number of arguments." << endl;
 	return;
     }
 
