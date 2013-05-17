@@ -802,7 +802,6 @@ Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
 }
 
 Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
-    //cerr << "static dispatch" << endl;
     Symbol specified_parent = type_name;
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
     // check whether expr_type is <= of the explicitly defined parent type
@@ -811,7 +810,9 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Specified static type is not defined." << endl;
     } else {
     	if(!feature_table->method_exists_in_class(name, specified_parent)) {
-	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Method " << name << " not defined in class " << specified_parent << "." << endl;
+	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Method " << name << " not defined in class " << specified_parent << "." << endl;	
+	    set_type(Object);
+	    return Object;
 	} else {
 	    // check that args are valid
 	    std::vector<Symbol> *arg_types = new std::vector<Symbol>();
@@ -826,9 +827,9 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
     }
     
     // figure out what type to return
-    Symbol ret_type;
     // gets the statically declared return type of the winky() method in class B
     // but not sufficient
+    Symbol ret_type;
     Symbol method_ret_type = feature_table->get_methods(specified_parent)[name]->get_return_type();
 
     if (specified_parent == SELF_TYPE) {
