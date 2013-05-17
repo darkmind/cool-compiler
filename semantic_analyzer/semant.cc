@@ -96,10 +96,12 @@ ClassTable::ClassTable(Classes classes) {
 	Class_ class_ptr = classes->nth(i);
 	Symbol name = class_ptr->get_name();
 	Symbol parent = class_ptr->get_parent();
-	if(class_map.count(name) > 0) { // redefining user-defined class
-		error_reporter->semant_error(class_ptr) << "Class " << name << " was previously defined." << endl;
+	if (name == SELF_TYPE || parent == SELF_TYPE) {
+	    error_reporter->semant_error(class_ptr) << "SELF_TYPE cannot be defined or inherited from" << endl;
+	} else if(class_map.count(name) > 0) { // redefining user-defined class
+	    error_reporter->semant_error(class_ptr) << "Class " << name << " was previously defined." << endl;
 	} else if(name == Object || name == IO || name == Str || name == Int || name == Bool || name == SELF_TYPE) { // redefined basic class
-		error_reporter->semant_error(class_ptr) << "Redefinition of basic class " << name << "." << endl;
+	    error_reporter->semant_error(class_ptr) << "Redefinition of basic class " << name << "." << endl;
 	} else {
 	    // cannot inherit from Bool, Int or String
 	    if(parent == Bool || parent == Int || parent == Str) {
@@ -124,18 +126,30 @@ ClassTable::ClassTable(Classes classes) {
 
 bool ClassTable::is_child(Symbol child_name, Symbol class_name) {
     // cerr << "type: " << child_name << endl; //DEBUG
-    if(child_name == class_name) return true;
-    while(child_name != Object) {
-	cerr << child_name << endl; //DEBUG
-	if (class_map[child_name].parent == class_name) return true;
-	cerr << "child name before is: " << child_name << endl;
-	child_name = class_map[child_name].parent;
-	cerr << "child_name now is: " << child_name << endl;
-	//Symbol temp = class_map[child_name].parent;
-	//cerr << "class_map[child_name]: " << temp << endl;
+    if (child_name == SELF_TYPE) {
+	// Both are SELF_TYPE, true.
+	if (class_name == SELF_TYPE) return true;
+	// Child is SELF_TYPE, parent isn't. Check if the current class is child of parent.
+	else return is_child(curr_class_ptr->get_name(), class_name);
     }
-    cerr << "returning false" << endl;
-    return false;
+    // Child isn't SELF_TYPE
+    else {
+	// If parent is SELF_TYPE, always false
+	if (class_name == SELF_TYPE) return false;
+	// Normal checking
+	if (child_name == class_name) return true;
+	while(child_name != Object) {
+	    // cerr << child_name << endl; //DEBUG
+	    if (class_map[child_name].parent == class_name) return true;
+	    // cerr << "child name before is: " << child_name << endl; //DEBUG
+	    child_name = class_map[child_name].parent;
+	    // cerr << "child_name now is: " << child_name << endl; //DEBUG
+	    //Symbol temp = class_map[child_name].parent;
+	    //cerr << "class_map[child_name]: " << temp << endl; //DEBUG
+	}
+	cerr << "returning false" << endl;
+	return false;
+    }
 }
 
 bool ClassTable::check_for_cycles() {
@@ -312,8 +326,16 @@ bool ClassTable::class_exists(Symbol class_name)
     return class_map.count(class_name) > 0;
 }
 
+// Least upper bound// least common ancestor function
 Symbol ClassTable::lca(Symbol class1, Symbol class2)
 {
+    // SELF_TYPE and SELF_TYPE
+    if (class1 == SELF_TYPE && class2 == SELF_TYPE) return SELF_TYPE;
+    // SELF_TYPE and T
+    if (class1 == SELF_TYPE) return lca(curr_class_ptr->get_name(), class2);
+    // T and SELF_TYPE
+    if (class2 == SELF_TYPE) return lca(class1, curr_class_ptr->get_name());
+    // T and T'
     for (Symbol parent = class1; parent != Object; parent = class_map[parent].parent) {
 	if (is_child(class2, parent)) return parent;
     }
@@ -368,13 +390,12 @@ void program_class::semant()
 	exit(1);
     }
 
-    // TODO: check that there is a Main class with a main() method.
     // TODO: check if any differences between archived project 1 test cases and PA1-tests.
-    // TODO: also need to add self, and SELF_TYPE in all these places. KV said there are lot of places with self and SELF_TYPE.
-    // QN - in type checking, when assigning expression to attribute, need to check type of expression is valid. then when add to symbol table, add the type of expression or static type of attribute?
     // TODO: return Object everywhere there is an error reported that prevents the expression from being evaluated properly
-    // TODO: KV said something about adding the parent's methods/attributes into the current scope/local table
     // TODO: check that code
+
+    // TODO: SELF_TYPE
+    // 1. new SELF_TYPE, return type of method, declared in let, declared in attr.
 
     // go through classes and collect all methods in a method table
     FeatureTable *feature_table = new FeatureTable();
@@ -438,7 +459,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	Class_ class_ptr = classes->nth(i);
 	// cerr << "currently on class: " << class_ptr->get_name() << endl; //DEBUG
 	// add current class to symbol table
-	symbol_table->addid(self, new Symbol(class_ptr->get_name()));
+	symbol_table->addid(self, new Symbol(SELF_TYPE));
 	class_table->set_curr_class_ptr(class_ptr);
 	Features features = class_ptr->get_features();
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
@@ -464,7 +485,9 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
     // check whether exists in parent classes or not
 
     //attribute->dump_with_types(cerr, 0); //DEBUG
-    if(is_attr_in_parent_classes(attribute, class_name)) {
+    if (attribute->get_name() == self) {
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to assign to self in attribute declaration." << endl;
+    } else if(is_attr_in_parent_classes(attribute, class_name)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attribute " << attribute->get_name() << " already defined in ancestor classes." << endl;
     } else {
     	// check in same class whether attribute has been defined or not
@@ -551,7 +574,11 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	for (int j = formals->first(); formals->more(j); j = formals->next(j)) {
 	    // cerr << "verifying formals part: " << j << endl; //DEBUG
 	    Formal curr_formal = formals->nth(j);
-	    if (symbol_table->probe(curr_formal->get_name()) == NULL) {
+	    if (curr_formal->get_name() == self) {
+		error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to bind to self in a method formal." << endl;
+	    } else if (curr_formal->get_type() == SELF_TYPE) {
+		error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to bind SELF_TYPE to variable in formal." << endl;
+	    } else if (symbol_table->probe(curr_formal->get_name()) == NULL) {
 		// cerr << "putting stuff in symtab: " << curr_formal->get_name() << " : " << curr_formal->get_type() << endl; //DEBUG
 		if (valid_type(curr_formal->get_type())) {
   	    	    symbol_table->addid(curr_formal->get_name(), new Symbol(curr_formal->get_type()));
@@ -754,6 +781,13 @@ Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
     // check that name is defined in symbol table, and that expression is valid type
     // cerr << "here we are in assign class" << endl; //DEBUG
     // dump_with_types(cerr, 0); //DEBUG
+
+    if (name == self) {
+	set_type(Object);
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to assign to self." << endl;
+	return Object;
+    }
+
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
 
     // cerr << expr_type << " is being assigned" << endl; //DEBUG
@@ -782,12 +816,12 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
     Symbol specified_parent = type_name;
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
     // check whether expr_type is <= of the explicitly defined parent type
-    if(!class_table->is_child(expr_type, specified_parent)) {
+    if (specified_parent == SELF_TYPE) {
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Static type of dispatch cannot be SELF_TYPE." << endl;
+    } else if (!class_table->is_child(expr_type, specified_parent)) {
 
 	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Dispatch type " << expr_type << " is not a child of specified static type " << specified_parent << "." << endl;
-    }
-
-    if(!class_table->class_exists(specified_parent)) {
+    } if (!class_table->class_exists(specified_parent)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Specified static type is not defined." << endl;
     } else {
     	if(!feature_table->method_exists_in_class(name, specified_parent)) {
@@ -832,13 +866,13 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
     cerr << "expr_type: " << expr_type << endl;
     if(expr_type == SELF_TYPE) {
 	cerr << " ################# AAA" << endl;
-	curr_class = *(symbol_table->lookup(self));
+	curr_class = (class_table->get_curr_class_ptr())->get_name();
 	cerr << "curr_class: " << curr_class << endl; // is Main
     } else {
 	cerr << " ################# BBB: " << expr_type << endl;
 	curr_class = expr_type;
     }
-    cerr << "a" << endl;
+    cerr << "a" << endl; //DEBUG
 
     bool method_exists = true;
 
@@ -917,11 +951,14 @@ Symbol loop_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sy
 }
 
 Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
-    // check that variables in all branches have different types
+    // check that variables in all branches have different types, also that none of the cases involve self
     std::set<Symbol> *types = new std::set<Symbol>();
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
 	Symbol type = cases->nth(i)->get_type();
-	if(types->count(type) > 0) {
+	Symbol name = cases->nth(i)->get_name();
+	if (name == self) {
+	    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to bind to self in case branch." << endl;
+	} else if(types->count(type) > 0) {
 	    error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Two or more branches have the same type defined." << endl;
 	} else {
 	    types->insert(type);
@@ -970,15 +1007,13 @@ Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
     cerr << "in let class..." << endl; //DEBUG
     symbol_table->enterscope();
     Symbol type_of_attr;
-    if (type_decl == SELF_TYPE) {
-	type_of_attr = *(symbol_table->lookup(self));
-    } else {
-	type_of_attr = type_decl;
-    }
+    type_of_attr = type_decl;
     // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
     Symbol init_expr_type = init->eval(class_table, feature_table, symbol_table);
     cerr << "init_expr_type: " << init_expr_type << endl;
-    if(init_expr_type != No_type) {
+    if (identifier == self) {
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to bind to self in let expression." << endl;
+    } else if(init_expr_type != No_type) {
 	// init expression defined	
 	// check valid type
         if(!class_table->is_child(init_expr_type, type_of_attr)) {
@@ -989,7 +1024,7 @@ Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
 	    symbol_table->addid(identifier, new Symbol(type_of_attr));
         }
     } else { // init expression not defined
-	cerr << "init expression not defined." << endl;
+	cerr << "init expression not defined." << endl; //DEBUG
 	symbol_table->addid(identifier, new Symbol(type_of_attr));
     }
 
@@ -997,7 +1032,7 @@ Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
     Symbol let_return_type = body->eval(class_table, feature_table, symbol_table);
     symbol_table->exitscope();
     set_type(let_return_type);
-    cerr << "returned from let successfully..." << endl;
+    cerr << "returned from let successfully..." << endl; //DEBUG
     return let_return_type;
 }
 
@@ -1108,8 +1143,8 @@ Symbol string_const_class::eval(ClassTable *class_table, FeatureTable *feature_t
 
 Symbol new__class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     if(type_name == SELF_TYPE) {
-	set_type(*(symbol_table->lookup(self)));
-	return *(symbol_table->lookup(self));
+	set_type(SELF_TYPE);
+	return SELF_TYPE;
     }
     if (class_table->class_exists(type_name)) {
 	set_type(type_name);
@@ -1135,7 +1170,7 @@ Symbol no_expr_class::eval(ClassTable *class_table, FeatureTable *feature_table,
 
 Symbol object_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     //dump(cerr, 0);
-    cerr << "######## name: " << name << endl; //DEBUG
+    cerr << "HELLO WE ARE NOW IN OBJECT CLASS ######## name: " << name << endl; //DEBUG
     if(name == self) {
 	cerr << "yo" << endl;
 	set_type(SELF_TYPE);	
