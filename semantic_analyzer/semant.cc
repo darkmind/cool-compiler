@@ -147,7 +147,7 @@ bool ClassTable::is_child(Symbol child_name, Symbol class_name) {
 	    //Symbol temp = class_map[child_name].parent;
 	    //cerr << "class_map[child_name]: " << temp << endl; //DEBUG
 	}
-	cerr << "returning false" << endl;
+	// cerr << "returning false" << endl; //DEBUG
 	return false;
     }
 }
@@ -462,8 +462,10 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	symbol_table->addid(self, new Symbol(SELF_TYPE));
 	class_table->set_curr_class_ptr(class_ptr);
 	Features features = class_ptr->get_features();
-	check_attributes(features, class_ptr->get_name()); // first, check all attributes
 	add_inherited_attributes(class_ptr->get_name());
+	cerr << "Added inherited attributes for class: " << class_ptr->get_name() << endl;
+	check_attributes(features, class_ptr->get_name()); // first, check all attributes
+	cerr << "CHECKED ATTRIBUTES FOR CLASS: " << class_ptr->get_name() << endl;
 	check_methods(features, class_ptr->get_name()); // then go through methods one by one
 	symbol_table->exitscope(); // exit the scope for the class
     }
@@ -492,10 +494,10 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
     } else {
     	// check in same class whether attribute has been defined or not
     	if(symbol_table->lookup(attribute->get_name()) == NULL) {
-	    cerr << "evaling init expression.." << endl; //DEBUG
-	    cerr << "init expr: " << attribute->get_init_expr() << endl; //DEBUG
+	    // cerr << "evaling init expression.." << endl; //DEBUG
+	    // cerr << "init expr: " << attribute->get_init_expr() << endl; //DEBUG
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
-	    cerr << "here" << endl; //DEBUG
+	    // cerr << "here" << endl; //DEBUG
 	    if (expr_type != No_type) { // init expression is defined
 		cerr << "init expression is defined. has type: " << expr_type << endl; //DEBUG
 		if(class_table->is_child(expr_type, attribute->get_type())) {
@@ -523,10 +525,14 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 
 // Adds all the attributes inherited but not put in scope yet. No error checking required here.
 void SemanticAnalyzer::add_inherited_attributes(Symbol class_name) {
-    std::map<Symbol, Symbol> all_attributes = feature_table->get_attributes(class_name);
-    for(std::map<Symbol, Symbol>::iterator it = all_attributes.begin(); it != all_attributes.end(); ++it) {
-	if (symbol_table->lookup(it->first) == NULL)
-	    symbol_table->addid(it->first, new Symbol(it->second));
+    for (Symbol parent = class_table->get_parent(class_name); parent != No_class; parent = class_table->get_parent(parent)) {
+	std::map<Symbol, Symbol> all_attributes = feature_table->get_attributes(parent);
+	cerr << "adding inherited attributes to class: " << class_name << " from parent " << parent << endl; //DEBUG
+	for(std::map<Symbol, Symbol>::iterator it = all_attributes.begin(); it != all_attributes.end(); ++it) {
+	    if (symbol_table->lookup(it->first) == NULL)
+		symbol_table->addid(it->first, new Symbol(it->second));
+	    cerr << "added : " << *(symbol_table->lookup(it->first)) << endl;
+	}
     }
 }
 
@@ -675,6 +681,7 @@ void FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class
 }
 
 void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c) {
+    cerr << "ADDING ATTRIBUTE to: " << class_name << ": " << attr_ptr->get_name() << endl; //DEBUG
     Symbol attribute_name = attr_ptr->get_name();
     if(features.count(class_name) > 0) {
 	if (features[class_name]->attributes.count(attribute_name) > 0) {
@@ -688,6 +695,7 @@ void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_
 	new_features->c = c;
 	features[class_name] = new_features;
     }
+    cerr << features[class_name]->attributes[attribute_name] << endl;
 }
 
 bool FeatureTable::valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table) {
@@ -705,10 +713,10 @@ bool FeatureTable::valid_dispatch_arguments(method_class *method_defn, std::vect
 }
 
 void FeatureTable::install_features_from_class(Class_ class_ptr) {
-    Features features = class_ptr->get_features();
-    cerr << "class: " << class_ptr->get_name() << endl; //DEBUG
-    for(int j = features->first(); features->more(j); j = features->next(j)) {
-	Feature feature_ptr = features->nth(j);
+    Features features_list = class_ptr->get_features();
+    cerr << "installing features from class: " << class_ptr->get_name() << endl; //DEBUG
+    for(int j = features_list->first(); features_list->more(j); j = features_list->next(j)) {
+	Feature feature_ptr = features_list->nth(j);
 	// try to cast to method class type
 	method_class *method_ptr = dynamic_cast<method_class *>(feature_ptr);
 	if(method_ptr != 0) {
@@ -719,6 +727,8 @@ void FeatureTable::install_features_from_class(Class_ class_ptr) {
 	    // not a method, must be attribute
 	    attr_class *attr_ptr = dynamic_cast<attr_class *>(feature_ptr);
 	    add_attribute(class_ptr->get_name(), attr_ptr, class_ptr);
+	    cerr << attr_ptr->get_name() << "; " << class_ptr->get_name() << endl; //DEBUG
+	    cerr << features[class_ptr->get_name()]->attributes[attr_ptr->get_name()] << " was just added" << endl; //DEBUG
 	}
     }
 }
@@ -758,6 +768,7 @@ void FeatureTable::add_missing_features(features_struct *child_features, feature
     for (std::map<Symbol, Symbol>::iterator it = anc_attr.begin(); it != anc_attr.end(); ++it) {
 	if (child_features->attributes.count(it->first) == 0)
 	    child_features->attributes[it->first] = it->second;
+	    cerr << "added attribute: " << it->first << " of type " << it->second << endl; //DEBUG
     }    
 }
 
@@ -767,7 +778,7 @@ void FeatureTable::add_missing_features(features_struct *child_features, feature
 // We do not need to do any error checking here, since any inheritance problems are checked in traverse.
 void FeatureTable::add_inherited_features(ClassTable *class_tab) {
     for(std::map<Symbol, features_struct *>::iterator it = features.begin(); it != features.end(); ++it) {
-        cerr << "here" << endl; //DEBUG
+        cerr << "################ADDING FEATURES TO CLASS" << endl; //DEBUG
 	Symbol curr_class = it->first;
 	cerr << curr_class << endl; //DEBUG
 	for (Symbol parent = class_tab->get_parent(curr_class); parent != No_class && curr_class != Object; parent = class_tab->get_parent(parent)) {
@@ -967,19 +978,23 @@ Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table,
 
     // QN - since the value of expr0 is assigned to one of the id's, do we need to check that all the id's have types that can be assigned the type of the value of expr0?
     // QN - do we need to enterscope() here on case branch? I think we need to..implemented below already.
-
+    cerr << "typcase: evaling the expr: " << endl; //DEBUG
+    expr->dump(cerr, 10); //DEBUG
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
 
     // find union class of all the expressions of all the branches
     symbol_table->enterscope();
     Case curr_case = cases->nth(cases->first());
+    cerr << "currently in typcase. Adding to scope: " << curr_case->get_name() << " of type " << *(new Symbol (expr_type)) << " oh wat " << expr_type << endl;
     symbol_table->addid(curr_case->get_name(), new Symbol(expr_type));
+
     Symbol ret_type = curr_case->get_expr()->eval(class_table, feature_table, symbol_table);
+    cerr << "initialize the return type of typcase: " << ret_type << endl;
     symbol_table->exitscope();
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
 	symbol_table->enterscope();
 	Case curr_case = cases->nth(i);
-    	symbol_table->addid(curr_case->get_name(), new Symbol(expr_type));
+    	symbol_table->addid(curr_case->get_name(), new Symbol(curr_case->get_type()));
 	ret_type = class_table->lca(ret_type, curr_case->get_expr()->eval(class_table, feature_table, symbol_table));
 	symbol_table->exitscope();
     }
