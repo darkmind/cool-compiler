@@ -389,12 +389,6 @@ void program_class::semant()
 	exit(1);
     }
 
-    // TODO: check if any differences between archived project 1 test cases and PA1-tests.
-    // TODO: return Object everywhere there is an error reported that prevents the expression from being evaluated properly
-    // TODO: check that code
-
-    // TODO: SELF_TYPE
-    // 1. new SELF_TYPE, return type of method, declared in let, declared in attr.
 
     // go through classes and collect all methods in a method table
     FeatureTable *feature_table = new FeatureTable();
@@ -427,6 +421,10 @@ void program_class::semant()
     semantic_analyzer->set_class_table(class_table);
     semantic_analyzer->set_feature_table(feature_table);
     semantic_analyzer->traverse(classes);
+    if (error_reporter->errors()) {
+	cerr << "Compilation halted due to static semantic errors." << endl;
+	exit(1);
+    }
 }
 
 SemanticAnalyzer::SemanticAnalyzer() {
@@ -484,16 +482,21 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
     } else {
     	// check in same class whether attribute has been defined or not
     	if(symbol_table->lookup(attribute->get_name()) == NULL) {
+	    Symbol type = attribute->get_type();
+	    if (!class_table->class_exists(type)) {
+		error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Class " << type << " of attribute " << attribute->get_name() << " is undefined." << endl;
+		type = Object;
+	    }
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
 	    if (expr_type != No_type) { // init expression is defined
-		if(class_table->is_child(expr_type, attribute->get_type())) {
-		    symbol_table->addid(attribute->get_name(), new Symbol(attribute->get_type()));
+		if(class_table->is_child(expr_type, type)) {
+		    symbol_table->addid(attribute->get_name(), new Symbol(type));
 		} else {
-		    error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Inferred type " << expr_type << " of initialization of attribute " << attribute->get_name() << " does not conform to declared type " << attribute->get_type() << "." << endl;
-		    symbol_table->addid(attribute->get_name(), new Symbol(attribute->get_type()));
+		    error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Inferred type " << expr_type << " of initialization of attribute " << attribute->get_name() << " does not conform to declared type " << type << "." << endl;
+		    symbol_table->addid(attribute->get_name(), new Symbol(type));
 		}
 	    } else { // init expression not defined
-		symbol_table->addid(attribute->get_name(), new Symbol(attribute->get_type()));
+		symbol_table->addid(attribute->get_name(), new Symbol(type));
 	    }
         } else {
 	    if(attribute->get_name() == self) {
@@ -566,6 +569,7 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 		if (valid_type(curr_formal->get_type())) {
   	    	    symbol_table->addid(curr_formal->get_name(), new Symbol(curr_formal->get_type()));
 		} else {
+		    error_reporter->semant_error(class_table->get_curr_class_ptr(), method) << "Class " << curr_formal->get_type() << " of formal parameter " << curr_formal->get_name() << " is undefined." << endl;
 		    symbol_table->addid(curr_formal->get_name(), new Symbol(Object));
 		}
 	    } else {
@@ -782,9 +786,8 @@ Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
 
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
 
-    Symbol type_of_attr = *(symbol_table->lookup(name));
-
-    if(type_of_attr) {
+    if(symbol_table->lookup(name) != NULL) {
+        Symbol type_of_attr = *(symbol_table->lookup(name));
 	// the attribute being assigned to is defined in the symbol table
 	if(!class_table->is_child(expr_type, type_of_attr)) {
 	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Type " << expr_type << " of assigned expression does not conform to declared return type " << type_of_attr << "." << endl;
@@ -1015,6 +1018,7 @@ Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
 	symbol_table->addid(identifier, new Symbol(type_of_attr));
     }
 
+
     // at this point, all the formals have been added to the symbol table
     Symbol let_return_type = body->eval(class_table, feature_table, symbol_table);
     symbol_table->exitscope();
@@ -1163,14 +1167,12 @@ Symbol object_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
     Symbol *obj_type = symbol_table->lookup(name);
     Symbol ret_type;
     if (obj_type == NULL) {
-	// TODO: ???
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Undeclared identifier " << name << "." << endl;
 	set_type(Object);
 	ret_type = Object;
     } else {
         Symbol obj = *obj_type;
         if (obj == Object) {
-	    // TODO: ???
 	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Object cannot have type Object." << endl;
 	    set_type(Object);
 	    ret_type = Object;
