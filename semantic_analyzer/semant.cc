@@ -552,7 +552,7 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
     symbol_table->enterscope(); // new scope per method
     // check whether exists in parent classes or not
     if (method_redefined_with_different_signature(method, class_name)) {
-	error_reporter->semant_error(class_table->get_curr_class_ptr(), method) << "Overridden method from parent with different signature." << endl;
+	
     } else {
 	// get formals (arguments) and add to current scope so that they are defined in the expression
 	Formals formals = method->get_formals();	
@@ -602,7 +602,10 @@ bool SemanticAnalyzer::method_redefined_with_different_signature(method_class *m
 
 bool SemanticAnalyzer::have_identical_signatures(method_class *method_one, method_class *method_two) {
     // check same length of arguments
-    if(method_one->get_formals()->len() != method_two->get_formals()->len()) return false;
+    if(method_one->get_formals()->len() != method_two->get_formals()->len()) {
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), method_one) << "Incompatible number of formal parameters in redefined method " << method_one->get_name() << endl;
+	return false;
+    }
     
     // check same types of arguments
     Formals formals_one = method_one->get_formals();
@@ -610,11 +613,17 @@ bool SemanticAnalyzer::have_identical_signatures(method_class *method_one, metho
     for(int j = formals_one->first(); formals_one->more(j); j = formals_one->next(j)) {
 	Formal curr_formal = formals_one->nth(j);
 	Formal other_formal = formals_two->nth(j);
-	if(curr_formal->get_type() != other_formal->get_type()) return false;
+	if(curr_formal->get_type() != other_formal->get_type()) {
+	    error_reporter->semant_error(class_table->get_curr_class_ptr(), method_one) << "In redefined method " << method_one->get_name() << ", parameter type " << curr_formal->get_type() << " is different from original type " << other_formal->get_type() << "." << endl;
+	    return false;
+	}
     }
 
     // check return type is the same for both methods
-    if(method_one->get_return_type() != method_two->get_return_type()) return false;
+    if(method_one->get_return_type() != method_two->get_return_type()) {
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), method_one) << "In redefined method " << method_one->get_name() << ", return type " << method_one->get_return_type() << " is different from original return type " << method_two->get_return_type() << "." << endl;
+	return false;
+    }
 
     return true;
 }
@@ -818,7 +827,6 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
     // but not sufficient
     Symbol method_ret_type = feature_table->get_methods(specified_parent)[name]->get_return_type();
 
-    // 
     if (specified_parent == SELF_TYPE) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Static type of dispatch cannot be SELF_TYPE." << endl;
         method_ret_type = Object;
