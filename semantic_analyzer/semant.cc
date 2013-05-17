@@ -487,7 +487,7 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
 	    if (expr_type != No_type) { // init expression is defined
 		if(class_table->is_child(expr_type, attribute->get_type())) {
-		    symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
+		    symbol_table->addid(attribute->get_name(), new Symbol(attribute->get_type()));
 		} else {
 		    error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Inferred type " << expr_type << " of initialization of attribute " << attribute->get_name() << " does not conform to declared type " << attribute->get_type() << "." << endl;
 		    symbol_table->addid(attribute->get_name(), new Symbol(attribute->get_type()));
@@ -848,13 +848,12 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 
     bool method_exists = true;
     //cerr << "a" << endl;
-
     if(!class_table->class_exists(curr_class)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Class " << curr_class << " is not defined." << endl;
     } else {
     	if(!feature_table->method_exists_in_class(name, curr_class)) {
 	    method_exists = false;
-	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Method " << name << " is not defined." << endl;
+	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Dispatch to undefined method " << name << "." << endl;
 	} else {
 	    // check that args are valid
 	    std::vector<Symbol> *arg_types = new std::vector<Symbol>();
