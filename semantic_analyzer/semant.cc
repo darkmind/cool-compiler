@@ -455,9 +455,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	class_table->set_curr_class_ptr(class_ptr);
 	Features features = class_ptr->get_features();
 	add_inherited_attributes(class_ptr->get_name());
-	cerr << "Added inherited attributes for class: " << class_ptr->get_name() << endl;
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
-	cerr << "CHECKED ATTRIBUTES FOR CLASS: " << class_ptr->get_name() << endl;
 	check_methods(features, class_ptr->get_name()); // then go through methods one by one
 	symbol_table->exitscope(); // exit the scope for the class
     }
@@ -487,7 +485,6 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
 	    if (expr_type != No_type) { // init expression is defined
 		if(class_table->is_child(expr_type, attribute->get_type())) {
-		    cerr << "initializing with type " << attribute->get_type() << endl;
 		    symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
 		} else {
 		    error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Inferred type " << expr_type << " of initialization of attribute " << attribute->get_name() << " does not conform to declared type " << attribute->get_type() << "." << endl;
@@ -664,7 +661,6 @@ void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_
 	new_features->c = c;
 	features[class_name] = new_features;
     }
-    cerr << features[class_name]->attributes[attribute_name] << endl;
 }
 
 void FeatureTable::check_valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table, tree_node *t) {
@@ -829,7 +825,9 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
 
 Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // check that the method exists in the class, and that it has the same arguments
+    cerr << "in dispatch_class" << endl;
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
+    cerr << "evaluated left-most expr" << endl;
     Symbol curr_class;
     if(expr_type == SELF_TYPE) {
 	curr_class = (class_table->get_curr_class_ptr())->get_name();
@@ -838,6 +836,7 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
     }
 
     bool method_exists = true;
+    cerr << "a" << endl;
 
     if(!class_table->class_exists(curr_class)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Class " << curr_class << " is not defined." << endl;
@@ -858,6 +857,7 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 	    feature_table->check_valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types, class_table, this);
 	}
     }
+    cerr << "b" << endl;
     
     // figure out what type to return
     Symbol ret_type;
@@ -876,7 +876,9 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 	    }
         }
     }
+    cerr << "c" << endl;
     set_type(ret_type);
+    cerr << "d" << endl;
     return ret_type;
 }
 
@@ -941,6 +943,7 @@ Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table,
 }
 
 Symbol block_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    cerr << "entered block" << endl;
     Symbol last;
     for(int i = body->first(); body->more(i); i = body->next(i)) {
 	if ( !(body->more(body->next(i))) ) {
@@ -950,6 +953,7 @@ Symbol block_class::eval(ClassTable *class_table, FeatureTable *feature_table, S
 	}
 	body->nth(i)->eval(class_table, feature_table, symbol_table);
     }
+    cerr << "exited block" << endl;
     return last;
 }
 
@@ -1088,6 +1092,7 @@ Symbol string_const_class::eval(ClassTable *class_table, FeatureTable *feature_t
 }
 
 Symbol new__class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    cerr << "in new_class" << endl;
     if(type_name == SELF_TYPE) {
 	set_type(SELF_TYPE);
 	return SELF_TYPE;
