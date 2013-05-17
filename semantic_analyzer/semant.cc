@@ -403,23 +403,23 @@ void program_class::semant()
     feature_table->set_class_table(class_table);
     feature_table->populate(classes);
 
-
-    feature_table->add_inherited_features(class_table);
-
     // check for existence of Main class and main() method with no args within it
     if(!class_table->class_exists(Main)) {
-	cerr << "Main class not defined." << endl;
+	error_reporter->semant_error() << "Main class not defined." << endl;
     } else {
         // check that main method exists in it using feature table
-	if(!feature_table->method_exists_in_class(main_meth, Main)) {
-	    cerr << "No 'main' method in class Main" << endl;
+	if (!feature_table->method_exists_in_class(main_meth, Main)) {
+	    error_reporter->semant_error(class_table->get_class(Main)) << "No 'main' method in class Main" << endl;
 	} else {
+
 	    method_class *main_method = feature_table->get_methods(Main)[main_meth];
 	    if(main_method->get_formals()->len() != 0) {
-		cerr << "main() method should not have any arguments." << endl;
+	        error_reporter->semant_error(class_table->get_class(Main), main_method) << "main() method should not have any arguments." << endl;
 	    }	
 	}
     }
+
+    feature_table->add_inherited_features(class_table);
 
     SemanticAnalyzer *semantic_analyzer = new SemanticAnalyzer();
     SymbolTable<Symbol, Symbol> *symbol_table = new SymbolTable<Symbol, Symbol>();
@@ -478,7 +478,7 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
     // check whether exists in parent classes or not
 
     if (attribute->get_name() == self) {
-	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to assign to self in attribute declaration." << endl;
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Attempting to assign to self in attribute declaration." << endl;
     } else if(is_attr_in_parent_classes(attribute, class_name)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Attribute " << attribute->get_name() << " already defined in ancestor classes." << endl;
     } else {
@@ -559,9 +559,9 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	for (int j = formals->first(); formals->more(j); j = formals->next(j)) {
 	    Formal curr_formal = formals->nth(j);
 	    if (curr_formal->get_name() == self) {
-		error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to bind to self in a method formal." << endl;
+		error_reporter->semant_error(class_table->get_curr_class_ptr(), method) << "Attempting to bind to self in a method formal." << endl;
 	    } else if (curr_formal->get_type() == SELF_TYPE) {
-		error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to bind SELF_TYPE to variable in formal." << endl;
+		error_reporter->semant_error(class_table->get_curr_class_ptr(), method) << "Attempting to bind SELF_TYPE to variable in formal." << endl;
 	    } else if (symbol_table->probe(curr_formal->get_name()) == NULL) {
 		if (valid_type(curr_formal->get_type())) {
   	    	    symbol_table->addid(curr_formal->get_name(), new Symbol(curr_formal->get_type()));
@@ -649,7 +649,7 @@ std::map<Symbol, Symbol> FeatureTable::get_attributes(Symbol class_name) {
 }
 
 bool FeatureTable::method_exists_in_class(Symbol method_name, Symbol class_name) {
-    return features[class_name]->methods.count(method_name) > 0;
+    return (features[class_name]->methods.count(method_name) > 0);
 }
 
 void FeatureTable::add_method(Symbol class_name, method_class *method_ptr, Class_ c) {
@@ -742,18 +742,22 @@ void FeatureTable::set_class_table(ClassTable *class_tab) {
 // We pass in the feature maps for a child and an ancestor. Any missing methods or attributes in the child_features are added.
 // No error checking is done here.
 void FeatureTable::add_missing_features(features_struct *child_features, features_struct *anc_features) {
-    std::map<Symbol, method_class *> anc_methods = anc_features->methods;
-    std::map<Symbol, Symbol> anc_attr = anc_features->attributes;
-    //methods
-    for (std::map<Symbol, method_class *>::iterator it = anc_methods.begin(); it != anc_methods.end(); ++it) {
-	if (child_features->methods.count(it->first) == 0)
-	    child_features->methods[it->first] = it->second;
+    if (anc_features != NULL) {
+	std::map<Symbol, method_class *> anc_methods = anc_features->methods;
+	std::map<Symbol, Symbol> anc_attr = anc_features->attributes;
+	//methods
+
+	for (std::map<Symbol, method_class *>::iterator it = anc_methods.begin(); it != anc_methods.end(); ++it) {
+	    if (child_features->methods.count(it->first) == 0)
+		child_features->methods[it->first] = it->second;
+	}
+	//attributes
+	for (std::map<Symbol, Symbol>::iterator it = anc_attr.begin(); it != anc_attr.end(); ++it) {
+	    
+	    if (child_features->attributes.count(it->first) == 0)
+		child_features->attributes[it->first] = it->second;
+	}
     }
-    //attributes
-    for (std::map<Symbol, Symbol>::iterator it = anc_attr.begin(); it != anc_attr.end(); ++it) {
-	if (child_features->attributes.count(it->first) == 0)
-	    child_features->attributes[it->first] = it->second;
-    }    
 }
 
 
@@ -774,7 +778,7 @@ Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
 
     if (name == self) {
 	set_type(Object);
-	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Attempting to assign to self." << endl;
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Attempting to assign to self." << endl;
 	return Object;
     }
 
@@ -828,7 +832,7 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
     Symbol method_ret_type = feature_table->get_methods(specified_parent)[name]->get_return_type();
 
     if (specified_parent == SELF_TYPE) {
-	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Static type of dispatch cannot be SELF_TYPE." << endl;
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Static type of dispatch cannot be SELF_TYPE." << endl;
         method_ret_type = Object;
     } else if (!class_table->is_child(expr_type, specified_parent)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Expression type " << expr_type << " does not conform to declared static dispatch type " << specified_parent << "." << endl;
