@@ -180,21 +180,27 @@ Instructions
 
 Write-up for PA3
 ----------------
-all the possible constructs in the language - expressions, features, formals etc.
-all the possible types - SELF_TYPE and class names
-type rules related to specific constructs - as given in COOL MANUAL
-rules that are global and not specific to a particular construct eg. all variables must be declared before use, all classes are global etc.
-compatible types i.e. inheritance structure of types
+user: yushiw
+user: jayhp9
 
-start iterating over the AST
-everytime new scope, create a new symbol table and add it to stack
-add any symbol declarations within that scope to that symbol table
-qn: multiple symbol tables in a stack, or a big symbol table with numbers to differentiate different scopes?
+#################### DESIGN ####################
 
-first pass:
-collect class names
 
-type-checking: bottoms-up
+-------------------- Overview -------------------
 
-1. Check inheritance structure is not cyclic
-2. 
+
+-------------------- Inheritance -------------------
+
+
+-------------------- Feature and Symbol Design -------------------
+
+
+
+-------------------- Type Checking and Annotation -------------------
+
+
+-------------------- Error Checking -------------------
+
+
+#################### TESTING ####################
+

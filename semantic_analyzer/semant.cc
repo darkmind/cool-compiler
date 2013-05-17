@@ -455,9 +455,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	class_table->set_curr_class_ptr(class_ptr);
 	Features features = class_ptr->get_features();
 	add_inherited_attributes(class_ptr->get_name());
-	cerr << "Added inherited attributes for class: " << class_ptr->get_name() << endl;
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
-	cerr << "CHECKED ATTRIBUTES FOR CLASS: " << class_ptr->get_name() << endl;
 	check_methods(features, class_ptr->get_name()); // then go through methods one by one
 	symbol_table->exitscope(); // exit the scope for the class
     }
@@ -487,7 +485,6 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
 	    if (expr_type != No_type) { // init expression is defined
 		if(class_table->is_child(expr_type, attribute->get_type())) {
-		    cerr << "initializing with type " << attribute->get_type() << endl;
 		    symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
 		} else {
 		    error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Inferred type " << expr_type << " of initialization of attribute " << attribute->get_name() << " does not conform to declared type " << attribute->get_type() << "." << endl;
@@ -664,7 +661,6 @@ void FeatureTable::add_attribute(Symbol class_name, attr_class *attr_ptr, Class_
 	new_features->c = c;
 	features[class_name] = new_features;
     }
-    cerr << features[class_name]->attributes[attribute_name] << endl;
 }
 
 void FeatureTable::check_valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table, tree_node *t) {
@@ -754,8 +750,6 @@ void FeatureTable::add_inherited_features(ClassTable *class_tab) {
 
 Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // check that name is defined in symbol table, and that expression is valid type
-    // cerr << "here we are in assign class" << endl; //DEBUG
-    // dump_with_types(cerr, 0); //DEBUG
 
     if (name == self) {
 	set_type(Object);
@@ -1097,7 +1091,7 @@ Symbol new__class::eval(ClassTable *class_table, FeatureTable *feature_table, Sy
 	return type_name;
     }
     else {
-	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Attempting to call new on an undefined class." << endl;
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Attempting to call 'new' on an undefined class " << type_name << "." << endl;
 	set_type(Object);
 	return Object;
     }
@@ -1115,7 +1109,6 @@ Symbol no_expr_class::eval(ClassTable *class_table, FeatureTable *feature_table,
 }
 
 Symbol object_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
-    //dump(cerr, 0);
     if(name == self) {
 	set_type(SELF_TYPE);	
 	return SELF_TYPE;
