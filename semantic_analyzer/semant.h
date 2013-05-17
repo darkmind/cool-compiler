@@ -38,6 +38,7 @@ public:
   int errors() { return semant_errors; }
   ostream& semant_error();
   ostream& semant_error(Class_ c);
+  ostream& semant_error(Class_ c, tree_node *t);
   ostream& semant_error(Symbol filename, tree_node *t);
 };
 
@@ -86,7 +87,7 @@ public:
   bool method_exists_in_class(Symbol method_name, Symbol class_name);
   void add_method(Symbol class_name, method_class *method_ptr, Class_ c);
   void add_attribute(Symbol class_name, attr_class *attr_ptr, Class_ c);
-  bool valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table);
+  void check_valid_dispatch_arguments(method_class *method_defn, std::vector<Symbol> *arg_types, ClassTable *class_table, tree_node *t);
 
   void set_class_table(ClassTable *class_table);
   void add_inherited_features(ClassTable *class_table);
