@@ -63,6 +63,9 @@ still considered valid class definitions.
 Throughout this document, we refer to this inheritance hierarchy as the 'class 
 table' for convenience.
 
+In addition to the table, we provided a lca (lowest common ancestor) and 
+is_child function in the class_table in order to quickly process inheritance.
+
 -------------------- Feature and Symbol Design -------------------
 
 As mentioned before already, all our features per class were stored in a global
@@ -86,7 +89,11 @@ formal parameter of a method is not redefined in the same scope.
 -------------------- Type Checking and Annotation -------------------
 
 To implement type checking, we followed the rules defined in Chapter 12 of the 
-Cool Manual for type checking. 
+Cool Manual for type checking. Initially, we simply implemented the rules
+without paying attention self or SELF_TYPE. After all the rules were
+implemented, we added self by putting in our symbol table and catching all bad
+instances where self can't be used, added SELF_TYPE to all of our rules, and
+modified our lca and is_child functions to support SELF_TYPE comparisons
 
 We annotate the AST by calling set_type() on each expression after evaluating it,
 using its inferred type. This translates into the annotated tree upon successful

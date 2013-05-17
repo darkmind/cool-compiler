@@ -11,8 +11,6 @@ Class Main {
 		attr_one@B.a(5, "hello", "extra argument");
 		attr_two@C.a("hello", 5);
 		attr_two@A.b(attr_three, attr_four);
-		attr_one@A.a(5, "hello");
-
 		attr_one@C.b(attr_four, attr_three);
 		attr_four@C.c((new C), (new A));
 		attr_four@A.c((new A), (new C));
