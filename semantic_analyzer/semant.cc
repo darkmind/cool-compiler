@@ -485,7 +485,7 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
 	    if (expr_type != No_type) { // init expression is defined
 		if(class_table->is_child(expr_type, attribute->get_type())) {
-		    symbol_table->addid(attribute->get_name(), new Symbol(expr_type));
+		    symbol_table->addid(attribute->get_name(), new Symbol(attribute->get_type()));
 		} else {
 		    error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Inferred type " << expr_type << " of initialization of attribute " << attribute->get_name() << " does not conform to declared type " << attribute->get_type() << "." << endl;
 		    symbol_table->addid(attribute->get_name(), new Symbol(attribute->get_type()));
@@ -823,9 +823,7 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
 
 Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // check that the method exists in the class, and that it has the same arguments
-    cerr << "in dispatch_class" << endl;
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
-    cerr << "evaluated left-most expr" << endl;
     Symbol curr_class;
     if(expr_type == SELF_TYPE) {
 	curr_class = (class_table->get_curr_class_ptr())->get_name();
@@ -834,14 +832,13 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
     }
 
     bool method_exists = true;
-    cerr << "a" << endl;
 
     if(!class_table->class_exists(curr_class)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Class " << curr_class << " is not defined." << endl;
     } else {
     	if(!feature_table->method_exists_in_class(name, curr_class)) {
 	    method_exists = false;
-	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Method " << name << " is not defined." << endl;
+	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Dispatch to undefined method " << name << "." << endl;
 	} else {
 	    // check that args are valid
 	    std::vector<Symbol> *arg_types = new std::vector<Symbol>();
@@ -855,7 +852,6 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 	    feature_table->check_valid_dispatch_arguments(feature_table->get_methods(curr_class)[name], arg_types, class_table, this);
 	}
     }
-    cerr << "b" << endl;
     
     // figure out what type to return
     Symbol ret_type;
@@ -874,9 +870,7 @@ Symbol dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table
 	    }
         }
     }
-    cerr << "c" << endl;
     set_type(ret_type);
-    cerr << "d" << endl;
     return ret_type;
 }
 
@@ -941,7 +935,6 @@ Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table,
 }
 
 Symbol block_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
-    cerr << "entered block" << endl;
     Symbol last;
     for(int i = body->first(); body->more(i); i = body->next(i)) {
 	if ( !(body->more(body->next(i))) ) {
@@ -951,7 +944,6 @@ Symbol block_class::eval(ClassTable *class_table, FeatureTable *feature_table, S
 	}
 	body->nth(i)->eval(class_table, feature_table, symbol_table);
     }
-    cerr << "exited block" << endl;
     return last;
 }
 
@@ -1090,7 +1082,6 @@ Symbol string_const_class::eval(ClassTable *class_table, FeatureTable *feature_t
 }
 
 Symbol new__class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
-    cerr << "in new_class" << endl;
     if(type_name == SELF_TYPE) {
 	set_type(SELF_TYPE);
 	return SELF_TYPE;
