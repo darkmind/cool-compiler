@@ -567,7 +567,6 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
   	    	    symbol_table->addid(curr_formal->get_name(), new Symbol(curr_formal->get_type()));
 		} else {
 		    symbol_table->addid(curr_formal->get_name(), new Symbol(Object));
-
 		}
 	    } else {
 		error_reporter->semant_error(class_table->get_curr_class_ptr(), method) << "Redefining formal " << curr_formal->get_name() << " not allowed." << endl;
@@ -577,7 +576,6 @@ void SemanticAnalyzer::check_method(method_class *method, Symbol class_name) {
 	if(class_table->is_child(expr_type, method->get_return_type())) {
 	    symbol_table->addid(method->get_name(), new Symbol(expr_type));
 	} else {
-
 	    error_reporter->semant_error(class_table->get_curr_class_ptr(), method) << "Inferred return type " << expr_type << " of method " << method->get_name() << " does not conform to declared return type " << method->get_return_type() << "." << endl;
 	}
     }
@@ -937,8 +935,8 @@ Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table,
     // check that variables in all branches have different types, also that none of the cases involve self
     std::set<Symbol> *types = new std::set<Symbol>();
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
-	Symbol type = cases->nth(i)->get_type();
 	Symbol name = cases->nth(i)->get_name();
+	Symbol type = cases->nth(i)->get_type();
 	if (name == self) {
 	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Attempting to bind to self in case branch." << endl;
 	} else if(types->count(type) > 0) {
@@ -962,7 +960,11 @@ Symbol typcase_class::eval(ClassTable *class_table, FeatureTable *feature_table,
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
 	symbol_table->enterscope();
 	Case curr_case = cases->nth(i);
-    	symbol_table->addid(curr_case->get_name(), new Symbol(curr_case->get_type()));
+	if (!class_table->class_exists(curr_case->get_type())) {
+		error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Class " << curr_case->get_type() << " of case bound identifier " << curr_case->get_name() << " is undefined." << endl;
+        	ret_type = Object;
+		symbol_table->addid(curr_case->get_name(), new Symbol(Object));
+    	} else symbol_table->addid(curr_case->get_name(), new Symbol(curr_case->get_type()));
 	ret_type = class_table->lca(ret_type, curr_case->get_expr()->eval(class_table, feature_table, symbol_table));
 	symbol_table->exitscope();
     }
@@ -991,6 +993,10 @@ Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
     symbol_table->enterscope();
     Symbol type_of_attr;
     type_of_attr = type_decl;
+    if (!class_table->class_exists(type_of_attr)) {
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Class " << type_of_attr << " of let bound identifier " << identifier << " is undefined." << endl;
+        type_of_attr = Object;
+    }
     // eval-ing this init expression will recursively add all the formals defined in this let expression to the current scope
     Symbol init_expr_type = init->eval(class_table, feature_table, symbol_table);
     if (identifier == self) {
@@ -999,7 +1005,7 @@ Symbol let_class::eval(ClassTable *class_table, FeatureTable *feature_table, Sym
 	// init expression defined	
 	// check valid type
         if(!class_table->is_child(init_expr_type, type_of_attr)) {
-	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Assigning expression of type " << init_expr_type << " to attribute of static type " << type_decl << "." << endl;
+	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Inferred type " << init_expr_type << " of initialization of identifier does not conform to identifier's declared type " << type_decl << "." << endl;
 	    symbol_table->addid(identifier, new Symbol(type_decl));
         } else {
 	    // add to symbol table
