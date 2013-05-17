@@ -26,8 +26,8 @@ Class B inherits A {
 };
 
 Class C {
-	m:IO <- 4;
-	n:Object <- m;
+	m:IO <- 5;
+	n:Int <- m;
 	o:B <- new B;
 	p:Object <- o;
 	q:SELF_TYPE <- self;
