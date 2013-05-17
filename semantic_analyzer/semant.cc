@@ -793,11 +793,6 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
     Symbol specified_parent = type_name;
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
     // check whether expr_type is <= of the explicitly defined parent type
-    if (specified_parent == SELF_TYPE) {
-	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Static type of dispatch cannot be SELF_TYPE." << endl;
-    } else if (!class_table->is_child(expr_type, specified_parent)) {
-	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Dispatch type " << expr_type << " is not a child of specified static type " << specified_parent << "." << endl;
-    }
 
     if(!class_table->class_exists(specified_parent)) {
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Specified static type is not defined." << endl;
@@ -819,7 +814,19 @@ Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *featur
     
     // figure out what type to return
     Symbol ret_type;
+    // gets the statically declared return type of the winky() method in class B
+    // but not sufficient
     Symbol method_ret_type = feature_table->get_methods(specified_parent)[name]->get_return_type();
+
+    // 
+    if (specified_parent == SELF_TYPE) {
+	error_reporter->semant_error(class_table->get_curr_class_ptr()) << "Static type of dispatch cannot be SELF_TYPE." << endl;
+        method_ret_type = Object;
+    } else if (!class_table->is_child(expr_type, specified_parent)) {
+	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Expression type " << expr_type << " does not conform to declared static dispatch type " << specified_parent << "." << endl;
+        method_ret_type = Object;
+    }
+
     if(method_ret_type == SELF_TYPE) {
 	ret_type = expr_type;
     } else {
