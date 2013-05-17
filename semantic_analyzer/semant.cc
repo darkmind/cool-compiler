@@ -455,6 +455,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 	class_table->set_curr_class_ptr(class_ptr);
 	Features features = class_ptr->get_features();
 	add_inherited_attributes(class_ptr->get_name());
+	cerr << "class: " << class_ptr->get_name() << endl;
 	check_attributes(features, class_ptr->get_name()); // first, check all attributes
 	check_methods(features, class_ptr->get_name()); // then go through methods one by one
 	symbol_table->exitscope(); // exit the scope for the class
@@ -464,6 +465,7 @@ void SemanticAnalyzer::traverse(Classes classes) {
 void SemanticAnalyzer::check_attributes(Features features, Symbol class_name) {
     for(int j = features->first(); features->more(j); j = features->next(j)) {
 	Feature feature_ptr = features->nth(j);
+	cerr << "class: " << class_name << feature_ptr << endl;
 	int type = get_type_of_feature(feature_ptr);
 	if(type == ATTRIBUTE) {
 	    attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
@@ -539,7 +541,9 @@ void SemanticAnalyzer::check_methods(Features features, Symbol class_name) {
 	int type = get_type_of_feature(feature_ptr);
 	if(type == METHOD) {
 	    method_class *method = dynamic_cast<method_class *>(feature_ptr);
+	    cerr << "currently on method: " << method->get_name() << endl;
 	    check_method(method, class_name);
+	    cerr << "finished method: " << method->get_name() << endl;
 	}
     }
 }
@@ -620,10 +624,18 @@ FeatureTable::FeatureTable() {
 }
 
 std::map<Symbol, method_class *> FeatureTable::get_methods(Symbol class_name) {
+    if (features[class_name] == NULL) {
+	features_struct *new_features = new features_struct;
+	features[class_name] = new_features;
+    }
     return features[class_name]->methods;
 }
 
 std::map<Symbol, Symbol> FeatureTable::get_attributes(Symbol class_name) {
+    if (features[class_name] == NULL) {
+	features_struct *new_features = new features_struct;
+	features[class_name] = new_features;
+    }
     return features[class_name]->attributes;
 }
 
@@ -777,6 +789,7 @@ Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
 }
 
 Symbol static_dispatch_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
+    cerr << "static dispatch" << endl;
     Symbol specified_parent = type_name;
     Symbol expr_type = expr->eval(class_table, feature_table, symbol_table);
     // check whether expr_type is <= of the explicitly defined parent type
