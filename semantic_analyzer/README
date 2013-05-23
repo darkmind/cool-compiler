@@ -120,9 +120,21 @@ help us retrieve those pieces of information with ease.
 #################### TESTING ####################
 
 We wrote specific test cases for a variety of expressions, rigorously testing 
-dispatch expressions, which caused the most number of problems for us. We also 
-used the .cl files in the /usr/class/cs143/examples directory as general tests 
-that revealed numerous problems for us early on. All the tests are available in 
-the tests/ directory.
+as many different expressions as we could think of with all sorts of errors. We 
+also used the .cl files in the /usr/class/cs143/examples directory as general 
+tests that revealed numerous problems for us early on. All the tests are available
+in the tests/ directory.
 
+A quick run-down of our tests are as follows:
 
+assign.cl - stress tested assignments
+bad.cl - a hodgepodge of tests; usually used to throw in random errors we thought
+	up on the fly
+basic_classes.cl - used to test whether redefining and inheriting from basic
+	classes like IO or Bool
+dispatch_implicit/explicit - used to test dispatch calls
+hairy.cl - used to test a good but messy inheritance heavy file.
+invalidsignature1/2/3 - used to test method calls with invalid signatures
+main_shenanigans/2.cl - used to test files without a main class or method
+static_dispatch.cl - used to test static dispatches
+undefined_types - used to test what would happen if we tried to assign undefined classes.
