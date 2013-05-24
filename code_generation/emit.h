@@ -31,17 +31,25 @@
 #define METHOD_SEP           "."
 #define CLASSINIT_SUFFIX     "_init"
 #define PROTOBJ_SUFFIX       "_protObj"
+
 #define OBJECTPROTOBJ        "Object"PROTOBJ_SUFFIX
 #define MAINPROTOBJ          "Main"PROTOBJ_SUFFIX
+#define STRINGPROTOBJ 	     "String"PROTOBJ_SUFFIX
 #define BOOLPROTOBJ          "Bool"PROTOBJ_SUFFIX
 #define IOPROTOBJ            "IO"PROTOBJ_SUFFIX
+#define INTPROTOBJ	     "Int"PROTOBJ_SUFFIX
+
 #define OBJECTDISPTAB        "Object"DISPTAB_SUFFIX
 #define MAINDISPTAB          "Main"DISPTAB_SUFFIX
+#define STRINGDISPTAB	     "String"DISPTAB_SUFFIX
 #define BOOLDISPTAB          "Bool"DISPTAB_SUFFIX
 #define IODISPTAB            "IO"DISPTAB_SUFFIX
+#define INTDISPTAB	     "Int"DISPTAB_SUFFIX
+
 #define INTCONST_PREFIX      "int_const"
 #define STRCONST_PREFIX      "str_const"
 #define BOOLCONST_PREFIX     "bool_const"
+
 #define EMPTYSLOT            0
 #define LABEL                ":\n"
 #define STRINGNAME (char *) "String"

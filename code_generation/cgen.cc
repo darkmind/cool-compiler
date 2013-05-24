@@ -877,17 +877,34 @@ void CgenClassTable::code_basic_prototypes() {
       << WORD << IODISPTAB << endl;
 
   // String_protObj
+  str << WORD << "-1" << endl;
+
+  str << STRINGPROTOBJ << ":" << endl					// label
+      << WORD << stringclasstag << endl             			// class tag
+      << WORD << DEFAULT_OBJFIELDS + STRING_SLOTS + 1 << endl  		// object size (+1 for the empty string)
+      << WORD << STRINGDISPTAB << endl					// dispatch
+      << WORD << "int_const1" << endl // TODO: Replace int_const1 here with the actual thing
+      << WORD << 0 << endl;
+
 
   // Bool_protObj
   str << WORD << "-1" << endl;
 
-  str << BOOLPROTOBJ << ":" << endl	            	// label
-      << WORD << boolclasstag << endl                   // class tag
-      << WORD << DEFAULT_OBJFIELDS + 1 << endl  	// object size
+  str << BOOLPROTOBJ << ":" << endl	            		// label
+      << WORD << boolclasstag << endl           	        // class tag
+      << WORD << DEFAULT_OBJFIELDS + BOOL_SLOTS << endl  	// object size
       << WORD << BOOLDISPTAB << endl
       << WORD << 0 << endl;
 
   // Int_protObj
+  str << WORD << "-1" << endl;
+
+  str << INTPROTOBJ << ":" << endl	            		// label
+      << WORD << intclasstag << endl         			// class tag
+      << WORD << DEFAULT_OBJFIELDS + INT_SLOTS << endl  	// object size
+      << WORD << INTDISPTAB << endl
+      << WORD << 0 << endl;
+
 }
 
 void CgenClassTable::code_user_prototypes() {
