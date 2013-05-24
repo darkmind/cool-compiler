@@ -834,6 +834,9 @@ void CgenClassTable::code()
 //                   - dispatch tables
 //
 
+  if(cgen_debug) cout << "coding prototypes" << endl;
+  code_prototypes();
+
   if (cgen_debug) cout << "coding global text" << endl;
   code_global_text();
 
@@ -844,6 +847,33 @@ void CgenClassTable::code()
 
 }
 
+void CgenClassTable::code_prototypes() {
+  if (cgen_debug) cout << "coding basic prototypes" << endl;
+  code_basic_prototypes();
+
+  if (cgen_debug) cout << "coding user-defined prototypes" << endl;
+  code_user_prototypes();
+}
+
+void CgenClassTable::code_basic_prototypes() {
+  // emit code in data section for basic class prototype objects
+
+  // Object_protObj
+
+  // Main_protObj
+
+  // String_protObj
+
+  // Bool_protObj
+
+  // Int_protObj
+
+  // IO_protObj
+}
+
+void CgenClassTable::code_user_prototypes() {
+  // emit code in data section for user-defined prototype objects
+}
 
 CgenNodeP CgenClassTable::root()
 {
