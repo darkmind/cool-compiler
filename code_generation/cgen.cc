@@ -619,9 +619,9 @@ void CgenClassTable::code_constants()
 
 CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
 {
-   stringclasstag = 5 /* Change to your String class tag here */;
-   intclasstag =    3 /* Change to your Int class tag here */;
-   boolclasstag =   4 /* Change to your Bool class tag here */;
+   stringclasstag = 4 /* Change to your String class tag here */;
+   intclasstag =    2 /* Change to your Int class tag here */;
+   boolclasstag =   3 /* Change to your Bool class tag here */;
 
    enterscope();
    if (cgen_debug) cout << "Building CgenClassTable" << endl;
@@ -859,6 +859,15 @@ void CgenClassTable::code_basic_prototypes() {
   // emit code in data section for basic class prototype objects
 
   // Object_protObj
+
+  // Add -1 eye catcher
+  str << WORD << "-1" << endl;
+
+  str << OBJECTPROTOBJ << ":" << endl	            	// label
+      << WORD << 0 << endl                      	// class tag
+      << WORD << DEFAULT_OBJFIELDS << endl  		// object size
+      << WORD << OBJECTDISPTAB << endl;
+
 
   // Main_protObj
 

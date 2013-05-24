@@ -32,9 +32,14 @@
 #define CLASSINIT_SUFFIX     "_init"
 #define PROTOBJ_SUFFIX       "_protObj"
 #define OBJECTPROTOBJ        "Object"PROTOBJ_SUFFIX
+#define OBJECTDISPTAB        "Object"DISPTAB_SUFFIX
+
 #define INTCONST_PREFIX      "int_const"
+
 #define STRCONST_PREFIX      "str_const"
 #define BOOLCONST_PREFIX     "bool_const"
+
+#define OBJECTDISPTAB        "Object"DISPTAB_SUFFIX
 
 
 #define EMPTYSLOT            0
