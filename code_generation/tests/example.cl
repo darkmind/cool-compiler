@@ -14,10 +14,10 @@ class Main {
   };
 };
 
-class Helloworld inherits IO {
+class Helloworld inherits Main {
   say():Int {
     {
-      out_string("hello world");
+      --out_string("hello world");
       1;
     }
   };
