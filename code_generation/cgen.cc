@@ -859,8 +859,6 @@ void CgenClassTable::code_basic_prototypes() {
   // emit code in data section for basic class prototype objects
 
   // Object_protObj
-
-  // Add -1 eye catcher
   str << WORD << "-1" << endl;
 
   str << OBJECTPROTOBJ << ":" << endl	            	// label
@@ -868,16 +866,26 @@ void CgenClassTable::code_basic_prototypes() {
       << WORD << DEFAULT_OBJFIELDS << endl  		// object size
       << WORD << OBJECTDISPTAB << endl;
 
+  // IO_protObj
+  str << WORD << "-1" << endl;
 
-  // Main_protObj
+  str << IOPROTOBJ << ":" << endl	            	// label
+      << WORD << 1 << endl                      	// class tag
+      << WORD << DEFAULT_OBJFIELDS << endl  		// object size
+      << WORD << IODISPTAB << endl;
 
   // String_protObj
 
   // Bool_protObj
+  str << WORD << "-1" << endl;
+
+  str << BOOLPROTOBJ << ":" << endl	            	// label
+      << WORD << 3 << endl                      	// class tag
+      << WORD << DEFAULT_OBJFIELDS + 1 << endl  	// object size
+      << WORD << BOOLDISPTAB << endl
+      << WORD << 0 << endl;
 
   // Int_protObj
-
-  // IO_protObj
 }
 
 void CgenClassTable::code_user_prototypes() {
