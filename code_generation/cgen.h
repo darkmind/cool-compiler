@@ -18,6 +18,8 @@ class CgenClassTable : public SymbolTable<Symbol,CgenNode> {
 private:
    List<CgenNode> *nds;
    ostream& str;
+   int objectclasstag;
+   int ioclasstag;
    int stringclasstag;
    int intclasstag;
    int boolclasstag;

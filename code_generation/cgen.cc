@@ -619,6 +619,8 @@ void CgenClassTable::code_constants()
 
 CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
 {
+   objectclasstag = 0;
+   ioclasstag = 1;
    stringclasstag = 4 /* Change to your String class tag here */;
    intclasstag =    2 /* Change to your Int class tag here */;
    boolclasstag =   3 /* Change to your Bool class tag here */;
@@ -862,7 +864,7 @@ void CgenClassTable::code_basic_prototypes() {
   str << WORD << "-1" << endl;
 
   str << OBJECTPROTOBJ << ":" << endl	            	// label
-      << WORD << 0 << endl                      	// class tag
+      << WORD << objectclasstag << endl                 // class tag
       << WORD << DEFAULT_OBJFIELDS << endl  		// object size
       << WORD << OBJECTDISPTAB << endl;
 
@@ -870,7 +872,7 @@ void CgenClassTable::code_basic_prototypes() {
   str << WORD << "-1" << endl;
 
   str << IOPROTOBJ << ":" << endl	            	// label
-      << WORD << 1 << endl                      	// class tag
+      << WORD << ioclasstag << endl                     // class tag
       << WORD << DEFAULT_OBJFIELDS << endl  		// object size
       << WORD << IODISPTAB << endl;
 
@@ -880,7 +882,7 @@ void CgenClassTable::code_basic_prototypes() {
   str << WORD << "-1" << endl;
 
   str << BOOLPROTOBJ << ":" << endl	            	// label
-      << WORD << 3 << endl                      	// class tag
+      << WORD << boolclasstag << endl                   // class tag
       << WORD << DEFAULT_OBJFIELDS + 1 << endl  	// object size
       << WORD << BOOLDISPTAB << endl
       << WORD << 0 << endl;
