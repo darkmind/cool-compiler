@@ -5,6 +5,7 @@
 #include "symtab.h"
 
 #include <map>
+#include <vector>
 
 
 enum Basicness     {Basic, NotBasic};
@@ -16,6 +17,8 @@ typedef CgenClassTable *CgenClassTableP;
 
 class CgenNode;
 typedef CgenNode *CgenNodeP;
+
+typedef attr_class *AttrP;
 
 class CgenClassTable : public SymbolTable<Symbol,CgenNode> {
 private:
@@ -54,6 +57,10 @@ private:
    void recurse_class_tags(List<CgenNode> *list, int *curr_tag);
    std::map<Symbol, CgenNodeP> *class_tags; // Maps from the class name (Symbol) to the node of the class
 
+// Following is used for handling attributes/inherited attributes
+   void populate_attr_map(List<CgenNode> *list);
+   std::map<Symbol, std::vector<AttrP> *> *attr_map;
+
 public:
    CgenClassTable(Classes, ostream& str);
    void code();
@@ -62,6 +69,11 @@ public:
 // Following is used for public functions to get/set class tags
    CgenNodeP map_get_class(Symbol symbol) { return (*class_tags)[symbol]; }
    void map_add_tag(Symbol symbol, CgenNodeP nd) { (*class_tags)[symbol] = nd; }
+
+// Used to get attr_list
+   std::vector<AttrP> *map_get_attr_list(Symbol symbol) { return (*attr_map)[symbol]; } 
+   void add_attr_list(Symbol symbol, std::vector<AttrP> *attr_list) { (*attr_map)[symbol] = attr_list; }
+   void populate_attr_map(List<CgenNode> *list, std::vector<AttrP> *parent_list);
 };
 
 
@@ -87,7 +99,8 @@ public:
 
    void nd_set_tag(int intag) { tag = intag; }
    int nd_get_tag() { return tag; }
-   int nd_get_num_attr();
+   
+   void nd_populate_attr_list(std::vector<AttrP> *attr_list); 
 };
 
 class BoolConst 

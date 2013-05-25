@@ -625,7 +625,9 @@ CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
    intclasstag =    1337 /* Change to your Int class tag here */;
    boolclasstag =   1337 /* Change to your Bool class tag here */;
 
+   // Here we make the new maps for retrieving class nodes and attribute lists, respectively
    class_tags = new std::map<Symbol, CgenNodeP>();
+   attr_map = new std::map<Symbol, std::vector<AttrP> *>();
 
    enterscope();
    if (cgen_debug) cout << "Building CgenClassTable" << endl;
@@ -915,13 +917,15 @@ void CgenClassTable::code_prototypes() {
 	CgenNodeP nd = l->hd();
 	
 	str << WORD << "-1" << endl;
-	str << nd->name << PROTOBJ_SUFFIX << ":" << endl	// label
-	    << WORD << nd->nd_get_tag() << endl         	// class tag
-	    << WORD << DEFAULT_OBJFIELDS + nd->nd_get_num_attr() << endl  		// object size
-	    << WORD << "PRETEND THIS IS A DISPATCH TAB" << endl
-	    << WORD << 0 << endl;
+	str << nd->name << PROTOBJ_SUFFIX << ":" << endl				// label
+	    << WORD << nd->nd_get_tag() << endl         				// class tag
+	    << WORD << DEFAULT_OBJFIELDS + map_get_attr_list(nd->name)->size() << endl	// object size
+	    << WORD << "PRETEND THIS IS A DISPATCH TAB" << endl;
+
+	str << WORD << 0 << endl;
     }
 }
+
 
 void CgenClassTable::assign_class_tags() {
     /*
@@ -939,6 +943,14 @@ void CgenClassTable::assign_class_tags() {
     // Find the Object CgenNodeP
     while (l && (l->hd()->name != Object )) l = l->tl();
     recurse_class_tags(l, &curr_tag);
+    
+    // Create an empty vector representing the zero attributes of Object, and recursively build the map
+    // using this as the "seed".
+    std::vector<AttrP> *object_attr = new std::vector<AttrP>();
+    add_attr_list(Object, object_attr);
+
+    // We populate each of the Object class' children into the attr_map
+    populate_attr_map(l->hd()->get_children(), object_attr);
 }
 
 /* 
@@ -971,6 +983,46 @@ void CgenClassTable::recurse_class_tags(List<CgenNode> *list, int *curr_tag) {
     }
 }
 
+/* 
+ * This is initially called on the Object Class.
+ * It labels the class, adds it to the class->tag mapping, and outputs the stuff to the stream.
+ */
+void CgenClassTable::populate_attr_map(List<CgenNode> *list, std::vector<AttrP> *parent_list) {
+
+    for(List<CgenNode> *l = list; l; l = l->tl()) {
+	CgenNodeP nd = l->hd();
+	std::vector<AttrP> *child_list = new std::vector<AttrP>(*parent_list);
+	nd->nd_populate_attr_list(child_list);
+	add_attr_list(nd->name, child_list);
+	
+	
+	// Get children of the current class
+	List<CgenNode> *children = nd->get_children();
+
+	if (cgen_debug) {
+	    cerr << "name: " << nd->name << endl;
+	    // Debug: check the attributes that are being added for each class
+	    cerr << "THE ATTRIBUTES OHOHOHOHO" << endl;
+	    for (std::vector<AttrP>::iterator it = child_list->begin(); it != child_list->end(); ++it) {
+		cerr << (*it)->name << endl;
+	    }
+	}  
+
+	// Recurse on the children classes
+	populate_attr_map(children, child_list);
+    }
+}
+
+void CgenNode::nd_populate_attr_list(std::vector<AttrP> *attr_list) {
+    for (int j = features->first(); features->more(j); j = features->next(j)) {
+	Feature feature_ptr = features->nth(j);
+	attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
+	if (attribute) { // i.e. attribute
+	    attr_list->push_back(attribute);
+	}
+    }
+}
+
 CgenNodeP CgenClassTable::root()
 {
    return probe(Object);
@@ -990,18 +1042,6 @@ CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct) :
    basic_status(bstatus)
 { 
    stringtable.add_string(name->get_string());          // Add class name to string table
-}
-
-int CgenNode::nd_get_num_attr() {
-   int num_attributes = 0;
-   for(int j = features->first(); features->more(j); j = features->next(j)) {
-	Feature feature_ptr = features->nth(j);
-	attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
-	if(attribute != 0) { // i.e. attribute
-	    num_attributes++;
-	}
-    }
-    return num_attributes;
 }
 
 //******************************************************************
