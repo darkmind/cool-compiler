@@ -619,11 +619,11 @@ void CgenClassTable::code_constants()
 
 CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
 {
-   objectclasstag = 0;
-   ioclasstag = 1;
-   stringclasstag = 4 /* Change to your String class tag here */;
-   intclasstag =    2 /* Change to your Int class tag here */;
-   boolclasstag =   3 /* Change to your Bool class tag here */;
+   // Debug: We don't know if these tags are used prior to assigning tags, so we set a 
+   // weird value here and see if they ever come up.
+   stringclasstag = 1337 /* Change to your String class tag here */;
+   intclasstag =    1337 /* Change to your Int class tag here */;
+   boolclasstag =   1337 /* Change to your Bool class tag here */;
 
    class_tags = new std::map<Symbol, CgenNodeP>();
 
@@ -823,6 +823,15 @@ void CgenNode::set_parentnd(CgenNodeP p)
 
 void CgenClassTable::code()
 {
+  if (cgen_debug) cout << "assigning class tags" << endl;
+  assign_class_tags();
+
+  stringclasstag = map_get_class(Str)->nd_get_tag();
+  boolclasstag = map_get_class(Bool)->nd_get_tag();
+  intclasstag = map_get_class(Int)->nd_get_tag();
+
+  if (cgen_debug) cout << "strings: " << stringclasstag << "; bools: " << boolclasstag << "; ints: " << intclasstag << endl;
+
   if (cgen_debug) cout << "coding global data" << endl;
   code_global_data();
 
@@ -851,18 +860,9 @@ void CgenClassTable::code()
 
 }
 
-void CgenClassTable::code_prototypes() {
-  if (cgen_debug) cout << "coding basic prototypes" << endl;
-  code_basic_prototypes();
-
-  if (cgen_debug) cout << "coding user-defined prototypes" << endl;
-  code_user_prototypes();
-}
-
-
-
+/*
 void CgenClassTable::code_basic_prototypes() {
-    /*
+    
   // emit code in data section for basic class prototype objects
 
   // Object_protObj
@@ -901,20 +901,36 @@ void CgenClassTable::code_basic_prototypes() {
       << WORD << BOOLDISPTAB << endl
       << WORD << 0 << endl;
 
-  // Int_protObj
-  str << WORD << "-1" << endl;
 
-  str << INTPROTOBJ << ":" << endl	            		// label
-      << WORD << intclasstag << endl         			// class tag
-      << WORD << DEFAULT_OBJFIELDS + INT_SLOTS << endl  	// object size
-      << WORD << INTDISPTAB << endl
-      << WORD << 0 << endl;
+}
+*/
+
+/*
+ * Given our classes, this function goes through and builds prototypes for each of the classes
+ * and populates the mapping from class names to tags at the same time
+ */
+void CgenClassTable::code_prototypes() {
+    /*
+     * STEPS
+     * 1. Iterate through the inheritance graph
+     * 2. If isn't a basic class, add it
+     **** IDEA: What if we just fold the basic_prototypes into this function? This would actually just be
+     * strictly better than the workaround we have 
+     * 3. 
+     
+    	// Generating prototype
+	str << WORD << "-1" << endl;
+	str << nd->name << PROTOBJ_SUFFIX << ":" << endl	// label
+	    << WORD << nd->nd_get_tag() << endl         	// class tag
+	    << WORD << "9999" << endl  				// object size
+	    << WORD << "PRETEND THIS IS A DISPATCH TAB" << endl
+	    << WORD << 0 << endl;
+    for(List<CgenNode> *l = list; l; l = l->tl()) {
+
 */
 }
 
-
-
-void CgenClassTable::code_user_prototypes() {
+void CgenClassTable::assign_class_tags() {
     /*
      * STEPS
      * 1. Iterate through the inheritance graph
@@ -924,27 +940,43 @@ void CgenClassTable::code_user_prototypes() {
      * 3. 
      */
 
-    int curr_tag = list_length(nds) - 1;
-    add_class_tags(nds, curr_tag);
+    int curr_tag = 0;
+    List<CgenNode> *l = nds;
+    
+    // Find the Object CgenNodeP
+    while (l && (l->hd()->name != Object )) l = l->tl();
+    recurse_class_tags(l, &curr_tag);
+    
 }
 
-void CgenClassTable::add_class_tags(List<CgenNode> *list, int curr_tag) {
-    
+/* 
+ * This is initially called on the Object Class.
+ * It labels the class, adds it to the class->tag mapping, and outputs the stuff to the stream.
+ */
+void CgenClassTable::recurse_class_tags(List<CgenNode> *list, int *curr_tag) {
+
     for(List<CgenNode> *l = list; l; l = l->tl()) {
-
 	CgenNodeP nd = l->hd();
-	nd->nd_set_tag(curr_tag);
-	cerr << "name: " << nd->name << "; tag = " << nd->nd_get_tag() << endl;
+	nd->nd_set_tag(*curr_tag);
 	map_add_tag(nd->name, nd);
-	if (nd->basic()) cerr << "basic class!" << endl;
+	(*curr_tag)++;
+	map_add_tag(nd->name, nd);
 	
-	// recurse on children
+	// Get children of the current class
 	List<CgenNode> *children = nd->get_children();
-	add_class_tags(children, curr_tag-1);
-    }
-    
 
-    
+	if (cgen_debug) {
+	    cerr << "name: " << nd->name << "; tag = " << nd->nd_get_tag() << endl;
+	    if (nd->basic()) cerr << "basic class!" << endl;
+	    cerr << "CHILDREN" << endl;
+	    for (List<CgenNode> *c = children; c; c = c->tl()) {
+		cerr << c->hd()->name << endl;
+	    }
+	}  
+
+	// Recurse on the children classes
+	recurse_class_tags(children, curr_tag);
+    }
 }
 
 CgenNodeP CgenClassTable::root()

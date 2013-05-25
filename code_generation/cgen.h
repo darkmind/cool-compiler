@@ -37,8 +37,6 @@ private:
    void code_select_gc();
    void code_constants();
    void code_prototypes();
-   void code_basic_prototypes();
-   void code_user_prototypes();
 
 // The following creates an inheritance graph from
 // a list of classes.  The graph is implemented as
@@ -52,6 +50,8 @@ private:
    void set_relations(CgenNodeP nd);
 
 // Following is used for handling and marking things with class tags.
+   void assign_class_tags();
+   void recurse_class_tags(List<CgenNode> *list, int *curr_tag);
    std::map<Symbol, CgenNodeP> *class_tags; // Maps from the class name (Symbol) to the node of the class
 
 public:
@@ -59,9 +59,9 @@ public:
    void code();
    CgenNodeP root();
 
-   CgenNodeP map_get_tag(Symbol symbol) { return (*class_tags)[symbol]; }
+// Following is used for public functions to get/set class tags
+   CgenNodeP map_get_class(Symbol symbol) { return (*class_tags)[symbol]; }
    void map_add_tag(Symbol symbol, CgenNodeP nd) { (*class_tags)[symbol] = nd; }
-   void add_class_tags(List<CgenNode> *list, int curr_tag);
 };
 
 
