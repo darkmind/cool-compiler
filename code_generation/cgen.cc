@@ -625,6 +625,8 @@ CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
    intclasstag =    2 /* Change to your Int class tag here */;
    boolclasstag =   3 /* Change to your Bool class tag here */;
 
+   class_tags = new std::map<Symbol, CgenNodeP>();
+
    enterscope();
    if (cgen_debug) cout << "Building CgenClassTable" << endl;
    install_basic_classes();
@@ -857,7 +859,10 @@ void CgenClassTable::code_prototypes() {
   code_user_prototypes();
 }
 
+
+
 void CgenClassTable::code_basic_prototypes() {
+    /*
   // emit code in data section for basic class prototype objects
 
   // Object_protObj
@@ -904,11 +909,42 @@ void CgenClassTable::code_basic_prototypes() {
       << WORD << DEFAULT_OBJFIELDS + INT_SLOTS << endl  	// object size
       << WORD << INTDISPTAB << endl
       << WORD << 0 << endl;
-
+*/
 }
 
+
+
 void CgenClassTable::code_user_prototypes() {
-  // emit code in data section for user-defined prototype objects
+    /*
+     * STEPS
+     * 1. Iterate through the inheritance graph
+     * 2. If isn't a basic class, add it
+     **** IDEA: What if we just fold the basic_prototypes into this function? This would actually just be
+     * strictly better than the workaround we have 
+     * 3. 
+     */
+
+    int curr_tag = list_length(nds) - 1;
+    add_class_tags(nds, curr_tag);
+}
+
+void CgenClassTable::add_class_tags(List<CgenNode> *list, int curr_tag) {
+    
+    for(List<CgenNode> *l = list; l; l = l->tl()) {
+
+	CgenNodeP nd = l->hd();
+	nd->nd_set_tag(curr_tag);
+	cerr << "name: " << nd->name << "; tag = " << nd->nd_get_tag() << endl;
+	map_add_tag(nd->name, nd);
+	if (nd->basic()) cerr << "basic class!" << endl;
+	
+	// recurse on children
+	List<CgenNode> *children = nd->get_children();
+	add_class_tags(children, curr_tag-1);
+    }
+    
+
+    
 }
 
 CgenNodeP CgenClassTable::root()

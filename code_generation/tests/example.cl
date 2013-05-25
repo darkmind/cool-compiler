@@ -28,3 +28,7 @@ class Myclass {
     1
   };
 };
+
+class IO2 inherits IO {
+    asdf : Int;
+};
