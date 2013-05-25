@@ -931,18 +931,22 @@ void CgenClassTable::code_prototypes() {
 	    << WORD << nd->name << DISPTAB_SUFFIX << endl;
 
 	for (std::vector<AttrP>::iterator it = attr_list->begin(); it != attr_list->end(); ++it) {
+
+	    // Printing out all of things that we're pushing to str
+	    if (cgen_debug) {
+		cerr << "attribute: " << (*it)->name << " of class: " << nd->name << endl;
+	    }
+
 	    Symbol type = (*it)->type_decl;
 	    str << WORD;
 	    if (type == Bool) {
 		str << FALSECONST << endl; // False
 	    } else if (type == Int) {
-		str << INTCONST_PREFIX << zero_int << endl;
+		str << INTCONST_PREFIX << zero_int << endl; // "0"
 	    } else if (type == Str) {
-		str << STRCONST_PREFIX << empty_str << endl;
+		str << STRCONST_PREFIX << empty_str << endl; // ""
 	    } else str << 0 << endl;
 	}
-
-	str << WORD << 0 << endl;
     }
 }
 
