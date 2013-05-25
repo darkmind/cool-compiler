@@ -15,6 +15,8 @@ class Main {
 };
 
 class Helloworld inherits Main {
+  yo:Int;
+  blah:Myclass;
   say():Int {
     {
       --out_string("hello world");

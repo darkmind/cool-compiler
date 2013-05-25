@@ -910,24 +910,17 @@ void CgenClassTable::code_basic_prototypes() {
  * and populates the mapping from class names to tags at the same time
  */
 void CgenClassTable::code_prototypes() {
-    /*
-     * STEPS
-     * 1. Iterate through the inheritance graph
-     * 2. If isn't a basic class, add it
-     **** IDEA: What if we just fold the basic_prototypes into this function? This would actually just be
-     * strictly better than the workaround we have 
-     * 3. 
-     
-    	// Generating prototype
+    // iterate through all classes and emit code for all of them
+    for(List<CgenNode> *l = nds; l; l = l->tl()) {
+	CgenNodeP nd = l->hd();
+	
 	str << WORD << "-1" << endl;
 	str << nd->name << PROTOBJ_SUFFIX << ":" << endl	// label
 	    << WORD << nd->nd_get_tag() << endl         	// class tag
-	    << WORD << "9999" << endl  				// object size
+	    << WORD << DEFAULT_OBJFIELDS + nd->nd_get_num_attr() << endl  		// object size
 	    << WORD << "PRETEND THIS IS A DISPATCH TAB" << endl
 	    << WORD << 0 << endl;
-    for(List<CgenNode> *l = list; l; l = l->tl()) {
-
-*/
+    }
 }
 
 void CgenClassTable::assign_class_tags() {
@@ -946,7 +939,6 @@ void CgenClassTable::assign_class_tags() {
     // Find the Object CgenNodeP
     while (l && (l->hd()->name != Object )) l = l->tl();
     recurse_class_tags(l, &curr_tag);
-    
 }
 
 /* 
@@ -1000,6 +992,17 @@ CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct) :
    stringtable.add_string(name->get_string());          // Add class name to string table
 }
 
+int CgenNode::nd_get_num_attr() {
+   int num_attributes = 0;
+   for(int j = features->first(); features->more(j); j = features->next(j)) {
+	Feature feature_ptr = features->nth(j);
+	attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
+	if(attribute != 0) { // i.e. attribute
+	    num_attributes++;
+	}
+    }
+    return num_attributes;
+}
 
 //******************************************************************
 //

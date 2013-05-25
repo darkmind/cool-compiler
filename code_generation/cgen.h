@@ -73,7 +73,6 @@ private:
                                               // `NotBasic' otherwise
    int tag;
 
-
 public:
    CgenNode(Class_ c,
             Basicness bstatus,
@@ -88,7 +87,7 @@ public:
 
    void nd_set_tag(int intag) { tag = intag; }
    int nd_get_tag() { return tag; }
-
+   int nd_get_num_attr();
 };
 
 class BoolConst 
