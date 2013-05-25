@@ -1043,9 +1043,19 @@ void CgenNode::nd_populate_attr_list(std::vector<AttrP> *attr_list) {
 //
 //////////////////////////////////////////////////////////////////////
 
-void CgenClassTable::code_class_names {
-
-
+void CgenClassTable::code_class_names() {
+   str << CLASSNAMETAB << LABEL; // label
+   for (List<CgenNode> *l = nds; l; l = l->tl()) {
+      CgenNodeP nd = l->hd();
+      char *class_name = nd->name->get_string();
+      int class_index = find_in_stringtable(class_name);
+      
+      if (cgen_debug) {
+	  cerr << "emitting class_nameTab" << endl;
+          cerr << "str_const index for class " << class_name << ": " << class_index << endl;
+      }
+      str << WORD << STRCONST_PREFIX << class_index << endl;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////
