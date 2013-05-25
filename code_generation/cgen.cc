@@ -912,18 +912,64 @@ void CgenClassTable::code_basic_prototypes() {
  * and populates the mapping from class names to tags at the same time
  */
 void CgenClassTable::code_prototypes() {
+
+    // Search in the int and string tables for "0" and empty string, respectively
+    int zero_int = find_in_inttable("0");
+    int empty_str = find_in_stringtable("");
+
     // iterate through all classes and emit code for all of them
     for(List<CgenNode> *l = nds; l; l = l->tl()) {
 	CgenNodeP nd = l->hd();
+
+	// Get the attr_list
+	std::vector<AttrP> *attr_list = map_get_attr_list(nd->name);
 	
 	str << WORD << "-1" << endl;
-	str << nd->name << PROTOBJ_SUFFIX << ":" << endl				// label
-	    << WORD << nd->nd_get_tag() << endl         				// class tag
-	    << WORD << DEFAULT_OBJFIELDS + map_get_attr_list(nd->name)->size() << endl	// object size
-	    << WORD << "PRETEND THIS IS A DISPATCH TAB" << endl;
+	str << nd->name << PROTOBJ_SUFFIX << LABEL			// label
+	    << WORD << nd->nd_get_tag() << endl         		// class tag
+	    << WORD << DEFAULT_OBJFIELDS + attr_list->size() << endl	// object size
+	    << WORD << nd->name << DISPTAB_SUFFIX << endl;
+
+	for (std::vector<AttrP>::iterator it = attr_list->begin(); it != attr_list->end(); ++it) {
+	    Symbol type = (*it)->type_decl;
+	    str << WORD;
+	    if (type == Bool) {
+		str << FALSECONST << endl; // False
+	    } else if (type == Int) {
+		str << INTCONST_PREFIX << zero_int << endl;
+	    } else if (type == Str) {
+		str << STRCONST_PREFIX << empty_str << endl;
+	    } else str << 0 << endl;
+	}
 
 	str << WORD << 0 << endl;
     }
+}
+
+// Three grossly inefficient functions for looking up shit in the various stringtables
+
+int CgenClassTable::find_in_stringtable(char * str) {
+    StrTable *st = &stringtable;
+    for (int i = st->first(); st->more(i); i = st->next(i)) {
+	if (st->lookup(i) == st->lookup_string(str)) return i;
+    }
+    return -1; // Not found
+}
+
+int CgenClassTable::find_in_inttable(char * str) {
+    IntTable *st = &inttable;
+    for (int i = st->first(); st->more(i); i = st->next(i)) {
+	if (st->lookup(i) == st->lookup_string(str)) return i;
+    }
+    return -1; // Not found
+}
+
+int CgenClassTable::find_in_idtable(char * str) {
+    IdTable *st = &idtable;
+    for (int i = st->first(); st->more(i); i = st->next(i)) {
+	if (st->lookup(i) == st->lookup_string(str)) return i;
+    }
+    return -1; // Not found
 }
 
 

@@ -74,6 +74,11 @@ public:
    std::vector<AttrP> *map_get_attr_list(Symbol symbol) { return (*attr_map)[symbol]; } 
    void add_attr_list(Symbol symbol, std::vector<AttrP> *attr_list) { (*attr_map)[symbol] = attr_list; }
    void populate_attr_map(List<CgenNode> *list, std::vector<AttrP> *parent_list);
+
+// Used to find strings in the string or int or id tables
+   int find_in_stringtable(char * str);
+   int find_in_inttable(char * str);
+   int find_in_idtable(char * str);
 };
 
 

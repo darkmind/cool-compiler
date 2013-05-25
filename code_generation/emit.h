@@ -50,6 +50,9 @@
 #define STRCONST_PREFIX      "str_const"
 #define BOOLCONST_PREFIX     "bool_const"
 
+#define TRUECONST	     "bool_const1"
+#define FALSECONST	     "bool_const0"
+
 #define EMPTYSLOT            0
 #define LABEL                ":\n"
 #define STRINGNAME (char *) "String"
