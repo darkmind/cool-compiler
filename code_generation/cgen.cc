@@ -849,11 +849,13 @@ void CgenClassTable::code()
 //                   - dispatch tables
 //
 
+  if (cgen_debug) cout << "coding class names" << endl;
+  code_class_names();
+
   if (cgen_debug) cout << "coding prototypes" << endl;
   code_prototypes();
 
-  if (cgen_debug) cout << "coding class_nameTab" << endl;
-  code_class_nametab();
+
 
   if (cgen_debug) cout << "coding global text" << endl;
   code_global_text();
@@ -1041,7 +1043,7 @@ void CgenNode::nd_populate_attr_list(std::vector<AttrP> *attr_list) {
 //
 //////////////////////////////////////////////////////////////////////
 
-void CgenClassTable::code_class_nametab {
+void CgenClassTable::code_class_names {
 
 
 }
