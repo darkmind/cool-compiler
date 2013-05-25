@@ -920,10 +920,12 @@ void CgenClassTable::code_prototypes() {
 	str << nd->name << PROTOBJ_SUFFIX << ":" << endl				// label
 	    << WORD << nd->nd_get_tag() << endl         				// class tag
 	    << WORD << DEFAULT_OBJFIELDS + map_get_attr_list(nd->name)->size() << endl	// object size
-	    << WORD << "PRETEND THIS IS A DISPATCH TAB" << endl
-	    << WORD << 0 << endl;
+	    << WORD << "PRETEND THIS IS A DISPATCH TAB" << endl;
+
+	str << WORD << 0 << endl;
     }
 }
+
 
 void CgenClassTable::assign_class_tags() {
     /*
