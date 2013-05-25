@@ -849,8 +849,13 @@ void CgenClassTable::code()
 //                   - dispatch tables
 //
 
-  if(cgen_debug) cout << "coding prototypes" << endl;
+  if (cgen_debug) cout << "coding class names" << endl;
+  code_class_names();
+
+  if (cgen_debug) cout << "coding prototypes" << endl;
   code_prototypes();
+
+
 
   if (cgen_debug) cout << "coding global text" << endl;
   code_global_text();
@@ -859,88 +864,96 @@ void CgenClassTable::code()
 //                   - object initializer
 //                   - the class methods
 //                   - etc...
-
 }
 
-/*
-void CgenClassTable::code_basic_prototypes() {
-    
-  // emit code in data section for basic class prototype objects
-
-  // Object_protObj
-  str << WORD << "-1" << endl;
-
-  str << OBJECTPROTOBJ << ":" << endl	            	// label
-      << WORD << objectclasstag << endl                 // class tag
-      << WORD << DEFAULT_OBJFIELDS << endl  		// object size
-      << WORD << OBJECTDISPTAB << endl;
-
-  // IO_protObj
-  str << WORD << "-1" << endl;
-
-  str << IOPROTOBJ << ":" << endl	            	// label
-      << WORD << ioclasstag << endl                     // class tag
-      << WORD << DEFAULT_OBJFIELDS << endl  		// object size
-      << WORD << IODISPTAB << endl;
-
-  // String_protObj
-  str << WORD << "-1" << endl;
-
-  str << STRINGPROTOBJ << ":" << endl					// label
-      << WORD << stringclasstag << endl             			// class tag
-      << WORD << DEFAULT_OBJFIELDS + STRING_SLOTS + 1 << endl  		// object size (+1 for the empty string)
-      << WORD << STRINGDISPTAB << endl					// dispatch
-      << WORD << "int_const1" << endl // TODO: Replace int_const1 here with the actual thing
-      << WORD << 0 << endl;
-
-
-  // Bool_protObj
-  str << WORD << "-1" << endl;
-
-  str << BOOLPROTOBJ << ":" << endl	            		// label
-      << WORD << boolclasstag << endl           	        // class tag
-      << WORD << DEFAULT_OBJFIELDS + BOOL_SLOTS << endl  	// object size
-      << WORD << BOOLDISPTAB << endl
-      << WORD << 0 << endl;
-
-
-}
-*/
+///////////////////////////////////////////////////////////////////////
+//
+// Coding prototypes
+//
+///////////////////////////////////////////////////////////////////////
 
 /*
  * Given our classes, this function goes through and builds prototypes for each of the classes
  * and populates the mapping from class names to tags at the same time
  */
 void CgenClassTable::code_prototypes() {
+    // Search in the int and string tables for "0" and empty string, respectively
+    int zero_int = find_in_inttable("0");
+    int empty_str = find_in_stringtable("");
+
     // iterate through all classes and emit code for all of them
     for(List<CgenNode> *l = nds; l; l = l->tl()) {
 	CgenNodeP nd = l->hd();
+
+	// Get the attr_list
+	std::vector<AttrP> *attr_list = map_get_attr_list(nd->name);
 	
 	str << WORD << "-1" << endl;
-	str << nd->name << PROTOBJ_SUFFIX << ":" << endl				// label
-	    << WORD << nd->nd_get_tag() << endl         				// class tag
-	    << WORD << DEFAULT_OBJFIELDS + map_get_attr_list(nd->name)->size() << endl	// object size
-	    << WORD << "PRETEND THIS IS A DISPATCH TAB" << endl;
+	str << nd->name << PROTOBJ_SUFFIX << LABEL			// label
+	    << WORD << nd->nd_get_tag() << endl         		// class tag
+	    << WORD << DEFAULT_OBJFIELDS + attr_list->size() << endl	// object size
+	    << WORD << nd->name << DISPTAB_SUFFIX << endl;
 
-	str << WORD << 0 << endl;
+	for (std::vector<AttrP>::iterator it = attr_list->begin(); it != attr_list->end(); ++it) {
+
+	    // Printing out all of things that we're pushing to str
+	    if (cgen_debug) {
+		cerr << "attribute: " << (*it)->name << " of class: " << nd->name << endl;
+	    }
+
+	    Symbol type = (*it)->type_decl;
+	    str << WORD;
+	    if (type == Bool) {
+		str << FALSECONST << endl; // False
+	    } else if (type == Int) {
+		str << INTCONST_PREFIX << zero_int << endl; // "0"
+	    } else if (type == Str) {
+		str << STRCONST_PREFIX << empty_str << endl; // ""
+	    } else str << 0 << endl;
+	}
     }
 }
 
+// Three grossly inefficient functions for looking up shit in the various stringtables
 
+int CgenClassTable::find_in_stringtable(char * str) {
+    StrTable *st = &stringtable;
+    for (int i = st->first(); st->more(i); i = st->next(i)) {
+	if (st->lookup(i) == st->lookup_string(str)) return i;
+    }
+    return -1; // Not found
+}
+
+int CgenClassTable::find_in_inttable(char * str) {
+    IntTable *st = &inttable;
+    for (int i = st->first(); st->more(i); i = st->next(i)) {
+	if (st->lookup(i) == st->lookup_string(str)) return i;
+    }
+    return -1; // Not found
+}
+
+int CgenClassTable::find_in_idtable(char * str) {
+    IdTable *st = &idtable;
+    for (int i = st->first(); st->more(i); i = st->next(i)) {
+	if (st->lookup(i) == st->lookup_string(str)) return i;
+    }
+    return -1; // Not found
+}
+
+/*
+ * STEPS
+ * 1. Iterate through the inheritance graph
+ * 2. If isn't a basic class, add it
+ **** IDEA: What if we just fold the basic_prototypes into this function? This would actually just be
+ * strictly better than the workaround we have 
+ * 3. 
+ */
 void CgenClassTable::assign_class_tags() {
-    /*
-     * STEPS
-     * 1. Iterate through the inheritance graph
-     * 2. If isn't a basic class, add it
-     **** IDEA: What if we just fold the basic_prototypes into this function? This would actually just be
-     * strictly better than the workaround we have 
-     * 3. 
-     */
 
     int curr_tag = 0;
     List<CgenNode> *l = nds;
     
-    // Find the Object CgenNodeP
+    // Find the Object CgenNodeP (in list form)
     while (l && (l->hd()->name != Object )) l = l->tl();
     recurse_class_tags(l, &curr_tag);
     
@@ -1013,6 +1026,7 @@ void CgenClassTable::populate_attr_map(List<CgenNode> *list, std::vector<AttrP> 
     }
 }
 
+// Adds a CgenNode's attributes to an attr_list
 void CgenNode::nd_populate_attr_list(std::vector<AttrP> *attr_list) {
     for (int j = features->first(); features->more(j); j = features->next(j)) {
 	Feature feature_ptr = features->nth(j);
@@ -1023,10 +1037,26 @@ void CgenNode::nd_populate_attr_list(std::vector<AttrP> *attr_list) {
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Coding Name Table stuff
+//
+//////////////////////////////////////////////////////////////////////
+
+void CgenClassTable::code_class_names {
+
+
+}
+
+//////////////////////////////////////////////////////////////////////
+// Holy fucking shit we didn't realize this thing existed.
+//////////////////////////////////////////////////////////////////////
 CgenNodeP CgenClassTable::root()
 {
    return probe(Object);
 }
+
+
 
 
 ///////////////////////////////////////////////////////////////////////
