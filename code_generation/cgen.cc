@@ -629,6 +629,7 @@ CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
    // Here we make the new maps for retrieving class nodes and attribute lists, respectively
    class_tags = new std::map<Symbol, CgenNodeP>();
    attr_map = new std::map<Symbol, std::vector<AttrP> *>();
+   meth_map = new std::map<Symbol, std::vector<method_dispatch> *>();
    // TODO: make a method_map
 
    enterscope();
@@ -854,9 +855,11 @@ void CgenClassTable::code()
   if (cgen_debug) cout << "coding class names" << endl;
   code_class_names();
 
+  if (cgen_debug) cout << "coding dispatch tables" << endl;
+  code_dispatch_tables();
+
   if (cgen_debug) cout << "coding prototypes" << endl;
   code_prototypes();
-
 
 
   if (cgen_debug) cout << "coding global text" << endl;
@@ -870,19 +873,39 @@ void CgenClassTable::code()
 
 ///////////////////////////////////////////////////////////////////////
 //
-// Coding prototypes
+// Coding the global information: class names, object names, dispatch tables, prototypes
 //
 ///////////////////////////////////////////////////////////////////////
+
+/*
+ * With our method map completed, we can go through and print out each class and its associated methods
+ */
+
+void CgenClassTable::code_dispatch_tables() {
+
+    // Iterate through all classes
+    for (List<CgenNode> *l = nds; l; l = l->tl()) {
+
+	CgenNodeP nd = l->hd();
+	std::vector<method_dispatch> *meth_list = map_get_meth_list(nd->name);
+
+	str << nd->name << DISPTAB_SUFFIX << LABEL; 			// label
+
+	//Iterate through the vector of methods
+	for (std::vector<method_dispatch>::iterator it = meth_list->begin(); it != meth_list->end(); ++it) {
+	    str << WORD << it->class_name << "." << it->method_name << endl;
+	}
+    }
+}
 
 /*
  * Given our classes, this function goes through and builds prototypes for each of the classes
  * and populates the mapping from class names to tags at the same time
  */
 void CgenClassTable::code_prototypes() {
-    // Search in the int and string tables for "0" and empty string, respectively
 
     // iterate through all classes and emit code for all of them
-    for(List<CgenNode> *l = nds; l; l = l->tl()) {
+    for (List<CgenNode> *l = nds; l; l = l->tl()) {
 	CgenNodeP nd = l->hd();
 
 	// Get the attr_list
@@ -954,7 +977,7 @@ int CgenClassTable::find_in_idtable(char * str) {
  * 2. If isn't a basic class, add it
  **** IDEA: What if we just fold the basic_prototypes into this function? This would actually just be
  * strictly better than the workaround we have 
- * 3. 
+ * 3. At the same time, populate the attributes and methods for each class into the attr_map and meth_map, respectively
  */
 void CgenClassTable::assign_class_tags() {
 
@@ -972,6 +995,17 @@ void CgenClassTable::assign_class_tags() {
 
     // We populate each of the Object class' children into the attr_map
     populate_attr_map(l->hd()->get_children(), object_attr);
+
+    // Create a vector and populate it with the methods of Object, and recursively build the map
+    // using this as the "seed"
+    // Note that since Objects have methods, we must call nd_populate_meth_list on this first.
+    std::vector<method_dispatch> *object_meth = new std::vector<method_dispatch>();
+    l->hd()->nd_populate_meth_list(object_meth);
+    add_meth_list(Object, object_meth);
+
+    // We populate each of the Object class' children into the meth_map
+    populate_meth_map(l->hd()->get_children(), object_meth);
+
 }
 
 /* 
@@ -1037,12 +1071,61 @@ void CgenClassTable::populate_attr_map(List<CgenNode> *list, std::vector<AttrP> 
 void CgenNode::nd_populate_attr_list(std::vector<AttrP> *attr_list) {
     for (int j = features->first(); features->more(j); j = features->next(j)) {
 	Feature feature_ptr = features->nth(j);
-	attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
+	AttrP attribute = dynamic_cast<AttrP>(feature_ptr);
 	if (attribute) { // i.e. attribute
 	    attr_list->push_back(attribute);
 	}
     }
 }
+
+// Similar to the populate_attr_map, but for methods
+void CgenClassTable::populate_meth_map(List<CgenNode> *list, std::vector<method_dispatch> *parent_list) {
+
+    for(List<CgenNode> *l = list; l; l = l->tl()) {
+	CgenNodeP nd = l->hd();
+	std::vector<method_dispatch> *child_list = new std::vector<method_dispatch>(*parent_list);
+	nd->nd_populate_meth_list(child_list);
+	add_meth_list(nd->name, child_list);
+	
+	
+	// Get children of the current class
+	List<CgenNode> *children = nd->get_children();
+
+	if (cgen_debug) {
+	    cerr << "name: " << nd->name << endl;
+	    // Debug: check the attributes that are being added for each class
+	    cerr << "THE METHODS OHOHOHOHO" << endl;
+	    for (std::vector<method_dispatch>::iterator it = child_list->begin(); it != child_list->end(); ++it) {
+		cerr << it->class_name << ": " << it->method_name << endl;
+	    }
+	}  
+
+	// Recurse on the children classes
+	populate_meth_map(children, child_list);
+    }
+}
+
+// Adds a CgenNode's methods to a meth_list
+void CgenNode::nd_populate_meth_list(std::vector<method_dispatch> *meth_list) {
+    for (int j = features->first(); features->more(j); j = features->next(j)) {
+	Feature feature_ptr = features->nth(j);
+	MethP method = dynamic_cast<MethP>(feature_ptr);
+	if (method) { // i.e. method
+	    method_dispatch to_add;
+	    to_add.method_name = method->name;
+	    to_add.method_p = method;
+	    to_add.class_name = name;
+	    // First, check if method already exists in the vector. If it does, remove it.
+	    for (std::vector<method_dispatch>::iterator it = meth_list->begin(); it != meth_list->end(); ++it) {
+		if (it->method_name == to_add.method_name) { // Method already exists, so we remove this old method to be overwritten
+		    it = meth_list->erase(it) - 1; // Erase old method and move it back one so that it doesn't skip the next method
+		}
+	    }
+	    meth_list->push_back(to_add);
+	}
+    }
+}
+
 
 //////////////////////////////////////////////////////////////////////
 //

@@ -19,6 +19,16 @@ class CgenNode;
 typedef CgenNode *CgenNodeP;
 
 typedef attr_class *AttrP;
+typedef method_class *MethP;
+
+// Encodes a method/class pair
+typedef struct method_dispatch {
+    Symbol method_name;
+    MethP method_p;
+    Symbol class_name;
+} method_dispatch;
+
+///////////////////////////////////////////
 
 class CgenClassTable : public SymbolTable<Symbol,CgenNode> {
 private:
@@ -39,8 +49,9 @@ private:
    void code_bools(int);
    void code_select_gc();
    void code_constants();
-   void code_prototypes();
    void code_class_names();
+   void code_dispatch_tables();
+   void code_prototypes();
 
 // The following creates an inheritance graph from
 // a list of classes.  The graph is implemented as
@@ -61,6 +72,7 @@ private:
 // Following is used for handling attributes/inherited attributes
    void populate_attr_map(List<CgenNode> *list);
    std::map<Symbol, std::vector<AttrP> *> *attr_map;
+   std::map<Symbol, std::vector<method_dispatch> *> *meth_map;
 
 public:
    CgenClassTable(Classes, ostream& str);
@@ -70,12 +82,19 @@ public:
 // Following is used for public functions to get/set class tags
    CgenNodeP map_get_class(Symbol symbol) { return (*class_tags)[symbol]; }
    void map_add_tag(Symbol symbol, CgenNodeP nd) { (*class_tags)[symbol] = nd; }
-   bool classes_contains_name(Symbol symbol);
+   
+   // Basically, a short function that "probes" our map for the symbol, since symbol comparison is tricky
+   bool classes_contains_name(Symbol symbol); 
 
 // Used to get attr_list
    std::vector<AttrP> *map_get_attr_list(Symbol symbol) { return (*attr_map)[symbol]; } 
    void add_attr_list(Symbol symbol, std::vector<AttrP> *attr_list) { (*attr_map)[symbol] = attr_list; }
    void populate_attr_map(List<CgenNode> *list, std::vector<AttrP> *parent_list);
+
+// Used to get meth_list
+   std::vector<method_dispatch> *map_get_meth_list(Symbol symbol) { return (*meth_map)[symbol]; }
+   void add_meth_list(Symbol symbol, std::vector<method_dispatch> *meth_list) { (*meth_map)[symbol] = meth_list; }
+   void populate_meth_map(List<CgenNode> *list, std::vector<method_dispatch> *parent_list);
 
 // Used to find strings in the string or int or id tables JK WE DON'T NEED THIS
 // TODO: DELETE
@@ -109,8 +128,10 @@ public:
 
    void nd_set_tag(int intag) { tag = intag; }
    int nd_get_tag() { return tag; }
-   
+
+   // Used for populating the method and attribute lists for each node
    void nd_populate_attr_list(std::vector<AttrP> *attr_list); 
+   void nd_populate_meth_list(std::vector<method_dispatch> *meth_list);
 };
 
 class BoolConst 

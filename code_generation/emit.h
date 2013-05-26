@@ -37,6 +37,7 @@
 #define STRCONST_PREFIX      "str_const"
 #define BOOLCONST_PREFIX     "bool_const"
 
+// Looks like we don't even need these. Oh well
 #define TRUECONST	     "bool_const1"
 #define FALSECONST	     "bool_const0"
 
