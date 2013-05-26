@@ -620,7 +620,8 @@ void CgenClassTable::code_constants()
 CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
 {
    // Debug: We don't know if these tags are used prior to assigning tags, so we set a 
-   // weird value here and see if they ever come up.
+   // weird value here and see if they ever come up. They should be set to correct values
+   // immediately when code is called, so it should be fine.
    stringclasstag = 1337 /* Change to your String class tag here */;
    intclasstag =    1337 /* Change to your Int class tag here */;
    boolclasstag =   1337 /* Change to your Bool class tag here */;
@@ -628,6 +629,7 @@ CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
    // Here we make the new maps for retrieving class nodes and attribute lists, respectively
    class_tags = new std::map<Symbol, CgenNodeP>();
    attr_map = new std::map<Symbol, std::vector<AttrP> *>();
+   // TODO: make a method_map
 
    enterscope();
    if (cgen_debug) cout << "Building CgenClassTable" << endl;
@@ -878,8 +880,6 @@ void CgenClassTable::code()
  */
 void CgenClassTable::code_prototypes() {
     // Search in the int and string tables for "0" and empty string, respectively
-    int zero_int = find_in_inttable("0");
-    int empty_str = find_in_stringtable("");
 
     // iterate through all classes and emit code for all of them
     for(List<CgenNode> *l = nds; l; l = l->tl()) {
@@ -903,18 +903,24 @@ void CgenClassTable::code_prototypes() {
 
 	    Symbol type = (*it)->type_decl;
 	    str << WORD;
+
+	    // Print out the appropriate initial value for type.
 	    if (type == Bool) {
-		str << FALSECONST << endl; // False
-	    } else if (type == Int) {
-		str << INTCONST_PREFIX << zero_int << endl; // "0"
+		falsebool.code_ref(str);
 	    } else if (type == Str) {
-		str << STRCONST_PREFIX << empty_str << endl; // ""
-	    } else str << 0 << endl;
+		stringtable.lookup_string("")->code_ref(str);
+	    } else if (type == Int) {
+		inttable.lookup_string("0")->code_ref(str);
+	    } else str << 0;
+	    str << endl;
 	}
     }
 }
 
 // Three grossly inefficient functions for looking up shit in the various stringtables
+
+/*
+ * TODO: OH LOOK WE SHOULD DELETE THIS
 
 int CgenClassTable::find_in_stringtable(char * str) {
     StrTable *st = &stringtable;
@@ -939,6 +945,8 @@ int CgenClassTable::find_in_idtable(char * str) {
     }
     return -1; // Not found
 }
+
+*/
 
 /*
  * STEPS
@@ -977,7 +985,6 @@ void CgenClassTable::recurse_class_tags(List<CgenNode> *list, int *curr_tag) {
 	nd->nd_set_tag(*curr_tag);
 	map_add_tag(nd->name, nd);
 	(*curr_tag)++;
-	map_add_tag(nd->name, nd);
 	
 	// Get children of the current class
 	List<CgenNode> *children = nd->get_children();
@@ -1043,21 +1050,38 @@ void CgenNode::nd_populate_attr_list(std::vector<AttrP> *attr_list) {
 //
 //////////////////////////////////////////////////////////////////////
 
+// Output the table of class names
 void CgenClassTable::code_class_names() {
-   str << CLASSNAMETAB << LABEL; // label
-   for (List<CgenNode> *l = nds; l; l = l->tl()) {
-      CgenNodeP nd = l->hd();
-      char *class_name = nd->name->get_string();
-      int class_index = find_in_stringtable(class_name);
-      
-      if (cgen_debug) {
-	  cerr << "emitting class_nameTab" << endl;
-          cerr << "str_const index for class " << class_name << ": " << class_index << endl;
-      }
-      str << WORD << STRCONST_PREFIX << class_index << endl;
-   }
+
+    str << CLASSNAMETAB << LABEL; // label of class name table section
+
+    StrTable *st = &stringtable;
+
+    // Iterate through everything in the string table
+    for (int i = st->first(); st->more(i); i = st->next(i)) {
+
+	bool is_class = false;
+	Symbol curr_symbol = st->lookup(i);
+
+	// If this string is contained in the inheritance cycle of classes, it is a proper class
+	// and should be printed.
+	if (classes_contains_name(curr_symbol)) {
+	    if (cgen_debug) {
+		cerr << "emitting class_nameTab" << endl;
+		cerr << "str_const index for class " << curr_symbol << ": " << i << endl;
+	    }
+	    str << WORD << STRCONST_PREFIX << i << endl;
+	}
+    }
 }
 
+// Since apparently the symbols from different tables don't compare very well, we do this workaround
+bool CgenClassTable::classes_contains_name(Symbol symbol) {
+    for (std::map<Symbol, CgenNodeP>::iterator j = class_tags->begin(); j != class_tags->end(); ++j) {
+	if (symbol->equal_string(j->first->get_string(), j->first->get_len())) return true;
+    }
+    return false;
+}
 //////////////////////////////////////////////////////////////////////
 // Holy fucking shit we didn't realize this thing existed.
 //////////////////////////////////////////////////////////////////////
