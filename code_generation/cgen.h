@@ -40,7 +40,6 @@ private:
    void code_select_gc();
    void code_constants();
    void code_prototypes();
-   void code_class_names();
 
 // The following creates an inheritance graph from
 // a list of classes.  The graph is implemented as
@@ -57,6 +56,14 @@ private:
    void assign_class_tags();
    void recurse_class_tags(List<CgenNode> *list, int *curr_tag);
    std::map<Symbol, CgenNodeP> *class_tags; // Maps from the class name (Symbol) to the node of the class
+
+// Following is used for handling the printing of class names
+   void code_class_names();
+   void recurse_class_names(List<CgenNode> *list);
+
+// Following is used for handling the printing of class_objTab
+   void code_object_table();
+   void recurse_object_table(List<CgenNode> *list);
 
 // Following is used for handling attributes/inherited attributes
    void populate_attr_map(List<CgenNode> *list);

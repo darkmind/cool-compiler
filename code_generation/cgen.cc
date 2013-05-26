@@ -854,6 +854,9 @@ void CgenClassTable::code()
   if (cgen_debug) cout << "coding class names" << endl;
   code_class_names();
 
+  if (cgen_debug) cout << "coding object table" << endl;
+  code_object_table();
+
   if (cgen_debug) cout << "coding prototypes" << endl;
   code_prototypes();
 
@@ -884,6 +887,8 @@ void CgenClassTable::code_prototypes() {
     // iterate through all classes and emit code for all of them
     for(List<CgenNode> *l = nds; l; l = l->tl()) {
 	CgenNodeP nd = l->hd();
+	if (cgen_debug)
+	    cerr << "emitting prototype for " << nd->name << endl;
 
 	// Get the attr_list
 	std::vector<AttrP> *attr_list = map_get_attr_list(nd->name);
@@ -982,6 +987,8 @@ void CgenClassTable::recurse_class_tags(List<CgenNode> *list, int *curr_tag) {
 
     for(List<CgenNode> *l = list; l; l = l->tl()) {
 	CgenNodeP nd = l->hd();
+	if (cgen_debug)
+	    cerr << "current node: " << nd->name << " ; num siblings: " << list_length<CgenNode>(l) << endl;
 	nd->nd_set_tag(*curr_tag);
 	map_add_tag(nd->name, nd);
 	(*curr_tag)++;
@@ -996,7 +1003,7 @@ void CgenClassTable::recurse_class_tags(List<CgenNode> *list, int *curr_tag) {
 	    for (List<CgenNode> *c = children; c; c = c->tl()) {
 		cerr << c->hd()->name << endl;
 	    }
-	}  
+	}
 
 	// Recurse on the children classes
 	recurse_class_tags(children, curr_tag);
@@ -1046,32 +1053,91 @@ void CgenNode::nd_populate_attr_list(std::vector<AttrP> *attr_list) {
 
 //////////////////////////////////////////////////////////////////////
 //
+// Coding Object Table stuff
+//
+//////////////////////////////////////////////////////////////////////
+
+// Output the table of class prototypes and init methods
+void CgenClassTable::code_object_table() {
+    if (cgen_debug) {
+        cerr << "emitting class_objTab" << endl;
+    }
+
+    str << CLASSOBJTAB << LABEL; // label of class object table section
+
+    // Find the Object CgenNodeP (in list form)
+    List<CgenNode> *l = nds;
+    while (l && (l->hd()->name != Object )) l = l->tl();
+
+    recurse_object_table(l);
+}
+
+void CgenClassTable::recurse_object_table(List<CgenNode> *list) {
+    for(List<CgenNode> *l = list; l; l = l->tl()) {
+	CgenNodeP nd = l->hd();
+	
+	// Get current node, look up its entry in the string table and output its str_const
+	str << WORD << nd->name << PROTOBJ_SUFFIX << endl;
+	str << WORD << nd->name << CLASSINIT_SUFFIX << endl;
+
+        // Get children of the current node
+        List<CgenNode> *children = nd->get_children();
+    
+    	if (cgen_debug) {
+	    cerr << "emitting object table stuff for class " << nd->name << ": " << endl;
+	    cerr << WORD << nd->name << PROTOBJ_SUFFIX << endl;
+	    cerr << WORD << nd->name << CLASSINIT_SUFFIX << endl;
+        }
+	
+        recurse_object_table(children);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Coding Name Table stuff
 //
 //////////////////////////////////////////////////////////////////////
 
 // Output the table of class names
 void CgenClassTable::code_class_names() {
-
+    if (cgen_debug)
+        cerr << "emitting class_nameTab" << endl;
+    
     str << CLASSNAMETAB << LABEL; // label of class name table section
 
+    // Find the Object CgenNodeP (in list form)
+    List<CgenNode> *l = nds;
+    while (l && (l->hd()->name != Object )) l = l->tl();
+
+    recurse_class_names(l);
+}
+
+/* 
+ * This is initially called on the Object Class.
+ * It outputs str_consts for each class, by recursing down the inheritance hierarchy.
+ * Since each node is already in the inheritance hierarchy, it is guaranteed to be a
+ * valid class, so we can just output it.
+ */
+void CgenClassTable::recurse_class_names(List<CgenNode> *list) {
     StrTable *st = &stringtable;
+    for(List<CgenNode> *l = list; l; l = l->tl()) {
+	CgenNodeP nd = l->hd();
+	
+	// Get current node, look up its entry in the string table and output its str_const
+	str << WORD;
+	st->lookup_string(nd->name->get_string())->code_ref(str);
+	str << endl;	
 
-    // Iterate through everything in the string table
-    for (int i = st->first(); st->more(i); i = st->next(i)) {
-
-	bool is_class = false;
-	Symbol curr_symbol = st->lookup(i);
-
-	// If this string is contained in the inheritance cycle of classes, it is a proper class
-	// and should be printed.
-	if (classes_contains_name(curr_symbol)) {
-	    if (cgen_debug) {
-		cerr << "emitting class_nameTab" << endl;
-		cerr << "str_const index for class " << curr_symbol << ": " << i << endl;
-	    }
-	    str << WORD << STRCONST_PREFIX << i << endl;
-	}
+        // Get children of the current node
+        List<CgenNode> *children = nd->get_children();
+    
+    	if (cgen_debug) {
+	    cerr << "emitting str_const for class " << nd->name << ": " << endl;
+	    st->lookup_string(nd->name->get_string())->code_ref(cerr);
+        }
+	
+        recurse_class_names(children);
     }
 }
 
