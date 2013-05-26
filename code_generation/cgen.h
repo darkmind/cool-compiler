@@ -49,8 +49,13 @@ private:
    void code_bools(int);
    void code_select_gc();
    void code_constants();
+
+// Following is used for handling the printing of global text
    void code_class_names();
+   void recurse_class_names(List<CgenNode> *list);
+
    void code_dispatch_tables();
+
    void code_prototypes();
 
 // The following creates an inheritance graph from
@@ -68,6 +73,12 @@ private:
    void assign_class_tags();
    void recurse_class_tags(List<CgenNode> *list, int *curr_tag);
    std::map<Symbol, CgenNodeP> *class_tags; // Maps from the class name (Symbol) to the node of the class
+
+
+
+// Following is used for handling the printing of class_objTab
+   void code_object_table();
+   void recurse_object_table(List<CgenNode> *list);
 
 // Following is used for handling attributes/inherited attributes
    void populate_attr_map(List<CgenNode> *list);
