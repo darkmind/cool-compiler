@@ -400,11 +400,7 @@ void StringEntry::code_def(ostream& s, int stringclasstag)
       << WORD << stringclasstag << endl                                 // tag
       << WORD << (DEFAULT_OBJFIELDS + STRING_SLOTS + (len+4)/4) << endl // size
       << WORD;
-
-
- /***** Add dispatch information for class String ******/
-
-      s << endl;                                              // dispatch table
+      s << "String"DISPTAB_SUFFIX << endl; 
       s << WORD;  lensym->code_ref(s);  s << endl;            // string length
   emit_string_constant(s,str);                                // ascii string
   s << ALIGN;                                                 // align to word
@@ -443,10 +439,7 @@ void IntEntry::code_def(ostream &s, int intclasstag)
       << WORD << intclasstag << endl                      // class tag
       << WORD << (DEFAULT_OBJFIELDS + INT_SLOTS) << endl  // object size
       << WORD; 
-
- /***** Add dispatch information for class Int ******/
-
-      s << endl;                                          // dispatch table
+      s << "Int"DISPTAB_SUFFIX << endl;
       s << WORD << str << endl;                           // integer value
 }
 
@@ -487,10 +480,7 @@ void BoolConst::code_def(ostream& s, int boolclasstag)
       << WORD << boolclasstag << endl                       // class tag
       << WORD << (DEFAULT_OBJFIELDS + BOOL_SLOTS) << endl   // object size
       << WORD;
-
- /***** Add dispatch information for class Bool ******/
-
-      s << endl;                                            // dispatch table
+      s << "Bool"DISPTAB_SUFFIX << endl;
       s << WORD << val << endl;                             // value (0 or 1)
 }
 
@@ -861,10 +851,8 @@ void CgenClassTable::code()
   if (cgen_debug) cout << "coding dispatch tables" << endl;
   code_dispatch_tables();
 
-
   if (cgen_debug) cout << "coding prototypes" << endl;
   code_prototypes();
-
 
   if (cgen_debug) cout << "coding global text" << endl;
   code_global_text();
