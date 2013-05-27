@@ -1108,6 +1108,15 @@ int CgenNode::code_init(ostream& str, int counter) {
 	    if (is_initialized(attribute)) {
 	        (*it)->init->code(str); // currently only codes the int_const, str_const and bool_consts
 		emit_store(ACC, counter, SELF, str);
+		
+		// for the gc - only run this if the gc is activated (need to put this check in)
+		if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
+		    if (cgen_debug) {
+		        cerr << "garbage collector is activated. assigning to gc.." << endl;
+		    }
+		    emit_addiu(A1, SELF, counter*WORD_SIZE, str);
+		    emit_gc_assign(str);
+		}
 	    }
 	    counter++;
 	}
@@ -1414,6 +1423,10 @@ CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct) :
 //*****************************************************************
 
 void assign_class::code(ostream &s) {
+    // sample code: need to call 'jal _GenGC_Assign' 
+    //sw $x 12($self)
+    //addiu $a1 $self 12
+    //jal _GenGC_Assign
 }
 
 void static_dispatch_class::code(ostream &s) {
