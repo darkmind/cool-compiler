@@ -17,11 +17,21 @@ class Main {
 };
 
 class A {
-
+  a:Object <- 5;
+  b:IO2 <- (new IO2);
 };
 
 class B inherits A {
-
+  c:String;
+  d:Bool <- true;
+  -- test code generated for new__class
+  e:Object <- (new Object);
+  f:Int <- (new Int);
+  g:Bool <- (new Bool);
+  h:String <- (new String);
+  i:IO <- (new IO);
+  j:Main <- (new Main);
+  k:Helloworld <- (new Helloworld);
 };
 
 class Helloworld inherits Main {

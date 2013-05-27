@@ -1468,20 +1468,32 @@ void int_const_class::code(ostream& s)
   // Need to be sure we have an IntEntry *, not an arbitrary Symbol
   //
   // this code prints out something like 'la $a0 int_const3', which is exactly what we need
-  emit_load_int(ACC,inttable.lookup_string(token->get_string()),s);
+    emit_load_int(ACC,inttable.lookup_string(token->get_string()),s);
 }
 
 void string_const_class::code(ostream& s)
 {
-  emit_load_string(ACC,stringtable.lookup_string(token->get_string()),s);
+    emit_load_string(ACC,stringtable.lookup_string(token->get_string()),s);
 }
 
 void bool_const_class::code(ostream& s)
 {
-  emit_load_bool(ACC, BoolConst(val), s);
+    emit_load_bool(ACC, BoolConst(val), s);
 }
 
 void new__class::code(ostream &s) {
+    // emit 'la $a0 Helloworld_protObj' to load protObj into $a0
+    char *prot_obj = strdup(type_name->get_string());
+    prot_obj = strcat(prot_obj, PROTOBJ_SUFFIX);
+    emit_load_address(ACC, prot_obj, s);
+
+    // emit 'jal Object.copy' to instantiate the protObj passed in $a0
+    emit_jal ("Object.copy", s);
+
+    // emit 'jal Helloworld_init' to initialize the newly instantiated object
+    char *name_init = strdup(type_name->get_string());
+    name_init = strcat(name_init, CLASSINIT_SUFFIX);
+    emit_jal (name_init, s);
 }
 
 void isvoid_class::code(ostream &s) {
