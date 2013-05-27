@@ -6,6 +6,7 @@
 class Main {
   hw:Helloworld <- (new Helloworld);
   mc:Myclass <- (new Myclass);
+  test:A <- (new B);
   hi:Myclass;
   main():Int {
     {
@@ -15,11 +16,19 @@ class Main {
   };
 };
 
+class A {
+
+};
+
+class B inherits A {
+
+};
+
 class Helloworld inherits Main {
   myint:Int;
   myint2:Int <- 5;
   myint3:Int <- myint2;
-  myint4:Int <- self.say();
+  myint4:Int;
   mystr:String;
   mystr2:String <- "hello";
   mybool:Bool;

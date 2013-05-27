@@ -25,6 +25,9 @@
 #include "cgen.h"
 #include "cgen_gc.h"
 
+#include <sstream>
+#include <cstring>
+
 extern void emit_string_constant(ostream& str, char *s);
 extern int cgen_debug;
 
@@ -1024,11 +1027,27 @@ void CgenClassTable::code_prototypes() {
  * generates the assembly code used to initialize them
  */
 void CgenClassTable::code_object_inits() {
-    for (List<CgenNode> *l = nds; l; l = l->tl()) {
+    List<CgenNode> *l = nds;
+    while (l && (l->hd()->name != Object )) l = l->tl();
+
+    recurse_object_inits(l, DEFAULT_OBJFIELDS);
+}
+
+void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
+    for(List<CgenNode> *l = list; l; l = l->tl()) {
 	CgenNodeP nd = l->hd();
-	if (cgen_debug)
-	    cerr << "emitting initialization for " << nd->name << endl;
-	nd->code_init(str);
+
+	if (cgen_debug) {
+	    cerr << "emitting object init stuff for class " << nd->name << endl;
+        }
+
+	// Output all the code for the attributes of this node
+	int c = nd->code_init(str, counter);
+
+        // Get children of the current node
+        List<CgenNode> *children = nd->get_children();
+
+        recurse_object_inits(children, c);
     }
 }
 
@@ -1041,9 +1060,9 @@ int CgenNode::code_init(ostream& str, int counter) {
     generate_init_head(str);
 
     /* Tasks
-     * 1. If this isn't Object, call the init of its parent
+     * 1. If this isn't Object, call the init of its parent -- DONE
      * 2. If this is a basic class, then we're done. If it's not a basic class, then do the following:
-         a. First, load list of attributes.
+         a. First, load list of attributes. -- DONE
 
          b. Keep track of which attribute we are at (counter) so that we know which block of memory each attribute is at.
 	    Note that this counter is preserved between classes, so if class B inherits A, then if A has 5 attributes, then
@@ -1067,8 +1086,36 @@ int CgenNode::code_init(ostream& str, int counter) {
      */
 
     // TODO: EVERYTHING IN BETWEEN
+    
+    // emit code to jump to init method of the parent of this node
+    if (name != Object) {
+        CgenNodeP parentnd = get_parentnd();
+	char *parent_name = strdup(parentnd->name->get_string());
+        char *parent_init = strcat(parent_name, CLASSINIT_SUFFIX);
+        emit_jal (parent_init, str);
+    }
+
+    int initial_counter = counter;
+    // not a basic class so we need to get its initialized attributes and output them
+    if (!basic()) {
+	// get initialized attributes of this class
+        std::vector<AttrP> *attributes = get_attributes();
+	// for each initialized attribute, call the code() function on its init expression to render it to assembly
+	for (std::vector<AttrP>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
+	    AttrP attribute = *it;
+	    if (is_initialized(attribute)) {
+	        (*it)->init->code(str); // currently only codes the int_const, str_const and bool_consts
+		emit_store(ACC, counter, SELF, str);
+	    }
+	    counter++;
+	}
+    }
 
     generate_init_end(str);
+    if (cgen_debug) {
+	cerr << "Just finished emitting code for class " << name << "; started from offset " << initial_counter*4 << "; ended at offset " << counter*4 << endl;
+    }
+    return counter;
 }
 
 // Three grossly inefficient functions for looking up shit in the various stringtables
@@ -1289,7 +1336,6 @@ void CgenNode::generate_init_head(ostream& str) {
     emit_move(SELF, ACC, str);
 }
 
-
 // Generates the assembly code used in the end of every object initialization
 void CgenNode::generate_init_end(ostream& str) {
 
@@ -1306,6 +1352,35 @@ void CgenNode::generate_init_end(ostream& str) {
 
     // return
     emit_return(str);
+}
+
+std::vector<attr_class *> *CgenNode::get_attributes() {
+    std::vector<AttrP> *attributes = new std::vector<AttrP>();
+    for (int j = features->first(); features->more(j); j = features->next(j)) {
+        // get jth feature of this node
+	Feature feature_ptr = features->nth(j);
+	// check if it is an attribute by first trying to dynamic_cast it to attr_class
+	attr_class *attribute = dynamic_cast<attr_class *>(feature_ptr);
+	// if dynamic_cast is successful, then we know that it is indeed an attribute
+	// so we can access its 'init' expression variable
+	if(attribute)
+	    attributes->push_back(attribute);
+    }
+    return attributes;
+}
+
+bool CgenNode::is_initialized(AttrP attribute) {
+    no_expr_class *no_init_expr = dynamic_cast<no_expr_class *>(attribute->init);
+    if (cgen_debug) {
+	if (!no_init_expr) {
+	    cerr << "init expression found for attribute " << attribute->name << endl;
+	} else {
+	    cerr << "init expression not found for attribute " << attribute->name << endl;
+	}
+    }
+    if (!no_init_expr)
+	return true;
+    return false;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1392,6 +1467,7 @@ void int_const_class::code(ostream& s)
   //
   // Need to be sure we have an IntEntry *, not an arbitrary Symbol
   //
+  // this code prints out something like 'la $a0 int_const3', which is exactly what we need
   emit_load_int(ACC,inttable.lookup_string(token->get_string()),s);
 }
 

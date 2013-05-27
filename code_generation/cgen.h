@@ -64,6 +64,7 @@ private:
 
 // The object initialization assembly code is generated
    void code_object_inits();
+   void recurse_object_inits(List<CgenNode> *l, int counter);
 
 
 // The following creates an inheritance graph from
@@ -156,6 +157,8 @@ public:
    int code_init(ostream& str, int counter);
    void generate_init_head(ostream& str);
    void generate_init_end(ostream& str);
+   std::vector<AttrP> *get_attributes();
+   bool is_initialized(AttrP attribute);
 };
 
 class BoolConst 
