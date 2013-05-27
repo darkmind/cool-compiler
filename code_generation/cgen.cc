@@ -1090,9 +1090,11 @@ int CgenNode::code_init(ostream& str, int counter) {
     // emit code to jump to init method of the parent of this node
     if (name != Object) {
         CgenNodeP parentnd = get_parentnd();
-	char *parent_name = strdup(parentnd->name->get_string());
-        char *parent_init = strcat(parent_name, CLASSINIT_SUFFIX);
-        emit_jal (parent_init, str);
+	
+	// emit 'jal parent_init' to initialize the newly instantiated object
+        str << JAL;
+        emit_init_ref(parentnd->name, str);
+	str << endl;
     }
 
     int initial_counter = counter;
@@ -1483,17 +1485,17 @@ void bool_const_class::code(ostream& s)
 
 void new__class::code(ostream &s) {
     // emit 'la $a0 Helloworld_protObj' to load protObj into $a0
-    char *prot_obj = strdup(type_name->get_string());
-    prot_obj = strcat(prot_obj, PROTOBJ_SUFFIX);
-    emit_load_address(ACC, prot_obj, s);
+    s << LA << ACC << " ";
+    emit_protobj_ref(type_name, s);
+    s << endl;
 
     // emit 'jal Object.copy' to instantiate the protObj passed in $a0
     emit_jal ("Object.copy", s);
 
     // emit 'jal Helloworld_init' to initialize the newly instantiated object
-    char *name_init = strdup(type_name->get_string());
-    name_init = strcat(name_init, CLASSINIT_SUFFIX);
-    emit_jal (name_init, s);
+    s << JAL;
+    emit_init_ref(type_name, s);
+    s << endl;
 }
 
 void isvoid_class::code(ostream &s) {
