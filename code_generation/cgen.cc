@@ -116,7 +116,7 @@ static char *gc_collect_names[] =
 BoolConst falsebool(FALSE);
 BoolConst truebool(TRUE);
 
-//*********************************************************
+/*********************************************************
 //
 // Define method for code generation
 //
@@ -127,7 +127,7 @@ BoolConst truebool(TRUE);
 // That constructor performs all of the work of the code
 // generator.
 //
-//*********************************************************
+*********************************************************/
 
 void program_class::cgen(ostream &os) 
 {
@@ -873,6 +873,9 @@ void CgenClassTable::code()
 //                   - object initializer
 //                   - the class methods
 //                   - etc...
+
+  if (cgen_debug) cout << "coding object initialization" << endl;
+  code_object_inits();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -978,7 +981,7 @@ void CgenClassTable::code_dispatch_tables() {
 
 	//Iterate through the vector of methods
 	for (std::vector<method_dispatch>::iterator it = meth_list->begin(); it != meth_list->end(); ++it) {
-	    str << WORD << it->class_name << "." << it->method_name << endl;
+	    str << WORD << it->class_name << METHOD_SEP << it->method_name << endl;
 	}
     }
 }
@@ -992,6 +995,7 @@ void CgenClassTable::code_prototypes() {
     // iterate through all classes and emit code for all of them
     for (List<CgenNode> *l = nds; l; l = l->tl()) {
 	CgenNodeP nd = l->hd();
+
 	if (cgen_debug)
 	    cerr << "emitting prototype for " << nd->name << endl;
 
@@ -1027,6 +1031,58 @@ void CgenClassTable::code_prototypes() {
     }
 }
 
+/*
+ * Walks through our classes, and for each class,
+ * generates the assembly code used to initialize them
+ */
+void CgenClassTable::code_object_inits() {
+    for (List<CgenNode> *l = nds; l; l = l->tl()) {
+	CgenNodeP nd = l->hd();
+	if (cgen_debug)
+	    cerr << "emitting initialization for " << nd->name << endl;
+	nd->code_init(str);
+    }
+}
+
+/*
+ * Generates initialization code for a class. Returns the current value of the counter (attributes written)
+ */
+int CgenNode::code_init(ostream& str, int counter) {
+
+    str << name << CLASSINIT_SUFFIX << LABEL; //label
+    generate_init_head(str);
+
+    /* Tasks
+     * 1. If this isn't Object, call the init of its parent
+     * 2. If this is a basic class, then we're done. If it's not a basic class, then do the following:
+         a. First, load list of attributes.
+
+         b. Keep track of which attribute we are at (counter) so that we know which block of memory each attribute is at.
+	    Note that this counter is preserved between classes, so if class B inherits A, then if A has 5 attributes, then
+	    the counter starts at 5 for class B. I suggest that we modify this function so that we pass in an int for
+	    curr_counter.
+	 c. For each attribute, if there is an expression that is the initial value, then
+	    evaluate the expression into $a0, then stick it into the appropriate attribute slot. The code for this will be filled in later
+	    so don't do anything here, with two exceptions:
+
+	    i. If the expression is a string or int or bool, look it up in appropriate table, load into $a0, save into slot
+	    ii. If the expression is an ID, then it must be an attribute or inherited attribute. Look it up in the list of attributes,
+	        load into $a0, save into slot.
+
+		(actually I'm not sure if they're exceptions)
+
+	 d. I believe that the first attribute starts at 12 + $s0, so when you do SW, the offset
+	    should be 3 (DEFAULT_OBJFIELDS) + counter (counter is 0-indexed)
+
+	After all this is done, object initialization is done and we move onto code gen.
+
+     */
+
+    // TODO: EVERYTHING IN BETWEEN
+
+    generate_init_end(str);
+}
+
 // Three grossly inefficient functions for looking up shit in the various stringtables
 
 /*
@@ -1059,12 +1115,9 @@ int CgenClassTable::find_in_idtable(char * str) {
 */
 
 /*
- * STEPS
  * 1. Iterate through the inheritance graph
- * 2. If isn't a basic class, add it
- **** IDEA: What if we just fold the basic_prototypes into this function? This would actually just be
- * strictly better than the workaround we have 
- * 3. At the same time, populate the attributes and methods for each class into the attr_map and meth_map, respectively
+ * 2. Add every class to the map with an appropriate tag.
+ * 3. After tagging, populate the attributes and methods for each class into the attr_map and meth_map, respectively
  */
 void CgenClassTable::assign_class_tags() {
 
@@ -1223,6 +1276,50 @@ bool CgenClassTable::classes_contains_name(Symbol symbol) {
     }
     return false;
 }
+
+
+///////////////////////////////////////////////////////////////////////
+//
+// CgenNode methods
+//
+///////////////////////////////////////////////////////////////////////
+
+
+// Generates the assembly code used in the beginning of every object initialization
+void CgenNode::generate_init_head(ostream& str) {
+
+    // Move the stack pointer down
+    emit_addiu(SP, SP, -12, str);
+
+    // Store the frame pointer, self pointer, and return address
+    emit_store(FP, 3, SP, str);
+    emit_store(SELF, 2, SP, str);
+    emit_store(RA, 1, SP, str);
+
+    // ????
+    emit_addiu(FP, SP, 4, str);
+    emit_move(SELF, ACC, str);
+}
+
+
+// Generates the assembly code used in the end of every object initialization
+void CgenNode::generate_init_end(ostream& str) {
+
+    // ???????
+    emit_move(ACC, SELF, str);
+
+    // Recover the frame pointer, self pointer, and return address
+    emit_load(FP, 3, SP, str);
+    emit_load(SELF, 2, SP, str);
+    emit_load(RA, 1, SP, str);
+
+    // Move stack pointer back
+    emit_addiu(SP, SP, 12, str);
+
+    // return
+    emit_return(str);
+}
+
 //////////////////////////////////////////////////////////////////////
 // Holy fucking shit we didn't realize this thing existed.
 //////////////////////////////////////////////////////////////////////
@@ -1231,14 +1328,6 @@ CgenNodeP CgenClassTable::root()
    return probe(Object);
 }
 
-
-
-
-///////////////////////////////////////////////////////////////////////
-//
-// CgenNode methods
-//
-///////////////////////////////////////////////////////////////////////
 
 CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct) :
    class__class((const class__class &) *nd),

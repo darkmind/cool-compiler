@@ -18,6 +18,8 @@ class Main {
 class Helloworld inherits Main {
   myint:Int;
   myint2:Int <- 5;
+  myint3:Int <- myint2;
+  myint4:Int <- self.say();
   mystr:String;
   mystr2:String <- "hello";
   mybool:Bool;

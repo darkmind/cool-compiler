@@ -40,7 +40,6 @@ private:
    int intclasstag;
    int boolclasstag;
 
-
 // The following methods emit code for
 // constants and global declarations.
 
@@ -55,8 +54,17 @@ private:
    void recurse_class_names(List<CgenNode> *list);
 
    void code_dispatch_tables();
-
    void code_prototypes();
+
+//////////////////////////////////////////////////////////////////
+//
+// Following is used for actually generating assembly code!
+//
+//////////////////////////////////////////////////////////////////
+
+// The object initialization assembly code is generated
+   void code_object_inits();
+
 
 // The following creates an inheritance graph from
 // a list of classes.  The graph is implemented as
@@ -143,6 +151,11 @@ public:
    // Used for populating the method and attribute lists for each node
    void nd_populate_attr_list(std::vector<AttrP> *attr_list); 
    void nd_populate_meth_list(std::vector<method_dispatch> *meth_list);
+
+   // Used for generating the initialization assembly code
+   int code_init(ostream& str, int counter);
+   void generate_init_head(ostream& str);
+   void generate_init_end(ostream& str);
 };
 
 class BoolConst 
