@@ -867,6 +867,9 @@ void CgenClassTable::code()
 
   if (cgen_debug) cout << "coding object initialization" << endl;
   code_object_inits();
+
+  if (cgen_debug) cout << "coding methods" << endl;
+  code_methods();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1035,14 +1038,14 @@ void CgenClassTable::code_object_inits() {
 
 void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
     for(List<CgenNode> *l = list; l; l = l->tl()) {
-	CgenNodeP nd = l->hd();
+    	CgenNodeP nd = l->hd();
 
-	if (cgen_debug) {
-	    cerr << "emitting object init stuff for class " << nd->name << endl;
-        }
+    	if (cgen_debug) {
+  	    cerr << "emitting object init stuff for class " << nd->name << endl;
+      }
 
-	// Output all the code for the attributes of this node
-	int c = nd->code_init(str, counter);
+    	// Output all the code for the attributes of this node
+    	int c = nd->code_init(str, counter, this);
 
         // Get children of the current node
         List<CgenNode> *children = nd->get_children();
@@ -1054,10 +1057,10 @@ void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
 /*
  * Generates initialization code for a class. Returns the current value of the counter (attributes written)
  */
-int CgenNode::code_init(ostream& str, int counter) {
+int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) {
 
     str << name << CLASSINIT_SUFFIX << LABEL; //label
-    generate_init_head(str);
+    generate_disp_head(str);
 
     /* Tasks
      * 1. If this isn't Object, call the init of its parent -- DONE
@@ -1101,33 +1104,62 @@ int CgenNode::code_init(ostream& str, int counter) {
     // not a basic class so we need to get its initialized attributes and output them
     if (!basic()) {
 	// get initialized attributes of this class
-        std::vector<AttrP> *attributes = get_attributes();
+        std::vector<AttrP> *attributes = class_table->map_get_attr_list(name);
 	// for each initialized attribute, call the code() function on its init expression to render it to assembly
-	for (std::vector<AttrP>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
-	    AttrP attribute = *it;
-	    if (is_initialized(attribute)) {
-	        (*it)->init->code(str); // currently only codes the int_const, str_const and bool_consts
+    	for (std::vector<AttrP>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
+    	    AttrP attribute = *it;
+    	    if (is_initialized(attribute)) {
+		(*it)->init->code(str); // currently only codes the int_const, str_const and bool_consts
 		emit_store(ACC, counter, SELF, str);
-		
-		// for the gc - only run this if the gc is activated (need to put this check in)
-		if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
+    		
+      		// for the gc - only run this if the gc is activated (need to put this check in)
+      		if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
 		    if (cgen_debug) {
-		        cerr << "garbage collector is activated. assigning to gc.." << endl;
-		    }
+			cerr << "garbage collector is activated. assigning to gc.." << endl;
+      		    }
 		    emit_addiu(A1, SELF, counter*WORD_SIZE, str);
-		    emit_gc_assign(str);
+      		    emit_gc_assign(str);
 		}
-	    }
-	    counter++;
-	}
+            }
+    	    counter++;
+    	}
     }
 
-    generate_init_end(str);
+    emit_move(ACC, SELF, str);
+
+    generate_disp_end(str);
     if (cgen_debug) {
 	cerr << "Just finished emitting code for class " << name << "; started from offset " << initial_counter*4 << "; ended at offset " << counter*4 << endl;
     }
     return counter;
 }
+
+void CgenClassTable::code_methods() {
+    List<CgenNode> *l = nds;
+    while (l && (l->hd()->name != Object )) l = l->tl();
+
+    recurse_object_inits(l, DEFAULT_OBJFIELDS);
+}
+
+void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
+    for(List<CgenNode> *l = list; l; l = l->tl()) {
+    	CgenNodeP nd = l->hd();
+
+    	if (cgen_debug) {
+  	    cerr << "emitting object init stuff for class " << nd->name << endl;
+      }
+
+    	// Output all the code for the attributes of this node
+    	int c = nd->code_init(str, counter, this);
+
+        // Get children of the current node
+        List<CgenNode> *children = nd->get_children();
+
+        recurse_object_inits(children, c);
+    }
+}
+
+
 
 // Three grossly inefficient functions for looking up shit in the various stringtables
 
@@ -1332,7 +1364,7 @@ bool CgenClassTable::classes_contains_name(Symbol symbol) {
 
 
 // Generates the assembly code used in the beginning of every object initialization
-void CgenNode::generate_init_head(ostream& str) {
+void CgenNode::generate_disp_head(ostream& str) {
 
     // Move the stack pointer down
     emit_addiu(SP, SP, -12, str);
@@ -1348,10 +1380,9 @@ void CgenNode::generate_init_head(ostream& str) {
 }
 
 // Generates the assembly code used in the end of every object initialization
-void CgenNode::generate_init_end(ostream& str) {
+void CgenNode::generate_disp_end(ostream& str) {
 
     // ???????
-    emit_move(ACC, SELF, str);
 
     // Recover the frame pointer, self pointer, and return address
     emit_load(FP, 3, SP, str);
@@ -1365,6 +1396,7 @@ void CgenNode::generate_init_end(ostream& str) {
     emit_return(str);
 }
 
+/*
 std::vector<attr_class *> *CgenNode::get_attributes() {
     std::vector<AttrP> *attributes = new std::vector<AttrP>();
     for (int j = features->first(); features->more(j); j = features->next(j)) {
@@ -1379,6 +1411,7 @@ std::vector<attr_class *> *CgenNode::get_attributes() {
     }
     return attributes;
 }
+*/
 
 bool CgenNode::is_initialized(AttrP attribute) {
     no_expr_class *no_init_expr = dynamic_cast<no_expr_class *>(attribute->init);
