@@ -1060,7 +1060,7 @@ void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
 int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) {
 
     str << name << CLASSINIT_SUFFIX << LABEL; //label
-    generate_disp_head(str, 0);
+    generate_disp_head(str);
 
     /* Tasks
      * 1. If this isn't Object, call the init of its parent -- DONE
@@ -1104,7 +1104,7 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
     // not a basic class so we need to get its initialized attributes and output them
     if (!basic()) {
 	// get initialized attributes of this class
-        std::vector<AttrP> *attributes = class_table->map_get_attr_list(name);
+        std::vector<AttrP> *attributes = get_attributes();
 	// for each initialized attribute, call the code() function on its init expression to render it to assembly
     	for (std::vector<AttrP>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
     	    AttrP attribute = *it;
@@ -1127,7 +1127,7 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
 
     emit_move(ACC, SELF, str);
 
-    generate_disp_end(str, 0);
+    generate_disp_end(str);
     if (cgen_debug) {
 	cerr << "Just finished emitting code for class " << name << "; started from offset " << initial_counter*4 << "; ended at offset " << counter*4 << endl;
     }
@@ -1140,7 +1140,7 @@ void CgenClassTable::code_methods() {
     List<CgenNode> *l = nds;
     while (l && (l->hd()->name != Object )) l = l->tl();
 
-    recurse_object_inits(l, DEFAULT_OBJFIELDS);
+    recurse_methods(l, DEFAULT_OBJFIELDS);
 }
 
 void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
@@ -1366,10 +1366,10 @@ bool CgenClassTable::classes_contains_name(Symbol symbol) {
 
 
 // Generates the assembly code used in the beginning of every object initialization
-void CgenNode::generate_disp_head(ostream& str, int addn_registers) {
+void CgenNode::generate_disp_head(ostream& str) {
 
     // Move the stack pointer down
-    emit_addiu(SP, SP, WORD_SIZE * (DEFAULT_REG + addn_registers), str);
+    emit_addiu(SP, SP, WORD_SIZE * DEFAULT_REG, str);
 
     // Store the frame pointer, self pointer, and return address
     emit_store(FP, 3, SP, str);
@@ -1382,7 +1382,7 @@ void CgenNode::generate_disp_head(ostream& str, int addn_registers) {
 }
 
 // Generates the assembly code used in the end of every object initialization
-void CgenNode::generate_disp_end(ostream& str, int addn_registers) {
+void CgenNode::generate_disp_end(ostream& str) {
 
     // ???????
 
@@ -1392,13 +1392,12 @@ void CgenNode::generate_disp_end(ostream& str, int addn_registers) {
     emit_load(RA, 1, SP, str);
 
     // Move stack pointer back
-    emit_addiu(SP, SP, WORD_SIZE * (DEFAULT_REG + addn_registers), str);
+    emit_addiu(SP, SP, WORD_SIZE * DEFAULT_REG, str);
 
     // return
     emit_return(str);
 }
 
-/*
 std::vector<attr_class *> *CgenNode::get_attributes() {
     std::vector<AttrP> *attributes = new std::vector<AttrP>();
     for (int j = features->first(); features->more(j); j = features->next(j)) {
@@ -1413,7 +1412,6 @@ std::vector<attr_class *> *CgenNode::get_attributes() {
     }
     return attributes;
 }
-*/
 
 bool CgenNode::is_initialized(AttrP attribute) {
     no_expr_class *no_init_expr = dynamic_cast<no_expr_class *>(attribute->init);

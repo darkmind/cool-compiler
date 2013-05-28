@@ -49,25 +49,12 @@ private:
    void code_select_gc();
    void code_constants();
 
-// Following is used for handling the printing of class table
+// Following is used for handling the printing of global text
    void code_class_names();
    void recurse_class_names(List<CgenNode> *list);
 
-// Following is used for handling the printing of class_objTab
-   void code_object_table();
-   void recurse_object_table(List<CgenNode> *list);
-
    void code_dispatch_tables();
    void code_prototypes();
-
-
-// The object initialization assembly code is generated
-   void code_object_inits();
-   void recurse_object_inits(List<CgenNode> *l, int counter);
-
-// Methods are generated
-   void code_methods();
-   void recurse_methods(List<CgenNode> *l, int counter);
 
 //////////////////////////////////////////////////////////////////
 //
@@ -75,6 +62,9 @@ private:
 //
 //////////////////////////////////////////////////////////////////
 
+// The object initialization assembly code is generated
+   void code_object_inits();
+   void recurse_object_inits(List<CgenNode> *l, int counter);
 
 
 // The following creates an inheritance graph from
@@ -95,7 +85,9 @@ private:
 
 
 
-
+// Following is used for handling the printing of class_objTab
+   void code_object_table();
+   void recurse_object_table(List<CgenNode> *list);
 
 // Following is used for handling attributes/inherited attributes
    void populate_attr_map(List<CgenNode> *list);
@@ -162,18 +154,17 @@ public:
    void nd_populate_meth_list(std::vector<method_dispatch> *meth_list);
 
    // Used for generating the initialization assembly code
+
    int code_init(ostream& str, int counter, CgenClassTableP class_table);
    int code_dispatch(ostream& str, int counter, CgenClassTableP class_table);
 
    // Common code used in the head and end of every dispatch
-   void generate_disp_head(ostream& str, int addn_registers);
-   void generate_disp_end(ostream& str, int addn_registers);
+   void generate_disp_head(ostream& str);
+   void generate_disp_end(ostream& str);
 
-   // Code used to figure out how many registers are used in each expression/part of method
-   int registers_needed();
-  
+   std::vector<AttrP> *get_attributes();
+
    bool is_initialized(AttrP attribute);
-   // std::vector<AttrP> *get_attributes();
 };
 
 class BoolConst 
