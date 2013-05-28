@@ -166,8 +166,11 @@ public:
    int code_dispatch(ostream& str, int counter, CgenClassTableP class_table);
 
    // Common code used in the head and end of every dispatch
-   void generate_disp_head(ostream& str);
-   void generate_disp_end(ostream& str);
+   void generate_disp_head(ostream& str, int addn_registers);
+   void generate_disp_end(ostream& str, int addn_registers);
+
+   // Code used to figure out how many registers are used in each expression/part of method
+   int registers_needed();
   
    bool is_initialized(AttrP attribute);
    // std::vector<AttrP> *get_attributes();

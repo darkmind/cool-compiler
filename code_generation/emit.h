@@ -78,6 +78,8 @@
 #define FP   "$fp"		// Frame pointer 
 #define RA   "$ra"		// Return address 
 
+#define DEFAULT_REG 3 		// Number of slots the sp is pushed by default
+
 //
 // Opcodes
 //

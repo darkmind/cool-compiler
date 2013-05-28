@@ -1060,7 +1060,7 @@ void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
 int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) {
 
     str << name << CLASSINIT_SUFFIX << LABEL; //label
-    generate_disp_head(str);
+    generate_disp_head(str, 0);
 
     /* Tasks
      * 1. If this isn't Object, call the init of its parent -- DONE
@@ -1127,13 +1127,15 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
 
     emit_move(ACC, SELF, str);
 
-    generate_disp_end(str);
+    generate_disp_end(str, 0);
     if (cgen_debug) {
 	cerr << "Just finished emitting code for class " << name << "; started from offset " << initial_counter*4 << "; ended at offset " << counter*4 << endl;
     }
     return counter;
 }
 
+
+// TODO: finish these three functions for method dispatches
 void CgenClassTable::code_methods() {
     List<CgenNode> *l = nds;
     while (l && (l->hd()->name != Object )) l = l->tl();
@@ -1364,10 +1366,10 @@ bool CgenClassTable::classes_contains_name(Symbol symbol) {
 
 
 // Generates the assembly code used in the beginning of every object initialization
-void CgenNode::generate_disp_head(ostream& str) {
+void CgenNode::generate_disp_head(ostream& str, int addn_registers) {
 
     // Move the stack pointer down
-    emit_addiu(SP, SP, -12, str);
+    emit_addiu(SP, SP, WORD_SIZE * (DEFAULT_REG + addn_registers), str);
 
     // Store the frame pointer, self pointer, and return address
     emit_store(FP, 3, SP, str);
@@ -1380,7 +1382,7 @@ void CgenNode::generate_disp_head(ostream& str) {
 }
 
 // Generates the assembly code used in the end of every object initialization
-void CgenNode::generate_disp_end(ostream& str) {
+void CgenNode::generate_disp_end(ostream& str, int addn_registers) {
 
     // ???????
 
@@ -1390,7 +1392,7 @@ void CgenNode::generate_disp_end(ostream& str) {
     emit_load(RA, 1, SP, str);
 
     // Move stack pointer back
-    emit_addiu(SP, SP, 12, str);
+    emit_addiu(SP, SP, WORD_SIZE * (DEFAULT_REG + addn_registers), str);
 
     // return
     emit_return(str);
@@ -1484,6 +1486,29 @@ void let_class::code(ostream &s) {
 }
 
 void plus_class::code(ostream &s) {
+    // emit the code for the first expression
+    // the return value should be in $a0, and it should be a pointer to an int_constX
+    e1->code(s);
+    
+    // copy int value stored in int_constX into register $t1
+    emit_load(T1, DEFAULT_OBJFIELDS, ACC, s);
+
+    // emit the code for the second expression
+    // again, the return value will be in $a0, and it will be a pointer to an int_constY
+    e2->code(s);
+
+    // emit 'jal Object.copy' to instantiate a new copy of int_constY
+    // this newly instantiated copy of int_constY will contain the final summed value to be returned from this function
+    emit_jal ("Object.copy", s);
+
+    // copy int value stored in int_constY into register $t2
+    emit_load(T2, DEFAULT_OBJFIELDS, ACC, s);
+
+    // add the values stored in $t1 and $t2 and store the result in $t1
+    emit_add(T1, T1, T2, s);
+
+    // copy the summed value into the copy of int_constX that was made earlier
+    emit_store(T1, DEFAULT_OBJFIELDS, ACC, s);
 }
 
 void sub_class::code(ostream &s) {
@@ -1542,6 +1567,8 @@ void new__class::code(ostream &s) {
     s << JAL;
     emit_init_ref(type_name, s);
     s << endl;
+
+    // what if: init isn't supposed to load $s0 into $a0, but rather new__class is
 }
 
 void isvoid_class::code(ostream &s) {
