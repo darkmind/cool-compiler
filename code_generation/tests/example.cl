@@ -8,6 +8,10 @@ class Main {
   mc:Myclass <- (new Myclass);
   test:A <- (new B);
   hi:Myclass;
+  firstint:Int;
+  secondint:Int <- 6 + 3;
+  thirdint:Int <- (1 + 5) + 8;
+  --fourint:Int <- 1 + (5 + 8);
   main():Int {
     {
       hw.say();

@@ -1109,7 +1109,7 @@ int CgenNode::code_init(ostream& str, int counter) {
 	        (*it)->init->code(str); // currently only codes the int_const, str_const and bool_consts
 		emit_store(ACC, counter, SELF, str);
 		
-		// for the gc - only run this if the gc is activated (need to put this check in)
+		// for the gc - only run this if the gc is activated
 		if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
 		    if (cgen_debug) {
 		        cerr << "garbage collector is activated. assigning to gc.." << endl;
@@ -1451,6 +1451,29 @@ void let_class::code(ostream &s) {
 }
 
 void plus_class::code(ostream &s) {
+    // emit the code for the first expression
+    // the return value should be in $a0, and it should be a pointer to an int_constX
+    e1->code(s);
+    
+    // copy int value stored in int_constX into register $t1
+    emit_load(T1, DEFAULT_OBJFIELDS, ACC, s);
+
+    // emit the code for the second expression
+    // again, the return value will be in $a0, and it will be a pointer to an int_constY
+    e2->code(s);
+
+    // emit 'jal Object.copy' to instantiate a new copy of int_constY
+    // this newly instantiated copy of int_constY will contain the final summed value to be returned from this function
+    emit_jal ("Object.copy", s);
+
+    // copy int value stored in int_constY into register $t2
+    emit_load(T2, DEFAULT_OBJFIELDS, ACC, s);
+
+    // add the values stored in $t1 and $t2 and store the result in $t1
+    emit_add(T1, T1, T2, s);
+
+    // copy the summed value into the copy of int_constX that was made earlier
+    emit_store(T1, DEFAULT_OBJFIELDS, ACC, s);
 }
 
 void sub_class::code(ostream &s) {
@@ -1509,6 +1532,8 @@ void new__class::code(ostream &s) {
     s << JAL;
     emit_init_ref(type_name, s);
     s << endl;
+
+    // what if: init isn't supposed to load $s0 into $a0, but rather new__class is
 }
 
 void isvoid_class::code(ostream &s) {
