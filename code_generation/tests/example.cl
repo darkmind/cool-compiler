@@ -15,7 +15,7 @@ class Main {
   main():Int {
     {
       hw.say();
-      mc.hello();
+      hi.hello();
     }
   };
 };

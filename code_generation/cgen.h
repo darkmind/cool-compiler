@@ -9,6 +9,9 @@
 
 
 enum Basicness     {Basic, NotBasic};
+
+enum Memory	   {Stack, Heap};
+
 #define TRUE 1
 #define FALSE 0
 
@@ -27,6 +30,22 @@ typedef struct method_dispatch {
     MethP method_p;
     Symbol class_name;
 } method_dispatch;
+
+
+// Used for storing stuff in the environment
+
+class MemoryInfo {
+public:
+   int offset;
+   Memory mem_type;
+   MemoryInfo(int in_offset, Memory in_mem_type) {
+       offset = in_offset;
+       mem_type = in_mem_type;
+   }
+};
+
+
+
 
 ///////////////////////////////////////////
 
@@ -66,6 +85,10 @@ private:
    void code_object_inits();
    void recurse_object_inits(List<CgenNode> *l, int counter);
 
+// Method assembly code is generated
+   void code_methods();
+   void recurse_methods(List<CgenNode> *l);
+
 
 // The following creates an inheritance graph from
 // a list of classes.  The graph is implemented as
@@ -98,6 +121,7 @@ public:
    CgenClassTable(Classes, ostream& str);
    void code();
    CgenNodeP root();
+   SymbolTable<Symbol, MemoryInfo> *var_map;
 
 // Following is used for public functions to get/set class tags
    CgenNodeP map_get_class(Symbol symbol) { return (*class_tags)[symbol]; }
@@ -123,6 +147,7 @@ public:
    int find_in_inttable(char * str);
    int find_in_idtable(char * str);
  */
+
 };
 
 
@@ -144,7 +169,7 @@ public:
    void set_parentnd(CgenNodeP p);
    CgenNodeP get_parentnd() { return parentnd; }
 
-   int basic() { return (basic_status == Basic); }
+   bool basic() { return (basic_status == Basic); }
 
    void nd_set_tag(int intag) { tag = intag; }
    int nd_get_tag() { return tag; }
@@ -156,7 +181,12 @@ public:
    // Used for generating the initialization assembly code
 
    int code_init(ostream& str, int counter, CgenClassTableP class_table);
-   int code_dispatch(ostream& str, int counter, CgenClassTableP class_table);
+
+   // Used for generating the assembly code for methods
+   void code_all_methods(ostream& str, CgenClassTableP c);
+   void code_meth(ostream& str, CgenClassTableP c, method_dispatch meth);
+
+
 
    // Common code used in the head and end of every dispatch
    void generate_disp_head(ostream& str);

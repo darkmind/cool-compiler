@@ -619,11 +619,13 @@ CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
    intclasstag =    1337 /* Change to your Int class tag here */;
    boolclasstag =   1337 /* Change to your Bool class tag here */;
 
-   // Here we make the new maps for retrieving class nodes and attribute lists, respectively
+   // Here we make the new maps for retrieving class nodes and feature lists, respectively
    class_tags = new std::map<Symbol, CgenNodeP>();
    attr_map = new std::map<Symbol, std::vector<AttrP> *>();
    meth_map = new std::map<Symbol, std::vector<method_dispatch> *>();
-   // TODO: make a method_map
+
+   // Symbol table for storing offsets of variables in stack/heap memory
+   var_map = new SymbolTable<Symbol, MemoryInfo>();
 
    enterscope();
    if (cgen_debug) cout << "Building CgenClassTable" << endl;
@@ -1109,7 +1111,7 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
     	for (std::vector<AttrP>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
     	    AttrP attribute = *it;
     	    if (is_initialized(attribute)) {
-		(*it)->init->code(str); // currently only codes the int_const, str_const and bool_consts
+		(*it)->init->code(str, class_table); // currently only codes the int_const, str_const and bool_consts
 		emit_store(ACC, counter, SELF, str);
     		
       		// for the gc - only run this if the gc is activated (need to put this check in)
@@ -1134,31 +1136,85 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
     return counter;
 }
 
-
+//////////////////////////////////////////////////////////////
+//
+// Stack Machine Stuff
+//
+//////////////////////////////////////////////////////////////
 // TODO: finish these three functions for method dispatches
 void CgenClassTable::code_methods() {
     List<CgenNode> *l = nds;
     while (l && (l->hd()->name != Object )) l = l->tl();
 
-    recurse_methods(l, DEFAULT_OBJFIELDS);
+    recurse_methods(l);
 }
 
-void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
+void CgenClassTable::recurse_methods(List<CgenNode> *list) {
     for(List<CgenNode> *l = list; l; l = l->tl()) {
     	CgenNodeP nd = l->hd();
 
     	if (cgen_debug) {
-  	    cerr << "emitting object init stuff for class " << nd->name << endl;
-      }
+  	    cerr << "emitting methods for class " << nd->name << endl;
+        }
 
-    	// Output all the code for the attributes of this node
-    	int c = nd->code_init(str, counter, this);
+    	// Output all the code for the methods of this node
+	nd->code_all_methods(str, this);
 
         // Get children of the current node
         List<CgenNode> *children = nd->get_children();
 
-        recurse_object_inits(children, c);
+        recurse_methods(children);
     }
+}
+
+// Iterate through all the methods for a class, calling code_meth
+void CgenNode::code_all_methods(ostream& str, CgenClassTableP c) {
+
+    std::vector<method_dispatch> *methods = c->map_get_meth_list(name);
+    for (std::vector<method_dispatch>::iterator it = methods->begin(); it != methods->end(); ++it) {
+	CgenNodeP curr_class = c->map_get_class(it->class_name);
+	if (!curr_class->basic()) code_meth(str, c, *it);
+    }
+}
+
+// Generates the stack machine assembly code for a method
+void CgenNode::code_meth(ostream& str, CgenClassTableP c, method_dispatch meth) {
+
+    str << meth.class_name << METHOD_SEP << meth.method_name << LABEL; //label
+    generate_disp_head(str);
+
+    if (cgen_debug) cerr << "Currently emitting code for method" << meth.class_name << METHOD_SEP << meth.method_name << endl;
+
+    // Using our symbol table, we prepare to store the offsets of the class' attributes and the method's formals
+    SymbolTable<Symbol, MemoryInfo> *var_map = c->var_map;
+    var_map->enterscope();
+
+    std::vector<AttrP> *attr_list= c->map_get_attr_list(meth.class_name); // Get all attributes in the current class
+
+    // Iterate through all attributes, record their offset in the heap
+    int offset = DEFAULT_OBJFIELDS;
+    for (std::vector<AttrP>::iterator it = attr_list->begin(); it != attr_list->end(); ++it) {
+	if (cgen_debug) cerr << "Heap contains attribute " << (*it)->name << " at offset" << offset << endl;
+	var_map->addid((*it)->name, new MemoryInfo(offset, Heap));
+	offset++;
+    }
+
+    // TODO: Record the locations of formals in the stack
+    Formals formals = meth.method_p->formals;
+    offset = DEFAULT_OBJFIELDS + formals->len() - 1; //off by one error
+    for (int i = formals->first(); formals->more(i); i = formals->next(i)) {
+	Formal formal = formals->nth(i);
+	if (cgen_debug) cerr << "Stack contains var " << formal->get_name() << " at offset" << offset << endl;
+	var_map->addid(formal->get_name(), new MemoryInfo(offset, Stack));
+	offset--;
+    }
+
+    // Generate code for the expression
+    meth.method_p->expr->code(str, c);
+
+    if (cgen_debug) cerr << "asdf" << endl;
+
+    generate_disp_end(str);
 }
 
 
@@ -1369,7 +1425,7 @@ bool CgenClassTable::classes_contains_name(Symbol symbol) {
 void CgenNode::generate_disp_head(ostream& str) {
 
     // Move the stack pointer down
-    emit_addiu(SP, SP, WORD_SIZE * DEFAULT_REG, str);
+    emit_addiu(SP, SP, -WORD_SIZE * DEFAULT_REG, str);
 
     // Store the frame pointer, self pointer, and return address
     emit_store(FP, 3, SP, str);
@@ -1455,45 +1511,45 @@ CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct) :
 //
 //*****************************************************************
 
-void assign_class::code(ostream &s) {
+void assign_class::code(ostream &s, CgenClassTableP c) {
     // sample code: need to call 'jal _GenGC_Assign' 
     //sw $x 12($self)
     //addiu $a1 $self 12
     //jal _GenGC_Assign
 }
 
-void static_dispatch_class::code(ostream &s) {
+void static_dispatch_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void dispatch_class::code(ostream &s) {
+void dispatch_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void cond_class::code(ostream &s) {
+void cond_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void loop_class::code(ostream &s) {
+void loop_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void typcase_class::code(ostream &s) {
+void typcase_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void block_class::code(ostream &s) {
+void block_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void let_class::code(ostream &s) {
+void let_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void plus_class::code(ostream &s) {
+void plus_class::code(ostream &s, CgenClassTableP c) {
     // emit the code for the first expression
     // the return value should be in $a0, and it should be a pointer to an int_constX
-    e1->code(s);
+    e1->code(s, c);
     
     // copy int value stored in int_constX into register $t1
     emit_load(T1, DEFAULT_OBJFIELDS, ACC, s);
 
     // emit the code for the second expression
     // again, the return value will be in $a0, and it will be a pointer to an int_constY
-    e2->code(s);
+    e2->code(s, c);
 
     // emit 'jal Object.copy' to instantiate a new copy of int_constY
     // this newly instantiated copy of int_constY will contain the final summed value to be returned from this function
@@ -1509,31 +1565,31 @@ void plus_class::code(ostream &s) {
     emit_store(T1, DEFAULT_OBJFIELDS, ACC, s);
 }
 
-void sub_class::code(ostream &s) {
+void sub_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void mul_class::code(ostream &s) {
+void mul_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void divide_class::code(ostream &s) {
+void divide_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void neg_class::code(ostream &s) {
+void neg_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void lt_class::code(ostream &s) {
+void lt_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void eq_class::code(ostream &s) {
+void eq_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void leq_class::code(ostream &s) {
+void leq_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void comp_class::code(ostream &s) {
+void comp_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void int_const_class::code(ostream& s)  
+void int_const_class::code(ostream &s, CgenClassTableP c)  
 {
   //
   // Need to be sure we have an IntEntry *, not an arbitrary Symbol
@@ -1542,17 +1598,17 @@ void int_const_class::code(ostream& s)
     emit_load_int(ACC,inttable.lookup_string(token->get_string()),s);
 }
 
-void string_const_class::code(ostream& s)
+void string_const_class::code(ostream &s, CgenClassTableP c)
 {
     emit_load_string(ACC,stringtable.lookup_string(token->get_string()),s);
 }
 
-void bool_const_class::code(ostream& s)
+void bool_const_class::code(ostream &s, CgenClassTableP c)
 {
     emit_load_bool(ACC, BoolConst(val), s);
 }
 
-void new__class::code(ostream &s) {
+void new__class::code(ostream &s, CgenClassTableP c) {
     // emit 'la $a0 Helloworld_protObj' to load protObj into $a0
     s << LA << ACC << " ";
     emit_protobj_ref(type_name, s);
@@ -1569,13 +1625,13 @@ void new__class::code(ostream &s) {
     // what if: init isn't supposed to load $s0 into $a0, but rather new__class is
 }
 
-void isvoid_class::code(ostream &s) {
+void isvoid_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void no_expr_class::code(ostream &s) {
+void no_expr_class::code(ostream &s, CgenClassTableP c) {
 }
 
-void object_class::code(ostream &s) {
+void object_class::code(ostream &s, CgenClassTableP c) {
 }
 
 
