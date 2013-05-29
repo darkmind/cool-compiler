@@ -21,8 +21,9 @@ class Main {
 };
 
 class A {
-  a:Object <- 5;
-  b:IO2 <- (new IO2);
+  a:Object;
+  --b:IO2 <- (new IO2);
+  myself:A <- new SELF_TYPE;
 };
 
 class B inherits A {
@@ -60,8 +61,14 @@ class Helloworld inherits Main {
 };
 
 class Myclass {
+  a:Int;
+  b:Int;
+  c:Int <- 8;
   hello():Int {
-    1
+    {
+      a <- 5;
+      b <- c;
+    }
   };
 };
 
