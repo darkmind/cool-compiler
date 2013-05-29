@@ -190,7 +190,7 @@ public:
 
    // Common code used in the head and end of every dispatch
    void generate_disp_head(ostream& str);
-   void generate_disp_end(ostream& str);
+   void generate_disp_end(ostream& str, int args);
 
    std::vector<AttrP> *get_attributes();
 

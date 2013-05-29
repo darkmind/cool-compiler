@@ -1111,7 +1111,7 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
     	for (std::vector<AttrP>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
     	    AttrP attribute = *it;
     	    if (is_initialized(attribute)) {
-		(*it)->init->code(str, class_table); // currently only codes the int_const, str_const and bool_consts
+		(*it)->init->code(str, class_table); // Returns a pointer to the object that contains the created object
 		emit_store(ACC, counter, SELF, str);
     		
       		// for the gc - only run this if the gc is activated (need to put this check in)
@@ -1129,7 +1129,7 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
 
     emit_move(ACC, SELF, str);
 
-    generate_disp_end(str);
+    generate_disp_end(str, 0);
     if (cgen_debug) {
 	cerr << "Just finished emitting code for class " << name << "; started from offset " << initial_counter*4 << "; ended at offset " << counter*4 << endl;
     }
@@ -1209,12 +1209,13 @@ void CgenNode::code_meth(ostream& str, CgenClassTableP c, method_dispatch meth) 
 	offset--;
     }
 
+    if (cgen_debug) cerr << "generating code for body of method" << endl;
     // Generate code for the expression
     meth.method_p->expr->code(str, c);
 
     if (cgen_debug) cerr << "asdf" << endl;
 
-    generate_disp_end(str);
+    generate_disp_end(str, formals->len());
 }
 
 
@@ -1421,7 +1422,7 @@ bool CgenClassTable::classes_contains_name(Symbol symbol) {
 ///////////////////////////////////////////////////////////////////////
 
 
-// Generates the assembly code used in the beginning of every object initialization
+// Generates the assembly code used in the beginning of every method call
 void CgenNode::generate_disp_head(ostream& str) {
 
     // Move the stack pointer down
@@ -1437,8 +1438,8 @@ void CgenNode::generate_disp_head(ostream& str) {
     emit_move(SELF, ACC, str);
 }
 
-// Generates the assembly code used in the end of every object initialization
-void CgenNode::generate_disp_end(ostream& str) {
+// Generates the assembly code used in the end of every method call
+void CgenNode::generate_disp_end(ostream& str, int args) {
 
     // ???????
 
@@ -1447,8 +1448,8 @@ void CgenNode::generate_disp_end(ostream& str) {
     emit_load(SELF, 2, SP, str);
     emit_load(RA, 1, SP, str);
 
-    // Move stack pointer back
-    emit_addiu(SP, SP, WORD_SIZE * DEFAULT_REG, str);
+    // Move stack pointer back, but also shift it up by an additional number of words equal to the number of arguments
+    emit_addiu(SP, SP, WORD_SIZE * (DEFAULT_REG + args), str);
 
     // return
     emit_return(str);
@@ -1516,20 +1517,20 @@ void assign_class::code(ostream &s, CgenClassTableP c) {
     expr->code(s, c);
 
     // look up the name in the symbol table to get its position on the heap/stack
-    MemoryInfo info = c->var_map->lookup(name);
+    MemoryInfo *info = c->var_map->lookup(name);
     if (info) {
 	// copy from $a0 to the offset from FP
-	if (info.mem_type == STACK) {
-	    emit_store(ACC, info.offset, FP, s);
+	if (info->mem_type == Stack) {
+	    emit_store(ACC, info->offset, FP, s);
 	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
-                emit_addiu(A1, FP, info.offset*WORD_SIZE, s);
-                emit_gc_assign(ostream& s);
+                emit_addiu(A1, FP, info->offset*WORD_SIZE, s);
+                emit_gc_assign(s);
             }
 	} else {
-	    emit_store(ACC, info.offset, SELF, s);
+	    emit_store(ACC, info->offset, SELF, s);
 	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
-                emit_addiu(A1, SELF, info.offset*WORD_SIZE, s);
-                emit_gc_assign(ostream& s);
+                emit_addiu(A1, SELF, info->offset*WORD_SIZE, s);
+                emit_gc_assign(s);
             }
 	}
     }    
@@ -1551,7 +1552,11 @@ void typcase_class::code(ostream &s, CgenClassTableP c) {
 }
 
 void block_class::code(ostream &s, CgenClassTableP c) {
-
+    for (int i = body->first(); body->more(i); i = body->next(i)) {
+	Expression expr = body->nth(i);
+	if (cgen_debug) cerr << "Coding an expression in block " << endl;
+	expr->code(s, c);
+    }
 }
 
 void let_class::code(ostream &s, CgenClassTableP c) {
@@ -1561,35 +1566,161 @@ void plus_class::code(ostream &s, CgenClassTableP c) {
     // emit the code for the first expression
     // the return value should be in $a0, and it should be a pointer to an int_constX
     e1->code(s, c);
-    
-    // copy int value stored in int_constX into register $t1
-    emit_load(T1, DEFAULT_OBJFIELDS, ACC, s);
+
+    // emit 'jal Object.copy' to instantiate the protObj passed in $a0
+    emit_jal("Object.copy", s);
+
+    // push the return value (i.e. pointer to newly created object) of e1->code onto the top of the stack
+    emit_push(ACC, s);
 
     // emit the code for the second expression
-    // again, the return value will be in $a0, and it will be a pointer to an int_constY
     e2->code(s, c);
 
-    // emit 'jal Object.copy' to instantiate a new copy of int_constY
-    // this newly instantiated copy of int_constY will contain the final summed value to be returned from this function
-    emit_jal ("Object.copy", s);
+    // load the value of the int in e2 into $a0
+    emit_load(ACC, DEFAULT_OBJFIELDS, ACC, s);
 
-    // copy int value stored in int_constY into register $t2
-    emit_load(T2, DEFAULT_OBJFIELDS, ACC, s);
+    // copy recently pushed onto stack value into register $t1
+    emit_load(T1, 1, SP, s);
 
-    // add the values stored in $t1 and $t2 and store the result in $t1
-    emit_add(T1, T1, T2, s);
+    // load the value stored in the object pointed to by T1 (i.e. the newly instantiated object) into T1 to carry out addition
+    emit_load(T1, DEFAULT_OBJFIELDS, T1, s);
 
-    // copy the summed value into the copy of int_constX that was made earlier
-    emit_store(T1, DEFAULT_OBJFIELDS, ACC, s);
+    // add the values stored in $t1 (from eval of first expression) and $a0 (from eval of second expression) and store the result in $a0
+    emit_add(ACC, T1, ACC, s);
+
+    // copy recently pushed onto stack value (i.e. address of newly created object) into register $t1 again
+    emit_load(T1, 1, SP, s);
+
+    // store the result of the addition into the newly created object
+    // i.e. sw $a0 12($t1)
+    emit_store(ACC, DEFAULT_OBJFIELDS, T1, s);
+
+    // move the address of the newly created object into $a0 to be returned
+    emit_move(ACC, T1, s);
+     
+    // move the stack back up by WORD_SIZE to get rid of the first intermediary that was pushed onto it
+    emit_addiu(SP, SP, WORD_SIZE, s);
 }
 
 void sub_class::code(ostream &s, CgenClassTableP c) {
+    
+    // emit the code for the first expression
+    // the return value should be in $a0, and it should be a pointer to an int_constX
+    e1->code(s, c);
+
+    // emit 'jal Object.copy' to instantiate the protObj passed in $a0
+    emit_jal("Object.copy", s);
+
+    // push the return value (i.e. pointer to newly created object) of e1->code onto the top of the stack
+    emit_push(ACC, s);
+
+    // emit the code for the second expression
+    e2->code(s, c);
+
+    // load the value of the int in e2 into $a0
+    emit_load(ACC, DEFAULT_OBJFIELDS, ACC, s);
+
+    // copy recently pushed onto stack value into register $t1
+    emit_load(T1, 1, SP, s);
+
+    // load the value stored in the object pointed to by T1 (i.e. the newly instantiated object) into T1 to carry out addition
+    emit_load(T1, DEFAULT_OBJFIELDS, T1, s);
+
+    // add the values stored in $t1 (from eval of first expression) and $a0 (from eval of second expression) and store the result in $a0
+    emit_sub(ACC, T1, ACC, s);
+
+    // copy recently pushed onto stack value (i.e. address of newly created object) into register $t1 again
+    emit_load(T1, 1, SP, s);
+
+    // store the result of the addition into the newly created object
+    // i.e. sw $a0 12($t1)
+    emit_store(ACC, DEFAULT_OBJFIELDS, T1, s);
+
+    // move the address of the newly created object into $a0 to be returned
+    emit_move(ACC, T1, s);
+     
+    // move the stack back up by WORD_SIZE to get rid of the first intermediary that was pushed onto it
+    emit_addiu(SP, SP, WORD_SIZE, s);
 }
 
 void mul_class::code(ostream &s, CgenClassTableP c) {
+    // emit the code for the first expression
+    // the return value should be in $a0, and it should be a pointer to an int_constX
+    e1->code(s, c);
+
+    // emit 'jal Object.copy' to instantiate the protObj passed in $a0
+    emit_jal("Object.copy", s);
+
+    // push the return value (i.e. pointer to newly created object) of e1->code onto the top of the stack
+    emit_push(ACC, s);
+
+    // emit the code for the second expression
+    e2->code(s, c);
+
+    // load the value of the int in e2 into $a0
+    emit_load(ACC, DEFAULT_OBJFIELDS, ACC, s);
+
+    // copy recently pushed onto stack value into register $t1
+    emit_load(T1, 1, SP, s);
+
+    // load the value stored in the object pointed to by T1 (i.e. the newly instantiated object) into T1 to carry out addition
+    emit_load(T1, DEFAULT_OBJFIELDS, T1, s);
+
+    // add the values stored in $t1 (from eval of first expression) and $a0 (from eval of second expression) and store the result in $a0
+    emit_mul(ACC, T1, ACC, s);
+
+    // copy recently pushed onto stack value (i.e. address of newly created object) into register $t1 again
+    emit_load(T1, 1, SP, s);
+
+    // store the result of the addition into the newly created object
+    // i.e. sw $a0 12($t1)
+    emit_store(ACC, DEFAULT_OBJFIELDS, T1, s);
+
+    // move the address of the newly created object into $a0 to be returned
+    emit_move(ACC, T1, s);
+     
+    // move the stack back up by WORD_SIZE to get rid of the first intermediary that was pushed onto it
+    emit_addiu(SP, SP, WORD_SIZE, s);    
 }
 
 void divide_class::code(ostream &s, CgenClassTableP c) {
+    // emit the code for the first expression
+    // the return value should be in $a0, and it should be a pointer to an int_constX
+    e1->code(s, c);
+
+    // emit 'jal Object.copy' to instantiate the protObj passed in $a0
+    emit_jal("Object.copy", s);
+
+    // push the return value (i.e. pointer to newly created object) of e1->code onto the top of the stack
+    emit_push(ACC, s);
+
+    // emit the code for the second expression
+    e2->code(s, c);
+
+    // load the value of the int in e2 into $a0
+    emit_load(ACC, DEFAULT_OBJFIELDS, ACC, s);
+
+    // copy recently pushed onto stack value into register $t1
+    emit_load(T1, 1, SP, s);
+
+    // load the value stored in the object pointed to by T1 (i.e. the newly instantiated object) into T1 to carry out addition
+    emit_load(T1, DEFAULT_OBJFIELDS, T1, s);
+
+    // add the values stored in $t1 (from eval of first expression) and $a0 (from eval of second expression) and store the result in $a0
+    emit_div(ACC, T1, ACC, s);
+
+    // copy recently pushed onto stack value (i.e. address of newly created object) into register $t1 again
+    emit_load(T1, 1, SP, s);
+
+    // store the result of the addition into the newly created object
+    // i.e. sw $a0 12($t1)
+    emit_store(ACC, DEFAULT_OBJFIELDS, T1, s);
+
+    // move the address of the newly created object into $a0 to be returned
+    emit_move(ACC, T1, s);
+     
+    // move the stack back up by WORD_SIZE to get rid of the first intermediary that was pushed onto it
+    emit_addiu(SP, SP, WORD_SIZE, s);    
 }
 
 void neg_class::code(ostream &s, CgenClassTableP c) {
@@ -1653,7 +1784,23 @@ void no_expr_class::code(ostream &s, CgenClassTableP c) {
 }
 
 void object_class::code(ostream &s, CgenClassTableP c) {
-
+    MemoryInfo *info = c->var_map->lookup(name);
+    if (info) {
+	// copy from $a0 to the offset from FP
+	if (info->mem_type == Stack) {
+	    emit_load(ACC, info->offset, FP, s);
+	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
+                emit_addiu(A1, FP, info->offset*WORD_SIZE, s);
+                emit_gc_assign(s);
+            }
+	} else {
+	    emit_load(ACC, info->offset, SELF, s);
+	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
+                emit_addiu(A1, SELF, info->offset*WORD_SIZE, s);
+                emit_gc_assign(s);
+            }
+	}
+    }    
 }
 
 
