@@ -1605,7 +1605,7 @@ void plus_class::code(ostream &s, CgenClassTableP c) {
 void sub_class::code(ostream &s, CgenClassTableP c) {
     
     // emit the code for the first expression
-    // the return value should be in $a0, and it should be a pointer to an int_constX
+    // the return value should be in $a0, and it should be a pointer to an int object
     e1->code(s, c);
 
     // emit 'jal Object.copy' to instantiate the protObj passed in $a0
@@ -1645,7 +1645,7 @@ void sub_class::code(ostream &s, CgenClassTableP c) {
 
 void mul_class::code(ostream &s, CgenClassTableP c) {
     // emit the code for the first expression
-    // the return value should be in $a0, and it should be a pointer to an int_constX
+    // the return value should be in $a0, and it should be a pointer to an int object
     e1->code(s, c);
 
     // emit 'jal Object.copy' to instantiate the protObj passed in $a0
@@ -1685,7 +1685,7 @@ void mul_class::code(ostream &s, CgenClassTableP c) {
 
 void divide_class::code(ostream &s, CgenClassTableP c) {
     // emit the code for the first expression
-    // the return value should be in $a0, and it should be a pointer to an int_constX
+    // the return value should be in $a0, and it should be a pointer to an int object
     e1->code(s, c);
 
     // emit 'jal Object.copy' to instantiate the protObj passed in $a0
@@ -1724,6 +1724,22 @@ void divide_class::code(ostream &s, CgenClassTableP c) {
 }
 
 void neg_class::code(ostream &s, CgenClassTableP c) {
+    // emit the code for the expression
+    // the return value should be in $a0, and it should be a pointer to an int object
+    e1->code(s, c);
+
+    // emit 'jal Object.copy' to instantiate the protObj passed in $a0
+    emit_jal("Object.copy", s);
+
+    // Load the value of e1 into T1
+    emit_load(T1, DEFAULT_OBJFIELDS, ACC, s);
+
+    // Take the negative of T1
+    emit_neg(T1, T1, s);
+
+    // Replace the value of a0 with the negative value
+    emit_store(T1, DEFAULT_OBJFIELDS, ACC, s);
+
 }
 
 void lt_class::code(ostream &s, CgenClassTableP c) {
