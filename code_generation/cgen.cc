@@ -119,6 +119,8 @@ static char *gc_collect_names[] =
 BoolConst falsebool(FALSE);
 BoolConst truebool(TRUE);
 
+static int curr_label = 0;
+
 /*********************************************************
 //
 // Define method for code generation
@@ -1536,18 +1538,24 @@ void assign_class::code(ostream &s, CgenClassTableP c) {
     }    
 }
 
+// TODO
 void static_dispatch_class::code(ostream &s, CgenClassTableP c) {
+
 }
 
+// TODO
 void dispatch_class::code(ostream &s, CgenClassTableP c) {
 }
 
+// TODO
 void cond_class::code(ostream &s, CgenClassTableP c) {
 }
 
+// TODO
 void loop_class::code(ostream &s, CgenClassTableP c) {
 }
 
+// TODO
 void typcase_class::code(ostream &s, CgenClassTableP c) {
 }
 
@@ -1559,6 +1567,7 @@ void block_class::code(ostream &s, CgenClassTableP c) {
     }
 }
 
+// TODO
 void let_class::code(ostream &s, CgenClassTableP c) {
 }
 
@@ -1603,7 +1612,6 @@ void plus_class::code(ostream &s, CgenClassTableP c) {
 }
 
 void sub_class::code(ostream &s, CgenClassTableP c) {
-    
     // emit the code for the first expression
     // the return value should be in $a0, and it should be a pointer to an int object
     e1->code(s, c);
@@ -1742,16 +1750,20 @@ void neg_class::code(ostream &s, CgenClassTableP c) {
 
 }
 
+//TODO 
 void lt_class::code(ostream &s, CgenClassTableP c) {
     //
 }
 
+//TODO
 void eq_class::code(ostream &s, CgenClassTableP c) {
 }
 
+//TODO
 void leq_class::code(ostream &s, CgenClassTableP c) {
 }
 
+//TODO
 void comp_class::code(ostream &s, CgenClassTableP c) {
 }
 
@@ -1791,10 +1803,12 @@ void new__class::code(ostream &s, CgenClassTableP c) {
     // what if: init isn't supposed to load $s0 into $a0, but rather new__class is
 }
 
+//TODO
 void isvoid_class::code(ostream &s, CgenClassTableP c) {
 
 }
 
+//TODO
 void no_expr_class::code(ostream &s, CgenClassTableP c) {
 
 }
