@@ -1512,10 +1512,27 @@ CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct) :
 //*****************************************************************
 
 void assign_class::code(ostream &s, CgenClassTableP c) {
-    // sample code: need to call 'jal _GenGC_Assign' 
-    //sw $x 12($self)
-    //addiu $a1 $self 12
-    //jal _GenGC_Assign
+    // emit code for the expression that is being assigned
+    expr->code(s, c);
+
+    // look up the name in the symbol table to get its position on the heap/stack
+    MemoryInfo info = c->var_map->lookup(name);
+    if (info) {
+	// copy from $a0 to the offset from FP
+	if (info.mem_type == STACK) {
+	    emit_store(ACC, info.offset, FP, s);
+	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
+                emit_addiu(A1, FP, info.offset*WORD_SIZE, s);
+                emit_gc_assign(ostream& s);
+            }
+	} else {
+	    emit_store(ACC, info.offset, SELF, s);
+	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
+                emit_addiu(A1, SELF, info.offset*WORD_SIZE, s);
+                emit_gc_assign(ostream& s);
+            }
+	}
+    }    
 }
 
 void static_dispatch_class::code(ostream &s, CgenClassTableP c) {
@@ -1534,6 +1551,7 @@ void typcase_class::code(ostream &s, CgenClassTableP c) {
 }
 
 void block_class::code(ostream &s, CgenClassTableP c) {
+
 }
 
 void let_class::code(ostream &s, CgenClassTableP c) {
@@ -1578,6 +1596,7 @@ void neg_class::code(ostream &s, CgenClassTableP c) {
 }
 
 void lt_class::code(ostream &s, CgenClassTableP c) {
+    //
 }
 
 void eq_class::code(ostream &s, CgenClassTableP c) {
@@ -1626,12 +1645,15 @@ void new__class::code(ostream &s, CgenClassTableP c) {
 }
 
 void isvoid_class::code(ostream &s, CgenClassTableP c) {
+
 }
 
 void no_expr_class::code(ostream &s, CgenClassTableP c) {
+
 }
 
 void object_class::code(ostream &s, CgenClassTableP c) {
+
 }
 
 
