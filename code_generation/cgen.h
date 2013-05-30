@@ -114,9 +114,6 @@ private:
    void populate_attr_map(List<CgenNode> *list);
    std::map<Symbol, std::vector<AttrP> *> *attr_map;
    std::map<Symbol, std::vector<method_dispatch> *> *meth_map;
-
-// Following is used for storing the maximum tag of all the descendants of each class in the class hierarchy
-   std::map<Symbol, int> *max_tags_map;
    
 public:
    CgenClassTable(Classes, ostream& str);
@@ -148,6 +145,9 @@ public:
 // Used to get max tag of all descendants of every node in the inheritance hierarchy
    void populate_max_tags_map();
    int recurse_max_tags(CgenNodeP nd);
+
+// Following is used for storing the maximum tag of all the descendants of each class in the class hierarchy
+   std::map<Symbol, int> *max_tags_map;
 
 // Used to find strings in the string or int or id tables JK WE DON'T NEED THIS
 // TODO: DELETE
