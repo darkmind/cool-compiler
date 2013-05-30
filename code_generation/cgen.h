@@ -106,6 +106,8 @@ private:
    void recurse_class_tags(List<CgenNode> *list, int *curr_tag);
    std::map<Symbol, CgenNodeP> *class_tags; // Maps from the class name (Symbol) to the node of the class
 
+
+
 // Following is used for handling the printing of class_objTab
    void code_object_table();
    void recurse_object_table(List<CgenNode> *list);
@@ -114,7 +116,7 @@ private:
    void populate_attr_map(List<CgenNode> *list);
    std::map<Symbol, std::vector<AttrP> *> *attr_map;
    std::map<Symbol, std::vector<method_dispatch> *> *meth_map;
-   
+
 public:
    CgenClassTable(Classes, ostream& str);
    Symbol filename;
@@ -143,13 +145,6 @@ public:
    std::vector<method_dispatch> *map_get_meth_list(Symbol symbol) { return (*meth_map)[symbol]; }
    void add_meth_list(Symbol symbol, std::vector<method_dispatch> *meth_list) { (*meth_map)[symbol] = meth_list; }
    void populate_meth_map(List<CgenNode> *list, std::vector<method_dispatch> *parent_list);
-
-// Used to get max tag of all descendants of every node in the inheritance hierarchy
-   void populate_max_tags_map();
-   int recurse_max_tags(CgenNodeP nd);
-
-// Following is used for storing the maximum tag of all the descendants of each class in the class hierarchy
-   std::map<Symbol, int> *max_tags_map;
 
 // Used to find strings in the string or int or id tables JK WE DON'T NEED THIS
 // TODO: DELETE

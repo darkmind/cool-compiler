@@ -1200,7 +1200,7 @@ void CgenNode::code_all_methods(ostream& str, CgenClassTableP c) {
     std::vector<method_dispatch> *methods = c->map_get_meth_list(name);
     for (std::vector<method_dispatch>::iterator it = methods->begin(); it != methods->end(); ++it) {
 	CgenNodeP curr_class = c->map_get_class(it->class_name);
-	if (!curr_class->basic()) code_meth(str, c, *it);
+	if (!curr_class->basic() && (name == it->class_name)) code_meth(str, c, *it);
     }
 }
 
@@ -1675,6 +1675,9 @@ void static_dispatch_class::code(ostream &s, CgenClassTableP c) {
     // Call the method
     emit_jalr(T1, s);
 
+    // Reset the stack
+    emit_addiu(SP, SP, actual->len() * WORD_SIZE, s);
+    stack_offset += actual->len();
 }
 
 // TODO
@@ -1721,7 +1724,11 @@ void dispatch_class::code(ostream &s, CgenClassTableP c) {
     emit_load(T1, offset, T1, s);
 
     // Call the method
-    emit_jalr(T1, s);
+    emit_jalr(T1, s);    
+
+    // After dispatch, clear the formals by resetting the stack
+    emit_addiu(SP, SP, actual->len() * WORD_SIZE, s);
+    stack_offset += actual->len();
 }
 
 // TODO
@@ -1732,18 +1739,21 @@ void cond_class::code(ostream &s, CgenClassTableP c) {
 void loop_class::code(ostream &s, CgenClassTableP c) {
 }
 
+// Finds the branch with the highest class tag
 static int highest_case(Cases cases, int *cap, CgenClassTableP c) {
     int curr_cap = -1;
     int index = -1;
 
     for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
-	branch_class curr_branch = cases->nth(i);
-	int candidate = c->map_get_class(curr_branch->type_decl)->tag;
+	Case curr_branch = cases->nth(i);
+	int candidate = c->map_get_class(curr_branch->get_type())->tag;
 	if (candidate > curr_cap && candidate < *cap) {
 	    index = i;
 	    curr_cap = candidate;
 	}
     }
+
+    if (cgen_debug) cerr << "the highest class tag this time is " << curr_cap << " and its index is " << index << endl;
 
     *cap = curr_cap;
     return index;
@@ -1753,8 +1763,7 @@ static int highest_case(Cases cases, int *cap, CgenClassTableP c) {
 void typcase_class::code(ostream &s, CgenClassTableP c) {
 
     // Within the confines of this case expression, enter this scope
-    SymbolTable<Symbol, MemoryInfo> *var_map = class_table->var_map;
-    var_map->enterscope();
+    SymbolTable<Symbol, MemoryInfo> *var_map = c->var_map;
 
     // Save the current label as the "success" label
     int success = curr_label;
@@ -1787,45 +1796,51 @@ void typcase_class::code(ostream &s, CgenClassTableP c) {
     // Otherwise, proceed with the next tag.
     int cap = c->num_classes() + 1;
     int index = -1;
-    while ((index = highest_case(cases, &cap, c)) > 0) {
-	branch_class curr_branch = cases->nth(index);
-	int min_tag = c->map_get_class(curr_branch->type_decl)->tag;
-	int max_tag = (*(c->max_tags_map))[curr_branch->type_decl];
-	emit_blt(T2, min_tag, curr_label, s)
-	emit_bgt(T2, max_tag, curr_label, s)
+    while ((index = highest_case(cases, &cap, c)) >= 0) {
+
+	// Need to enter/exit scope once per branch
+	var_map->enterscope();
+	Case curr_branch = cases->nth(index);
+	int min_tag = c->map_get_class(curr_branch->get_type())->tag;
+	int max_tag = (*(c->max_tags_map))[curr_branch->get_type()];
+	emit_blti(T2, min_tag, curr_label, s);
+	emit_bgti(T2, max_tag, curr_label, s);
 
 	// If the tag of the class of the current branch is indeed an ancestor of the expression,
 	// then we save the expression as the current branch symbol in the stack, then evaluate
-	var_map->addid(curr_branch->name, new MemoryInfo(stack_offset, Stack));
+	var_map->addid(curr_branch->get_name(), new MemoryInfo(stack_offset, Stack));
 	emit_push(ACC, s);
 	stack_offset--;
 
-	curr_branch->expr->code(s, c);
+	if (cgen_debug) cout << stack_offset << " is the current offset in the stack after pushing a branch with expression " << curr_branch->get_name() << endl;
+
+	curr_branch->get_expr()->code(s, c);
 
 	// Fix the stack
         emit_addiu(SP, SP, WORD_SIZE, s);
 	stack_offset++;
+	if (cgen_debug) cout << stack_offset << " is the current offset in the stack after popping a branch" << endl;
 
 	// Go to success!
 	emit_branch(success, s);
 
 	emit_label_def(curr_label, s);
 	curr_label++;
+	var_map->exitscope();
     }
 
     // The last label is the failure label, no branches were able to match.
-    emit_jal("_case_abort")
+    emit_jal("_case_abort", s);
 
     emit_label_def(success, s);
     // Exit scope
-    var_map->exitscope();
 
 }
 
 void block_class::code(ostream &s, CgenClassTableP c) {
     for (int i = body->first(); body->more(i); i = body->next(i)) {
 	Expression expr = body->nth(i);
-	if (cgen_debug) cerr << "Coding an expression in block " << endl;
+	// if (cgen_debug) cerr << "Coding an expression in block " << endl;
 	expr->code(s, c);
     }
 }
@@ -1866,12 +1881,14 @@ void plus_class::code(ostream &s, CgenClassTableP c) {
     emit_addiu(SP, SP, WORD_SIZE, s);
     stack_offset++;
 
+
     // store the result of the addition into the newly created object i.e. sw $a0 12($t1)
     emit_store(ACC, DEFAULT_OBJFIELDS, T1, s);
 
     // move the address of the newly created object into $a0 to be returned
     emit_move(ACC, T1, s);
      
+    if (cgen_debug) cerr << "after addition we have offset at " << stack_offset << endl;
 }
 
 void sub_class::code(ostream &s, CgenClassTableP c) {
@@ -2120,10 +2137,12 @@ void object_class::code(ostream &s, CgenClassTableP c) {
     
     // Look up the name in our environment
     MemoryInfo *info = c->var_map->lookup(name);
+    /* 
     if (cgen_debug) {
 	cerr << "currently evaluating the identifier: " << name << endl;
 	cerr << "node result found in address" << info << endl;
     }
+    */
 
     // If we ever look for self, just load SELF into $a0
     if (name == self) {

@@ -4,12 +4,24 @@ class Main {
     c : GG;
     int1 : Int;
     main() : Object {
-	case 5 of
-	  a : Int => 5 + a + int1;
-	  b : B => 4;
-	  c : FF => 3;
-	esac
-    } ;
+	{
+	    (new IO).out_string("starting the case");
+	    case 5 of
+	      a : Int => { 
+		  (new IO).out_string("case a");
+		  1;
+	      };
+	      b : B => {
+		  (new IO).out_string("case b");
+		  2;
+	      };
+	      c : FF => {
+		  (new IO).out_string("case ff");
+		  3;
+	      };
+	    esac;
+	}
+    };
 };
 
 class FF {
