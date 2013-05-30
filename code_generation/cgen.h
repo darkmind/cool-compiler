@@ -124,6 +124,8 @@ public:
    CgenNodeP root();
    Symbol curr_class;
 
+   int num_classes() { return class_tags->size(); }
+
    // Symbol table for all the variables
    SymbolTable<Symbol, MemoryInfo> *var_map;
 

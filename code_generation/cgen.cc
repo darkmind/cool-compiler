@@ -122,6 +122,9 @@ BoolConst truebool(TRUE);
 // curr_label is used for indexing all of our labels
 static int curr_label = 0;
 
+// we keep track of the current offset with respect to fp for every new stack variable
+static int stack_offset = -1;
+
 
 /*********************************************************
 //
@@ -1068,6 +1071,9 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
     str << name << CLASSINIT_SUFFIX << LABEL; //label
     generate_disp_head(str);
 
+    if (cgen_debug) cerr << "resetting the stack offset counter to -1 from: " << stack_offset << endl;
+    stack_offset = -1;
+
     /* Tasks
      * 1. If this isn't Object, call the init of its parent -- DONE
      * 2. If this is a basic class, then we're done. If it's not a basic class, then do the following:
@@ -1203,6 +1209,9 @@ void CgenNode::code_meth(ostream& str, CgenClassTableP c, method_dispatch meth) 
 
     str << meth.class_name << METHOD_SEP << meth.method_name << LABEL; //label
     generate_disp_head(str);
+
+    if (cgen_debug) cerr << "resetting the stack offset counter to -1 from: " << stack_offset << endl;
+    stack_offset = -1;
 
     if (cgen_debug) cerr << "Currently emitting code for method" << meth.class_name << METHOD_SEP << meth.method_name << endl;
 
@@ -1585,6 +1594,7 @@ void static_dispatch_class::code(ostream &s, CgenClassTableP c) {
 
 	// push onto stack
 	emit_push(ACC, s);
+	stack_offset--;
     }
     
     // evaluate the expression that the method is being called on
@@ -1634,6 +1644,7 @@ void dispatch_class::code(ostream &s, CgenClassTableP c) {
 
 	// push onto stack
 	emit_push(ACC, s);
+	stack_offset--;
     }
     
     // evaluate the expression that the method is being called on
@@ -1677,8 +1688,94 @@ void cond_class::code(ostream &s, CgenClassTableP c) {
 void loop_class::code(ostream &s, CgenClassTableP c) {
 }
 
+static int highest_case(Cases cases, int *cap, CgenClassTableP c) {
+    int curr_cap = -1;
+    int index = -1;
+
+    for (int i = cases->first(); cases->more(i); i = cases->next(i)) {
+	branch_class curr_branch = cases->nth(i);
+	int candidate = c->map_get_class(curr_branch->type_decl)->tag;
+	if (candidate > curr_cap && candidate < *cap) {
+	    index = i;
+	    curr_cap = candidate;
+	}
+    }
+
+    *cap = curr_cap;
+    return index;
+}
+
 // TODO
 void typcase_class::code(ostream &s, CgenClassTableP c) {
+
+    // Within the confines of this case expression, enter this scope
+    SymbolTable<Symbol, MemoryInfo> *var_map = class_table->var_map;
+    var_map->enterscope();
+
+    // Save the current label as the "success" label
+    int success = curr_label;
+    curr_label++;
+
+    // Evaluate our expr
+    expr->code(s, c);
+
+    // check if the expression evaluated to something valid
+    emit_bne(ACC, ZERO, curr_label, s);
+
+    // if not valid expression, emit code to return file name and line number at which error was found
+    emit_load_address(ACC, "str_const0", s); // TODO: check if str_const0 OK
+
+    // Load the line number
+    emit_load_imm(T1, get_line_number(), s);
+
+    // Dispatch abort
+    emit_jal("_case_abort2", s);
+
+    // Initiate the loop through the branches here
+    emit_label_def(curr_label, s);
+    curr_label++;
+
+    // Load the class tag of the expr into T2
+    emit_load(T2, 0, ACC, s);
+
+    // Set the current highest class tag too high. At every iteration, get the highest class tag that hasn't already been chosen.
+    // If it exists, check T2 against this label and its highest descendent. If it is a parent, do the assignment and evaluation.
+    // Otherwise, proceed with the next tag.
+    int cap = c->num_classes() + 1;
+    int index = -1;
+    while ((index = highest_case(cases, &cap, c)) > 0) {
+	branch_class curr_branch = cases->nth(index);
+	int min_tag = c->map_get_class(curr_branch->type_decl)->tag;
+	int max_tag = (*(c->max_tags_map))[curr_branch->type_decl];
+	emit_blt(T2, min_tag, curr_label, s)
+	emit_bgt(T2, max_tag, curr_label, s)
+
+	// If the tag of the class of the current branch is indeed an ancestor of the expression,
+	// then we save the expression as the current branch symbol in the stack, then evaluate
+	var_map->addid(curr_branch->name, new MemoryInfo(stack_offset, Stack));
+	emit_push(ACC, s);
+	stack_offset--;
+
+	curr_branch->expr->code(s, c);
+
+	// Fix the stack
+        emit_addiu(SP, SP, WORD_SIZE, s);
+	stack_offset++;
+
+	// Go to success!
+	emit_branch(success, s);
+
+	emit_label_def(curr_label, s);
+	curr_label++;
+    }
+
+    // The last label is the failure label, no branches were able to match.
+    emit_jal("_case_abort")
+
+    emit_label_def(success, s);
+    // Exit scope
+    var_map->exitscope();
+
 }
 
 void block_class::code(ostream &s, CgenClassTableP c) {
@@ -1703,6 +1800,7 @@ void plus_class::code(ostream &s, CgenClassTableP c) {
 
     // push the return value (i.e. pointer to newly created object) of e1->code onto the top of the stack
     emit_push(ACC, s);
+    stack_offset--;
 
     // emit the code for the second expression
     e2->code(s, c);
@@ -1722,6 +1820,7 @@ void plus_class::code(ostream &s, CgenClassTableP c) {
     // pop the pushed value into register $t1 again and fix the stack
     emit_load(T1, 1, SP, s);
     emit_addiu(SP, SP, WORD_SIZE, s);
+    stack_offset++;
 
     // store the result of the addition into the newly created object i.e. sw $a0 12($t1)
     emit_store(ACC, DEFAULT_OBJFIELDS, T1, s);
@@ -1741,6 +1840,7 @@ void sub_class::code(ostream &s, CgenClassTableP c) {
 
     // push the return value (i.e. pointer to newly created object) of e1->code onto the top of the stack
     emit_push(ACC, s);
+    stack_offset--;
 
     // emit the code for the second expression
     e2->code(s, c);
@@ -1769,6 +1869,7 @@ void sub_class::code(ostream &s, CgenClassTableP c) {
      
     // move the stack back up by WORD_SIZE to get rid of the first intermediary that was pushed onto it
     emit_addiu(SP, SP, WORD_SIZE, s);
+    stack_offset++;
 }
 
 void mul_class::code(ostream &s, CgenClassTableP c) {
@@ -1781,6 +1882,7 @@ void mul_class::code(ostream &s, CgenClassTableP c) {
 
     // push the return value (i.e. pointer to newly created object) of e1->code onto the top of the stack
     emit_push(ACC, s);
+    stack_offset--;
 
     // emit the code for the second expression
     e2->code(s, c);
@@ -1808,7 +1910,8 @@ void mul_class::code(ostream &s, CgenClassTableP c) {
     emit_move(ACC, T1, s);
      
     // move the stack back up by WORD_SIZE to get rid of the first intermediary that was pushed onto it
-    emit_addiu(SP, SP, WORD_SIZE, s);    
+    emit_addiu(SP, SP, WORD_SIZE, s);
+    stack_offset++;
 }
 
 void divide_class::code(ostream &s, CgenClassTableP c) {
@@ -1821,6 +1924,7 @@ void divide_class::code(ostream &s, CgenClassTableP c) {
 
     // push the return value (i.e. pointer to newly created object) of e1->code onto the top of the stack
     emit_push(ACC, s);
+    stack_offset--;
 
     // emit the code for the second expression
     e2->code(s, c);
@@ -1848,7 +1952,8 @@ void divide_class::code(ostream &s, CgenClassTableP c) {
     emit_move(ACC, T1, s);
      
     // move the stack back up by WORD_SIZE to get rid of the first intermediary that was pushed onto it
-    emit_addiu(SP, SP, WORD_SIZE, s);    
+    emit_addiu(SP, SP, WORD_SIZE, s);
+    stack_offset++;
 }
 
 void neg_class::code(ostream &s, CgenClassTableP c) {
@@ -1924,6 +2029,7 @@ void new__class::code(ostream &s, CgenClassTableP c) {
 
 	// Push T1 (pointer to prototype object) onto the stack
 	emit_push(T1, s);
+	stack_offset--;
 
 	// Load the pointer to the prototype object into ACC
 	emit_load(ACC, 0, T1, s);
@@ -1934,6 +2040,7 @@ void new__class::code(ostream &s, CgenClassTableP c) {
 	// Pop the stack (pointer to prototype) to T1, then offset by 4 to get the init method
 	emit_load(T1, 1, SP, s);
 	emit_addiu(SP, SP, WORD_SIZE, s);
+	stack_offset++;
 
 	emit_load(T1, 1, T1, s);
 
