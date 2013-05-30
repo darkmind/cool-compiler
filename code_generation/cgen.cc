@@ -1675,9 +1675,9 @@ void static_dispatch_class::code(ostream &s, CgenClassTableP c) {
     // Call the method
     emit_jalr(T1, s);
 
-    // Reset the stack
-    emit_addiu(SP, SP, actual->len() * WORD_SIZE, s);
-    stack_offset += actual->len();
+    // Reset the stack JUST KIDDING WE DID THIS ALREADY
+    // emit_addiu(SP, SP, actual->len() * WORD_SIZE, s);
+    stack_offset += actual->len(); // still need to reset stack_offset though
 }
 
 // TODO
@@ -1726,8 +1726,8 @@ void dispatch_class::code(ostream &s, CgenClassTableP c) {
     // Call the method
     emit_jalr(T1, s);    
 
-    // After dispatch, clear the formals by resetting the stack
-    emit_addiu(SP, SP, actual->len() * WORD_SIZE, s);
+    // After dispatch, clear the formals by resetting the stack CHECK ABOVE COMMENT, YOU DUMBASS YUSHI
+    // emit_addiu(SP, SP, actual->len() * WORD_SIZE, s);
     stack_offset += actual->len();
 }
 
@@ -1803,8 +1803,10 @@ void typcase_class::code(ostream &s, CgenClassTableP c) {
 	Case curr_branch = cases->nth(index);
 	int min_tag = c->map_get_class(curr_branch->get_type())->tag;
 	int max_tag = (*(c->max_tags_map))[curr_branch->get_type()];
-	emit_blti(T2, min_tag, curr_label, s);
-	emit_bgti(T2, max_tag, curr_label, s);
+	int next_label = curr_label;
+	curr_label++;
+	emit_blti(T2, min_tag, next_label, s);
+	emit_bgti(T2, max_tag, next_label, s);
 
 	// If the tag of the class of the current branch is indeed an ancestor of the expression,
 	// then we save the expression as the current branch symbol in the stack, then evaluate
@@ -1824,8 +1826,7 @@ void typcase_class::code(ostream &s, CgenClassTableP c) {
 	// Go to success!
 	emit_branch(success, s);
 
-	emit_label_def(curr_label, s);
-	curr_label++;
+	emit_label_def(next_label, s);
 	var_map->exitscope();
     }
 

@@ -20,6 +20,7 @@ class Main {
 		  3;
 	      };
 	    esac;
+	    (new IO).out_string("finished the case");
 	}
     };
 };
