@@ -146,6 +146,14 @@ public:
    void add_meth_list(Symbol symbol, std::vector<method_dispatch> *meth_list) { (*meth_map)[symbol] = meth_list; }
    void populate_meth_map(List<CgenNode> *list, std::vector<method_dispatch> *parent_list);
 
+// Used to get max tag of all descendants of every node
+   void populate_max_tags_map();
+   int recurse_max_tags(CgenNodeP nd);
+
+// Used to store maximum tags
+   std::map<Symbol, int> *max_tags_map;
+
+
 // Used to find strings in the string or int or id tables JK WE DON'T NEED THIS
 // TODO: DELETE
 /*
