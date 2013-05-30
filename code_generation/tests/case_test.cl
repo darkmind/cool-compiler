@@ -44,3 +44,27 @@ class E inherits B {
 class F inherits E {
     f : Int;
 };
+
+class J inherits C {
+    j : Int;
+};
+
+class K inherits B {
+    k : Int;
+};
+
+class L inherits A {
+    l : Int;
+};
+
+class N inherits L {
+    n : Int;
+};
+
+class M inherits A {
+    m : Int;
+};
+
+class P inherits Main {
+    p : Int;
+};

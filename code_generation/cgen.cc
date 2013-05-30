@@ -627,6 +627,9 @@ CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
    class_tags = new std::map<Symbol, CgenNodeP>();
    attr_map = new std::map<Symbol, std::vector<AttrP> *>();
    meth_map = new std::map<Symbol, std::vector<method_dispatch> *>();
+   
+   // Here we make a map to hold the maximum tag of the descendants of all the classes in the inheritance hierarchy
+   max_tags_map = new std::map<Symbol, int>();
 
    // Symbol table for storing offsets of variables in stack/heap memory
    var_map = new SymbolTable<Symbol, MemoryInfo>();
@@ -830,6 +833,9 @@ void CgenClassTable::code()
   if (cgen_debug) cout << "assigning class tags" << endl;
   assign_class_tags();
 
+  if (cgen_debug) cout << "populating max tags map" << endl;
+  populate_max_tags_map();
+
   stringclasstag = map_get_class(Str)->nd_get_tag();
   boolclasstag = map_get_class(Bool)->nd_get_tag();
   intclasstag = map_get_class(Int)->nd_get_tag();
@@ -844,12 +850,6 @@ void CgenClassTable::code()
 
   if (cgen_debug) cout << "coding constants" << endl;
   code_constants();
-
-//                 Add your code to emit
-//                   - prototype objects
-//                   - class_nameTab
-//                   - dispatch tables
-//
 
   if (cgen_debug) cout << "coding class names" << endl;
   code_class_names();
@@ -1424,6 +1424,50 @@ void CgenNode::nd_populate_meth_list(std::vector<method_dispatch> *meth_list) {
     }
 }
 
+// for each class in the class hierarchy, compute the maximum tag of all its children
+void CgenClassTable::populate_max_tags_map() {
+    if (cgen_debug) {
+        cerr << "computing max tag descendant of each class in the class hierarchy" << endl;
+    }
+
+    // Find the Object CgenNodeP (in list form)
+    List<CgenNode> *l = nds;
+    while (l && (l->hd()->name != Object )) l = l->tl();
+
+    recurse_max_tags(l->hd());
+}
+
+int CgenClassTable::recurse_max_tags(CgenNodeP nd) {
+    // Get children of the current node
+    List<CgenNode> *children = nd->get_children();
+
+    // if no children of this node, then the max tag is its own tag
+    if (list_length<CgenNode>(children) == 0) {
+	(*max_tags_map)[nd->name] = nd->tag;
+	if (cgen_debug) {
+	    cerr << "maximum tag of children of node " << nd->name << ": " << nd->tag << endl;
+        }
+	return nd->tag;
+    }
+	
+    // This holds the maximum tag of all descendants of the current node
+    int max_tag = 0;
+	
+    for(List<CgenNode> *c = children; c; c = c->tl()) {
+	int nd_max = recurse_max_tags(c->hd());
+	if (nd_max > max_tag)
+	    max_tag = nd_max;
+    }
+
+    // store the max_tag in the hashmap with key as the current node
+    (*max_tags_map)[nd->name] = max_tag;
+
+    if (cgen_debug) {
+	cerr << "maximum tag of children of node " << nd->name << ": " << max_tag << endl;
+    }
+
+    return max_tag;
+}
 
 // Since apparently the symbols from different tables don't compare very well, we do this workaround
 bool CgenClassTable::classes_contains_name(Symbol symbol) {
