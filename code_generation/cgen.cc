@@ -119,7 +119,9 @@ static char *gc_collect_names[] =
 BoolConst falsebool(FALSE);
 BoolConst truebool(TRUE);
 
+// curr_label is used for indexing all of our labels
 static int curr_label = 0;
+
 
 /*********************************************************
 //
@@ -1107,8 +1109,22 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
     int initial_counter = counter;
     // not a basic class so we need to get its initialized attributes and output them
     if (!basic()) {
-	// get initialized attributes of this class
+	// get attributes of this class
         std::vector<AttrP> *attributes = get_attributes();
+
+	// we first add all the attributes of this class to our symbol table
+        SymbolTable<Symbol, MemoryInfo> *var_map = class_table->var_map;
+        var_map->enterscope();
+
+	// Add all the attributes to the current scope, in the heap memory, at their offsets
+    	for (std::vector<AttrP>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
+    	    AttrP attribute = *it;
+	    var_map->addid((*it)->name, new MemoryInfo(counter, Heap));
+	    counter++;
+	}
+
+	// reset counter
+	counter = initial_counter;
 	// for each initialized attribute, call the code() function on its init expression to render it to assembly
     	for (std::vector<AttrP>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
     	    AttrP attribute = *it;
@@ -1127,6 +1143,8 @@ int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) 
             }
     	    counter++;
     	}
+        var_map->exitscope();
+
     }
 
     emit_move(ACC, SELF, str);
@@ -1171,7 +1189,8 @@ void CgenClassTable::recurse_methods(List<CgenNode> *list) {
 
 // Iterate through all the methods for a class, calling code_meth
 void CgenNode::code_all_methods(ostream& str, CgenClassTableP c) {
-
+    c->curr_class = name;
+    
     std::vector<method_dispatch> *methods = c->map_get_meth_list(name);
     for (std::vector<method_dispatch>::iterator it = methods->begin(); it != methods->end(); ++it) {
 	CgenNodeP curr_class = c->map_get_class(it->class_name);
@@ -1214,9 +1233,7 @@ void CgenNode::code_meth(ostream& str, CgenClassTableP c, method_dispatch meth) 
     if (cgen_debug) cerr << "generating code for body of method" << endl;
     // Generate code for the expression
     meth.method_p->expr->code(str, c);
-
-    if (cgen_debug) cerr << "asdf" << endl;
-
+    var_map->exitscope();
     generate_disp_end(str, formals->len());
 }
 
@@ -1542,13 +1559,114 @@ void assign_class::code(ostream &s, CgenClassTableP c) {
     }    
 }
 
+// Helper method used to find the index of the method being called. Used in dispatch and static dispatch
+static int find_method_index(Symbol method_name, Symbol caller, CgenClassTableP c) {
+    if (caller == SELF_TYPE) caller = c->curr_class;
+    if (cgen_debug) cerr << "We currently have method: " << method_name << " being called from: " << caller << endl;
+    std::vector<method_dispatch> *meth_list = c->map_get_meth_list(caller);
+    int offset = 0;
+
+    // Loop through all the methods, return the index when match is found.
+    for (std::vector<method_dispatch>::iterator it = meth_list->begin(); it != meth_list->end(); ++it) {
+	if (it->method_name == method_name) return offset;
+	offset++;
+    }
+    return -1; // Method not found. This should never happen.
+}
+
 // TODO
 void static_dispatch_class::code(ostream &s, CgenClassTableP c) {
+    // Load the address of the arguments being passed to the dispatch, and push onto stack
+    for (int i = actual->first(); actual->more(i); i = actual->next(i)) {
+	Expression expr = actual->nth(i);
+	
+	if (cgen_debug) cerr << "Evaluating an expression in method dispatch " << endl;
+	expr->code(s, c);
+
+	// push onto stack
+	emit_push(ACC, s);
+    }
+    
+    // evaluate the expression that the method is being called on
+    // result will be in $a0
+    expr->code(s, c);
+
+    // check if the expression evaluated to something valid
+    emit_bne(ACC, ZERO, curr_label, s);
+
+    // if not valid expression, emit code to return file name and line number at which error was found
+    emit_load_address(ACC, "str_const0", s); // TODO: check if str_const0 OK
+
+    // Load the line number
+    emit_load_imm(T1, get_line_number(), s);
+
+    // Dispatch abort
+    emit_jal("_dispatch_abort", s);
+
+    // If expression is valid, do the label============================================= LABEL HERE
+    emit_label_def(curr_label, s);
+    curr_label++;
+
+    // Load the dispatch table for the parent
+    emit_partial_load_address(T1, s);    
+    emit_disptable_ref(type_name, s);
+    s << endl;
+
+    if (cgen_debug) cerr << "trying to find the method: " << name << " for the static type: " << type_name << endl;
+
+    // Get the method offset in dispatch table and load it
+    int offset = find_method_index(name, type_name, c);
+    emit_load(T1, offset, T1, s);
+
+    // Call the method
+    emit_jalr(T1, s);
 
 }
 
 // TODO
 void dispatch_class::code(ostream &s, CgenClassTableP c) {
+    // Load the address of the arguments being passed to the dispatch, and push onto stack
+    for (int i = actual->first(); actual->more(i); i = actual->next(i)) {
+	Expression expr = actual->nth(i);
+	
+	if (cgen_debug) cerr << "Evaluating an expression in method dispatch " << endl;
+	expr->code(s, c);
+
+	// push onto stack
+	emit_push(ACC, s);
+    }
+    
+    // evaluate the expression that the method is being called on
+    // result will be in $a0
+    expr->code(s, c);
+
+    // check if the expression evaluated to something valid
+    emit_bne(ACC, ZERO, curr_label, s);
+
+    // if not valid expression, emit code to return file name and line number at which error was found
+    emit_load_address(ACC, "str_const0", s); // TODO: check if str_const0 OK
+
+    // Load the line number
+    emit_load_imm(T1, get_line_number(), s);
+
+    // Dispatch abort
+    emit_jal("_dispatch_abort", s);
+
+    // If expression is valid, do the label============================================= LABEL HERE
+    emit_label_def(curr_label, s);
+    curr_label++;
+
+    // Load the dispatch table
+    emit_load(T1, 2, ACC, s);
+
+    if (cgen_debug) cerr << "trying to find the method: " << name << " for the expr type: " << expr->type << endl;
+
+    // Get the method offset in dispatch table and load it
+    int offset = find_method_index(name, expr->type, c);
+    emit_load(T1, offset, T1, s);
+
+    // Call the method
+    emit_jalr(T1, s);
 }
 
 // TODO
@@ -1601,18 +1719,16 @@ void plus_class::code(ostream &s, CgenClassTableP c) {
     // add the values stored in $t1 (from eval of first expression) and $a0 (from eval of second expression) and store the result in $a0
     emit_add(ACC, T1, ACC, s);
 
-    // copy recently pushed onto stack value (i.e. address of newly created object) into register $t1 again
+    // pop the pushed value into register $t1 again and fix the stack
     emit_load(T1, 1, SP, s);
+    emit_addiu(SP, SP, WORD_SIZE, s);
 
-    // store the result of the addition into the newly created object
-    // i.e. sw $a0 12($t1)
+    // store the result of the addition into the newly created object i.e. sw $a0 12($t1)
     emit_store(ACC, DEFAULT_OBJFIELDS, T1, s);
 
     // move the address of the newly created object into $a0 to be returned
     emit_move(ACC, T1, s);
      
-    // move the stack back up by WORD_SIZE to get rid of the first intermediary that was pushed onto it
-    emit_addiu(SP, SP, WORD_SIZE, s);
 }
 
 void sub_class::code(ostream &s, CgenClassTableP c) {
@@ -1791,20 +1907,52 @@ void bool_const_class::code(ostream &s, CgenClassTableP c)
 }
 
 void new__class::code(ostream &s, CgenClassTableP c) {
-    // emit 'la $a0 Helloworld_protObj' to load protObj into $a0
-    s << LA << ACC << " ";
-    emit_protobj_ref(type_name, s);
-    s << endl;
 
-    // emit 'jal Object.copy' to instantiate the protObj passed in $a0
-    emit_jal ("Object.copy", s);
+    // For handling SELF_TYPE
+    if (type_name == SELF_TYPE) {
+	// Load the object table
+	emit_load_address(T1, CLASSOBJTAB, s);
 
-    // emit 'jal Helloworld_init' to initialize the newly instantiated object
-    s << JAL;
-    emit_init_ref(type_name, s);
-    s << endl;
+	// Load the class tag
+	emit_load(T2, 0, SELF, s);
 
-    // what if: init isn't supposed to load $s0 into $a0, but rather new__class is
+	// Shift over the tag by 3 (2 entries/object * 4 bytes/word = 8)
+	emit_sll(T2, T2, 3, s);
+
+	// Moves T1 up to the correct prototype object
+	emit_addu(T1, T1, T2, s);
+
+	// Push T1 (pointer to prototype object) onto the stack
+	emit_push(T1, s);
+
+	// Load the pointer to the prototype object into ACC
+	emit_load(ACC, 0, T1, s);
+
+	// instantiate the object
+	emit_jal ("Object.copy", s);
+
+	// Pop the stack (pointer to prototype) to T1, then offset by 4 to get the init method
+	emit_load(T1, 1, SP, s);
+	emit_addiu(SP, SP, WORD_SIZE, s);
+
+	emit_load(T1, 1, T1, s);
+
+	// Call the init function
+	emit_jalr(T1, s);
+    } else {
+	// emit 'la $a0 Helloworld_protObj' to load protObj into $a0
+	emit_partial_load_address(ACC, s);
+	emit_protobj_ref(type_name, s);
+	s << endl;
+
+	// emit 'jal Object.copy' to instantiate the protObj passed in $a0
+	emit_jal ("Object.copy", s);
+
+	// emit 'jal Helloworld_init' to initialize the newly instantiated object
+	s << JAL;
+	emit_init_ref(type_name, s);
+	s << endl;
+    }
 }
 
 //TODO
@@ -1818,9 +1966,19 @@ void no_expr_class::code(ostream &s, CgenClassTableP c) {
 }
 
 void object_class::code(ostream &s, CgenClassTableP c) {
+    
+    // Look up the name in our environment
     MemoryInfo *info = c->var_map->lookup(name);
-    if (info) {
-	// copy from $a0 to the offset from FP
+    if (cgen_debug) {
+	cerr << "currently evaluating the identifier: " << name << endl;
+	cerr << "node result found in address" << info << endl;
+    }
+
+    // If we ever look for self, just load SELF into $a0
+    if (name == self) {
+	emit_move(ACC, SELF, s);
+    } else if (info) {
+	// copy to $a0 from the offset from FP
 	if (info->mem_type == Stack) {
 	    emit_load(ACC, info->offset, FP, s);
 	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
@@ -1828,6 +1986,7 @@ void object_class::code(ostream &s, CgenClassTableP c) {
                 emit_gc_assign(s);
             }
 	} else {
+	// copy to $a0 from the offset in SELF
 	    emit_load(ACC, info->offset, SELF, s);
 	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
                 emit_addiu(A1, SELF, info->offset*WORD_SIZE, s);

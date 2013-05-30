@@ -119,8 +119,12 @@ private:
 
 public:
    CgenClassTable(Classes, ostream& str);
+   Symbol filename;
    void code();
    CgenNodeP root();
+   Symbol curr_class;
+
+   // Symbol table for all the variables
    SymbolTable<Symbol, MemoryInfo> *var_map;
 
 // Following is used for public functions to get/set class tags
@@ -157,9 +161,9 @@ private:
    List<CgenNode> *children;                  // Children of class
    Basicness basic_status;                    // `Basic' if class is basic
                                               // `NotBasic' otherwise
-   int tag;
 
 public:
+   int tag;
    CgenNode(Class_ c,
             Basicness bstatus,
             CgenClassTableP class_table);
@@ -186,7 +190,8 @@ public:
    void code_all_methods(ostream& str, CgenClassTableP c);
    void code_meth(ostream& str, CgenClassTableP c, method_dispatch meth);
 
-
+   // Used for finding index of a certain method
+   int find_method_index(Symbol method_name, CgenClassTableP c);
 
    // Common code used in the head and end of every dispatch
    void generate_disp_head(ostream& str);
