@@ -1765,8 +1765,36 @@ void cond_class::code(ostream &s, CgenClassTableP c) {
     emit_label_def(ending_label, s);
 }
 
-// TODO
 void loop_class::code(ostream &s, CgenClassTableP c) {
+    // Output label for loop predicate
+    int predicate_label = curr_label;
+    emit_label_def(predicate_label, s);
+    curr_label++;
+
+    // Reserve ending label
+    int ending_label = curr_label;
+    curr_label++;
+    
+    // first code the predicate of the conditional
+    pred->code(s, c);
+
+    // load the value of the bool_const returned from evaluating the conditional into T1
+    emit_load(T1, DEFAULT_OBJFIELDS, ACC, s);
+
+    // jump to ending label if predicate evaluates to false
+    emit_beqz(T1, ending_label, s);
+
+    // code body of loop
+    body->code(s, c);
+
+    // jump to predicate label to evaluate predicate again
+    emit_branch(predicate_label, s);
+
+    // insert ending label to jump to when predicate evaluates to false
+    emit_label_def(ending_label, s);
+
+    // move the return value (always void) of loop into ACC
+    emit_move(ACC, ZERO, s);
 }
 
 // Finds the branch with the highest class tag

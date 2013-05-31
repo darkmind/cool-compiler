@@ -243,7 +243,7 @@ class A inherits IO {
     k() : Int {
 	{
 	    (if if myint3 < 3 then 8 < 9 else 100 < 99 fi then
-		 if (2+5) <= 7 then 
+		 if (2+5) <= 6 then 
 		     (new IO).out_string("A\n") 
 		 else
 		     {
