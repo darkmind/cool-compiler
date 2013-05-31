@@ -16,6 +16,9 @@ class Main {
 	    mya.h();
 	    mya.i();
 	    mya.j();
+
+	    myio.out_string("Nested conditionals\n");
+	    mya.k();
 	}
     };
 };
@@ -232,6 +235,27 @@ class A inherits IO {
 	 fi);
 	out_string("\n");
 	9999;
+	}
+    };
+
+    myint3 : Int <- 2;
+
+    k() : Int {
+	{
+	    (if if myint3 < 3 then 8 < 9 else 100 < 99 fi then
+		 if (2+5) <= 7 then 
+		     (new IO).out_string("A\n") 
+		 else
+		     {
+		         (new IO).out_string("B\n");
+	                 (new IO).out_string("correct branch\n");
+		     }
+		 fi
+	     else
+		 (new IO).out_string("wrong branch\n")
+	     fi
+	    );
+	    9999;
 	}
     };
 };
