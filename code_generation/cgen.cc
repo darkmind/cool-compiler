@@ -1068,6 +1068,8 @@ void CgenClassTable::recurse_object_inits(List<CgenNode> *list, int counter) {
  */
 int CgenNode::code_init(ostream& str, int counter, CgenClassTableP class_table) {
 
+    class_table->curr_class = name;
+
     str << name << CLASSINIT_SUFFIX << LABEL; //label
     generate_disp_head(str);
 
@@ -1876,6 +1878,42 @@ void block_class::code(ostream &s, CgenClassTableP c) {
 
 // TODO
 void let_class::code(ostream &s, CgenClassTableP c) {
+    // Within the confines of this let expression, enter this scope
+    SymbolTable<Symbol, MemoryInfo> *var_map = c->var_map;
+    var_map->enterscope();
+
+    // Initialize the variable according to its class (Int -> "0", String -> "", Bool -> false, other -> $zero);
+
+    if (type_decl == Int) emit_load_int(ACC,inttable.lookup_string("0"),s);
+    else if (type_decl == Bool) emit_load_bool(ACC, falsebool, s);
+    else if (type_decl == Str) emit_load_string(ACC, stringtable.lookup_string(""), s);
+    else emit_move(ACC, ZERO, s);
+
+    // Code up the initialization
+    no_expr_class *no_init_expr = dynamic_cast<no_expr_class *>(init);
+    if (cgen_debug) {
+	if (!no_init_expr) {
+	    cerr << "init expression found for let binding" << identifier << endl;
+	} else {
+	    cerr << "init expression not found for attribute " << identifier << endl;
+	}
+    }
+    init->code(s, c);
+
+    // Push the initialized value into stack
+    var_map->addid(identifier, new MemoryInfo(stack_offset, Stack));
+    emit_push(ACC, s);
+    stack_offset--;
+
+    // Evaluate let expression body
+    body->code(s, c);
+
+    // Pop stack, exit scope
+    emit_addiu(SP, SP, WORD_SIZE, s);
+    stack_offset++;
+
+    var_map->exitscope();
+
 }
 
 void plus_class::code(ostream &s, CgenClassTableP c) {
@@ -2188,9 +2226,8 @@ void isvoid_class::code(ostream &s, CgenClassTableP c) {
 
 }
 
-//TODO
+//DONE!
 void no_expr_class::code(ostream &s, CgenClassTableP c) {
-
 }
 
 void object_class::code(ostream &s, CgenClassTableP c) {
