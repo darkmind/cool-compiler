@@ -2164,7 +2164,6 @@ void lt_class::code(ostream &s, CgenClassTableP c) {
     curr_label++;
 }
 
-//TODO
 void eq_class::code(ostream &s, CgenClassTableP c) {
 
     // emit the code for the first expression
@@ -2200,7 +2199,6 @@ void eq_class::code(ostream &s, CgenClassTableP c) {
     curr_label++;
 }
 
-//TODO
 void leq_class::code(ostream &s, CgenClassTableP c) {
     // emit the code for the first expression
     e1->code(s, c);
@@ -2237,7 +2235,6 @@ void leq_class::code(ostream &s, CgenClassTableP c) {
     curr_label++;    
 }
 
-//TODO
 void comp_class::code(ostream &s, CgenClassTableP c) {
     // emit code for the expression
     e1->code(s, c);

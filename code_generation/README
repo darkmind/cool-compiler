@@ -1,175 +1,172 @@
 README file for Programming Assignment 4  (C++ edition)
-=======================================================
-
-Your directory should now contain the following files:
-
- Makefile	      -> [course dir]/assignments/PA4/Makefile
- README
- ast-lex.cc	      -> [course dir]/src/PA4/ast-lex.cc
- ast-parse.cc	      -> [course dir]/src/PA4/ast-parse.cc
- cgen-phase.cc	      -> [course dir]/src/PA4/cgen-phase.cc
- cgen.cc
- cgen.h
- cgen_supp.cc
- cool-tree.cc	      -> [course dir]/src/PA4/cool-tree.cc
- cool-tree.handcode.h
- dumptype.cc	      -> [course dir]/src/PA4/dumptype.cc
- emit.h
- example.cl
- handle_flags.cc      -> [course dir]/src/PA4/handle_flags.cc
- mycoolc	      -> [course dir]/src/PA4/mycoolc*
- stringtab.cc	      -> [course dir]/src/PA4/stringtab.cc
- tree.cc	      -> [course dir]/src/PA4/tree.cc
- utilities.cc	      -> [course dir]/src/PA4/utilities.cc
- *.d
-
-The include (.h) files for this assignment can be found in 
-[course dir]/include/PA4
-
-	The Makefile contains targets for compiling and running your
-	program, as well as handing it in. DO NOT MODIFY.
-
-	The README contains this info. Part of the assignment is to
-	fill the README with the write-up for your project. You should
-	explain design decisions, explain why your code is correct,
-	and why your test cases are adequate. It is part of the
-	assignment to clearly and concisely explain things in text as
-	well as to comment your code. Just edit this file.
-
-	In example.cl you should write a correct Cool program which
-	tests as many aspects of the code generator as possible. It
-	should pass your code generator, and running spim on the
-	generated output should run the program correctly.
-
-	cgen.cc is the skeleton file for the code generator. This
-	skeleton is much larger than the ones for previous
-	assignments.  The skeleton provides three components of the
-	code generator:
-
-		- functions to build the inheritance graph; (we supply
-		  this in case you didn't get this working for PA4)
-
-		- functions to emit global data and constants;
-		 
-		- functions to emit spim instructions; (we supply
-		  these last two to save you some tedious coding)
-
-	You should work to understand this code, and it will help you
-        write the rest of the code generator.
-
-	cgen.h is the header file for the code generator. Feel free to
-	add anything you need.
-
-	cgen_supp.cc is general support code for the code generator.
-	You can add functions as you see fit, but do not modify the 3
-	functions:
-
-		o byte_mode
-		o ascii_mode
-		o emit_string_constant
-
-	emit.h defines a bunch of macros which should come in handy
-	when you actually want to emit code. Feel free to change
-	anything here to suit your needs.
-
-        cgen-phase.cc supplies the driver for the compiler. You should
-        not modify this code.  The script mycoolc can pass any of the
-        standard flags to the code generator; for this assignment, -c
-        (code generator debug) may be useful as it sets a global
-        variable cgen_debug to true (1).  If you want your code
-        generator to print debug information when the option is set,
-        write your debug code in the following format:
-
-	      if (cgen_debug)
-	      {
-		...
-	      }
-
-	symtab.h contains a symbol table implementation. You may
-        modify this file if you'd like.  To do so, remove the link and
-        copy `[course dir]/include/PA4/symtab.h' to your local
-        directory.
-
-	cool.h contains definitions that are used by almost all parts
-	of the compiler. DO NOT MODIFY.
-
-        tree.h contains the base class `tree_node' of the AST nodes.
-
-        cool-tree.cc, cool-tree.h, and cool-tree.handcode.h contain
-        the declarations and definitions of code generation AST nodes.
-        You may add fields as you wish, but you shouldn't modify any
-        of the methods already there except `code', which you may
-        modify or remove as you wish.  Note that cool-tree.handcode.h
-        is different from the same file in PA4---this file contains
-        function definitions needed for the cgen.cc skeleton.  You may
-        modify cool-tree.h or cool-tree.handcode.h, but don't modify
-        cool-tree.cc.  Place all method definitions in cgen.cc
-
-	stringtab.h contains functions to manipulate the string table.
-	DO NOT MODIFY.
-
-	dumptype.cc contains functions for printing out an abstract
-	syntax tree.  DO NOT MODIFY.
-
-        *.d dependency files, generated automatically by the makefile.
-
-Instructions
-------------
-
-	To compile your compiler and code generator type:
-
-	% make cgen
-
-	To test your compiler, type:
-
-	% ./mycoolc <file1.cl>
-
-	This command parses all the cool files given on the command
-	line, passes them through the semantic checker, and then hands
-	the program AST to your code generator.
-
-	To run your compiler on the file example.cl, type:
-
-	% make dotest
-
-	To run the produced code:
-
-	% spim -file file1.s  /* or the output filename you chose */
-	
-	To submit your work type:
-
-	% make submit
-
- 	You may turn in the assignment as many times as you like.
- 	However, only the last version will be retained for grading.
-
-	If you change architectures you must issue
-
-	% make clean
-
-	when you switch from one type of machine to the other.  If at
-	some point you get weird errors from the linker, you probably
-	forgot this step.
-
-	GOOD LUCK!
-
----8<------8<------8<------8<---cut here---8<------8<------8<------8<---
-
 Write-up for PA4
 ----------------
+user: yushiw
+user: jayhp9
 
-TODO:
 
+=========================================================
 Inheritance Graph
+=========================================================
 
+For this part, we looked at the outputs from the reference code generator and noticed that they happened to assign the tags by performing a DFS through the the inheritance tree. From a piazza post, we learned that this was probably the optimal method for later code (particularly case), so we imitated that.
 
+To actually implement the DFS, we created a recursive graph algorithm which takes a node, assigns it a tag, increments the global counter for current tag number, then calls it on each of its children. We fed the Object node (root) into this function to assign every class a tag in DFS fashion.
+
+------------------------------------
+Environment
+------------------------------------
+
+In addition to tagging all of our classes, we set up the code generation environment by doing the following:
+
+1. Created a map in our class table (CgenClassTable) that returned a class node given the class name symbol (later we found that this was actually unnecessary)
+
+2. Created a map in our class table that stored a vector of attributes for each class (including inherited attributes). This map was created during the creation of the class table, and uses the same DFS algorithm, except that instead of assigning tags, it passed along a vector of the parents attributes as a second argument, which each call in a node then duplicated and populated with its own attributes.
+
+3. Created a map in our class table that stored a vector of method dispatch structures (method name, method pointer, and caller class name included) for each class. This was populated in the same fashion as the attributes map, with one difference: methods that were inherited but redefined were removed from the vector, then pushed back in at the end. In this manner, we were able to store the methods in the same way the reference cgen did in their dispatch table: first in order of how recently they were defined, then in order of appearance in class.
+
+4. Created a symbol table (offset table) for all active variables within any scope. More on this later.
+
+=========================================================
 Prototype Objects
+=========================================================
 
+We followed the given template for prototype objects for their structure, though we didn¿t print things out in quite the same order (we just iterated through the list of classes, but since this order doesn¿t matter in assembly, it was fine).
 
+For each class, we printed out the ¿-1¿ tag in the front and label first. Then to get the size, we retrieved the attribute list for each class from our environment, then printed out the size of the vector.
+
+Then, we iterate through the vector and print out each attribute¿s type, along with the initialized expression (empty string for str constants, 0 for int constants, false for bools, and 0 - void - for all other objects)
+
+------------------------------------
+Global Text
+------------------------------------
+
+In addition, we had to output the global text (dispatch tables, class tables, object tables), but these were all fairly simple; we just found the appropriate time to output them, then used our environment to retrieve the needed list or map, and iteratively printed out what we needed.
+
+=========================================================
 Initialize Classes
+=========================================================
 
+To initialize the classes, we followed the examples given by the reference code generator:
 
+1. First, generate the header for all methods (storing the fp, ra, sp, etc.), then call the init function for the parent class when initializing all classes that aren¿t Object.
+
+2. If the class isn¿t a basic class (aka user-defined), then we also iterate through all of its attributes, performing the assign_expression on every class that had an initialization. We didn¿t have the assembly for generating code for expressions at this point yet, but we had faith that our code would work once it was written.
+
+3. At the same time, for every attribute, save the attribute¿s name and location in the object in our offset table (mentioned above).
+
+------------------------------------
+Offset Table
+------------------------------------
+
+At any given time, we wanted to know the names of all variables active, along with their location in the current stack or heap. To do so, we created a symbol table mapping active variables to their latest location. To store their location, we stored the offset for the variable. This offset was either in the stack (relative to the frame pointer), or in the heap (relative to the self pointer). The heap offsets we kept using a counter within each class, but for the stack counter, we made a global counter that we incremented or decremented every time we pushed or popped from the stack.
+
+This symbol table was also used in generating the expressions/methods (obviously). Every time we entered a new class, let expression, or case expression, we would enter a new scope to indicate that the new bindings would override the old.
+
+=========================================================
 Code gen for different classes/nodes
+=========================================================
+
+For the assembly generation, we split this task up into essentially two parts: generating the assembly for each class¿ methods, and generating the assembly for each expression.
+
+For each method, we did the following: 
+
+1. First, we called the method header (described above). In the meantime, we updated the symbol table to reflect all the new bindings from the formals
+2. Iterate through the list of expressions, calling the code() function and passing in the ostream & and class table.
+3. At the very end, call the footer, but when restoring the stack pointer, we moved the pointer up by 12 (4 * 3 for each of the ra, fp, old sp slots) plus 4 times however many formals were passed in.
 
 
+------------------------------------
+Expression generation
+------------------------------------
+
+Arguably the hardest part of the assignment, we split up the work more or less evenly for the expressions, approaching each of them as modules. For each expression, we approached the task of code generation by first translating the reference code generator¿s assembly code into pseudocode, then emulating what they did.
+
+Most classes were fairly simple, but a few of the more noteworthy
+
+assign_class:
+We first evaluate the expression that is being assigned to the identifier. We then look up the name of the identifier being assigned to in the symbol table to get its offset in either the stack or the heap. We load its location into the accumulator, and then assign the return value of the evaluated expression into its object. Since this is a place where we update the pointers in an object, we also inform the GC of this update, as elaborated upon in the GC section of the README below.
+
+static_dispatch_class/dispatch_class
+First, we push all of the arguments in the call into the stack in preparation for the call.
+Then, we evaluated the calling object, returning an error if it is void. If it is valid, we then loaded the dispatch table, looked up the correct offset for the method using a linear search, then called the dispatch
+
+cond_class
+We first emit code for the predicate of the conditional. Depending on whether it evaluates to true or false, we jump to the relevant label and then emit code for the expression in that branch of the conditional.
+
+loop_class
+Like the cond_class, we first emit code for the predicate of the conditional. If it evaluates to true, we jump to a label where the body of the loop is emitted. At the end of that label, we unconditionally jump back to the label which contains the assembly code for the predicate and re-check what the predicate evaluates to. If at any point it evaluates to false, we emit code to jump out of the loop and assign 0 to the accumulator (because the loop evaluates to a 0 always).
+
+typcase_class
+This one was really tricky to emit code for. We first emit code for the main expression of the case statement and abort with the line number and file name if the expression evaluated to something invalid. If not, we start iterating through all the branches in descending order of tag (associated with the type of the identifier in the branch), so that we can find the tightest binding branch of all the branches with the class of the main expression of the case statement. Once we find it, we evaluate the expression in that branch and return it¿s type.
+
+block_class
+This was really straightforward. We just loop through all the expressions in the body of the block and emit code for each of them. The code that we emit for all other expressions takes care of the code that should be emitted for each expression.
+
+let_class
+This was really a short recursive function. We just simply save the binding into the stack, update our offset/symbol table, then evaluate the new expression in this environment.
+
+plus_class, sub_class, mul_class, divide_class
+These 4 classes were really similar i.e. we wrote code for one of them and then just copied over everything to the other 3, just changing one line. Essentially, we emitted code for the first operand first and then pushed its result value onto the stack before we went to emit code for the second operand. Then, we retrieved the value pushed onto the stack earlier and compare it with what the second operand returned, using the relevant MIPS command. Then we stored the result in ACC.
+
+neg_class
+We just evaluate the expression and take the neg of its return value (using NEG in MIPS) and return it in ACC.
+
+lt_class, leq_class, eq_class
+We evaluate the left expression first, and push its return value onto the stack and then evaluate the right expression and then pop the value from the stack and compare the two return values using the relevant MIPS code. For eq_class, we specifically use the ¿equality_test¿ function that has been written for us.
+
+comp_class
+We evaluate the expression and if it evaluates to false, we load the bool_const1 into the ACC and if it evaluates to true instead, we load the bool_const0 into the ACC. That¿s it.
+
+new_class
+If the type is SELF_TYPE, we load the prototype object of the current class, copy it and init it and return a reference in ACC. If not, we do the same with whatever class the user has specified.
+
+isvoid_class
+We just evaluate the expression and check if it equals 0. If so, return the bool_const1 in ACC else bool_const0.
+
+object_class
+We just lookup the identifier in the symbol table and if it is self, store the self pointer in ACC. If not, we load the word in the relevant offset (as stored in the symbol table) in the stack or the heap into ACC.
+=========================================================
 Garbage Collections
+=========================================================
+
+Here are the locations in our code where we inform the garbage collector that a pointer has been updated:
+
+1. Initializing an attribute
+2. Assigning to an attribute
+3. In object_class
+
+Essentially, whenever an object¿s location is being updated, we store the new location in A1 and call emit_gc_assign() to inform the GC of the new location.
+
+We ran all our tests with the -gt flags and it produced the correct output with no issues!!
+
+=========================================================
+Testing
+=========================================================
+
+We conducted incremental testing throughout the code, writing both simple and tricky tests in example.cl and example2.cl as we went. Then, when we had implemented enough to start coding up the expressions, we also created separate individual files to test each expression rigorously. Namely, here are the key language features that we hand-wrote specific tests for:
+
+1. Arithmetic operations (+, -, *, /, ~)
+2. Comparison operators (=, <, <=)
+3. Important expressions (assign, block, conditionals, loops, case, let, new)
+4. Dispatch and Static Dispatch
+
+All our test files are in the tests folder. Here is a list of their names:
+
+arithTest.cl - originally contained a bunch of tests for basic arithmetic operations, now contains a bunch of comparison expressions		
+arith_expr_test.cl - contains various tests for arithmetic operations, such as their order
+assign_test.cl - tested assignment expressions
+basic.cl - very simple test for seeing assembly for the first time
+block_test.cl
+case_test.cl
+conditionalTest.cl
+example[2].cl - 
+let_test.cl
+loopTest.cl
+main_class.cl
+methodreturns.cl - used to figure out what was going on with method calls and returns
+newSelfType.cl - tested new SELF_TYPE expressions
+new_class_test.cl - tested new expressions
+qq.cl - made a test to figure out why the hell my conditionals were failing when comparing ints, and only ints. Here I discovered the existence of the $a1 register
+simpleDispatch.cl - a no longer very simple test testing several dispatches, including static dispatches
+
