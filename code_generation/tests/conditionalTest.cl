@@ -1,12 +1,21 @@
 class Main {
     mya : A <- (new A);
+    myio : IO <- (new IO);
     main() : Int {
 	{
+	    myio.out_string("Outputs for 'less than'\n");
 	    mya.a();
 	    mya.b();
 	    mya.c();
 	    mya.d();
 	    mya.e();
+
+	    myio.out_string("Outputs for 'less than or equal to'\n");
+	    mya.f();
+	    mya.g();
+	    mya.h();
+	    mya.i();
+	    mya.j();
 	}
     };
 };
@@ -23,7 +32,7 @@ class A inherits IO {
 	     }
 	 else 
              { 
-	         out_string("5 >= 7");
+	         out_string("5 not < 7");
 		 0;
 	     }
 	 fi);
@@ -44,7 +53,7 @@ class A inherits IO {
 	 else 
              { 
 	         out_int(myint1);
-	         out_string(" >= ");
+	         out_string(" not < ");
 		 out_int(myint2);
 		 0;
 	     }
@@ -66,7 +75,7 @@ class A inherits IO {
 	 else 
              { 
 	         out_int(myint2);
-	         out_string(" >= ");
+	         out_string(" not < ");
 		 out_int(myint1);
 		 0;
 	     }
@@ -88,7 +97,7 @@ class A inherits IO {
 	 else 
              { 
 	         out_int(5);
-	         out_string(" >= ");
+	         out_string(" not < ");
 		 out_int(myint2);
 		 0;
 	     }
@@ -110,7 +119,113 @@ class A inherits IO {
 	 else 
              { 
 	         out_int(myint1);
-	         out_string(" >= ");
+	         out_string(" not < ");
+		 out_int(3);
+		 0;
+	     }
+	 fi);
+	out_string("\n");
+	9999;
+	}
+    };
+
+    f() : Int {
+        {
+        (if (5 <= 7) then
+	     { 
+	         out_string("5 <= 7");
+		 1;
+	     }
+	 else 
+             { 
+	         out_string("5 not <= 7");
+		 0;
+	     }
+	 fi);
+	out_string("\n");
+	9999;
+	}
+    };
+
+    g() : Int {
+        {
+        (if (myint1 <= myint2) then
+	     { 
+		 out_int(myint1);
+	         out_string(" <= ");
+		 out_int(myint2);
+		 1;
+	     }
+	 else 
+             { 
+	         out_int(myint1);
+	         out_string(" not <= ");
+		 out_int(myint2);
+		 0;
+	     }
+	 fi);
+	out_string("\n");
+	9999;
+	}
+    };
+
+    h() : Int {
+        {
+        (if (myint2 <= myint1) then
+	     { 
+		 out_int(myint2);
+	         out_string(" <= ");
+		 out_int(myint1);
+		 1;
+	     }
+	 else 
+             { 
+	         out_int(myint2);
+	         out_string(" not <= ");
+		 out_int(myint1);
+		 0;
+	     }
+	 fi);
+	out_string("\n");
+	9999;
+	}
+    };
+
+    i() : Int {
+        {
+        (if (5 <= myint2) then
+	     { 
+		 out_int(5);
+	         out_string(" <= ");
+		 out_int(myint2);
+		 1;
+	     }
+	 else 
+             { 
+	         out_int(5);
+	         out_string(" not <= ");
+		 out_int(myint2);
+		 0;
+	     }
+	 fi);
+	out_string("\n");
+	9999;
+	}
+    };
+
+    j() : Int {
+        {
+        (if (myint1 <= 3) then
+	     { 
+		 out_int(myint1);
+	         out_string(" <= ");
+		 out_int(3);
+		 1;
+	     }
+	 else 
+             { 
+	         out_int(myint1);
+	         out_string(" not <= ");
 		 out_int(3);
 		 0;
 	     }
