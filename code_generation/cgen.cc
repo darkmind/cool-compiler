@@ -2176,7 +2176,39 @@ void eq_class::code(ostream &s, CgenClassTableP c) {
 
 //TODO
 void leq_class::code(ostream &s, CgenClassTableP c) {
+    // emit the code for the first expression
+    e1->code(s, c);
 
+    // push the return value of the first expression onto the stack
+    emit_push(ACC, s);
+    stack_offset--;
+
+    // emit the code for the second expression
+    e2->code(s, c);
+
+    // pop stack into register T1, and fix it
+    emit_load(T1, 1, SP, s);
+    emit_addiu(SP, SP, WORD_SIZE, s);
+    stack_offset++;
+
+    // load the int value stored within the first result into T1
+    emit_load(T1, DEFAULT_OBJFIELDS, T1, s);
+
+    // load the int value stored within the second result into T2
+    emit_load(T2, DEFAULT_OBJFIELDS, ACC, s);
+
+    // load TRUE into ACC
+    emit_load_bool(ACC, BoolConst(1), s);
+
+    // check the 'less than' condition, if match, jump to specified label
+    emit_bleq(T1, T2, curr_label, s);
+
+    // load FALSE into ACC
+    emit_load_bool(ACC, BoolConst(0), s);
+
+    // Output label for next expression in the method, or end of method
+    emit_label_def(curr_label, s);
+    curr_label++;    
 }
 
 //TODO
