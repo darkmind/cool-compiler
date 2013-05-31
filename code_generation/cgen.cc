@@ -1597,14 +1597,12 @@ void assign_class::code(ostream &s, CgenClassTableP c) {
     if (info) {
 	// copy from $a0 to the offset from FP
 	if (info->mem_type == Stack) {
-	    // TODO: get the value in the object and store in ACC before next line
 	    emit_store(ACC, info->offset, FP, s);
 	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
                 emit_addiu(A1, FP, info->offset*WORD_SIZE, s);
                 emit_gc_assign(s);
             }
 	} else {
-	    // TODO: get the value in the object and store in ACC before next line
 	    emit_store(ACC, info->offset, SELF, s);
 	    if (strcmp(gc_init_names[cgen_Memmgr], gc_init_names[1]) == 0) {
                 emit_addiu(A1, SELF, info->offset*WORD_SIZE, s);
