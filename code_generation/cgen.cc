@@ -1848,7 +1848,6 @@ void block_class::code(ostream &s, CgenClassTableP c) {
     }
 }
 
-// TODO
 void let_class::code(ostream &s, CgenClassTableP c) {
     // Within the confines of this let expression, enter this scope
     SymbolTable<Symbol, MemoryInfo> *var_map = c->var_map;
