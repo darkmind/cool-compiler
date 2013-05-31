@@ -6,7 +6,7 @@ class Main {
     main() : Object {
 	{
 	    (new IO).out_string("starting the case");
-	    case 5 of
+	    case (new Object) of
 	      a : Int => { 
 		  (new IO).out_string("case a");
 		  1;
