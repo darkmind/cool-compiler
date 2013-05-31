@@ -1679,7 +1679,7 @@ void static_dispatch_class::code(ostream &s, CgenClassTableP c) {
     // emit_addiu(SP, SP, actual->len() * WORD_SIZE, s);
     stack_offset += actual->len(); // still need to reset stack_offset though
 }
-
+    
 // TODO
 void dispatch_class::code(ostream &s, CgenClassTableP c) {
     // Load the address of the arguments being passed to the dispatch, and push onto stack
@@ -1731,8 +1731,36 @@ void dispatch_class::code(ostream &s, CgenClassTableP c) {
     stack_offset += actual->len();
 }
 
-// TODO
 void cond_class::code(ostream &s, CgenClassTableP c) {
+    // first code the predicate of the conditional
+    pred->code(s, c);
+
+    // load the value of the bool_const returned from evaluating the conditional into T1
+    emit_load(T1, DEFAULT_OBJFIELDS, ACC, s);
+
+    // reserve ending label
+    int ending_label = curr_label;
+    curr_label++;
+
+    // reserve label for FALSE, and branch to it if equal 0
+    int false_label = curr_label;
+    emit_beqz(T1, false_label, s);
+    curr_label++;
+
+    // code for TRUE
+    then_exp->code(s, c);
+
+    // jump to ending label of method
+    emit_branch(ending_label, s);
+
+    // Output label for FALSE
+    emit_label_def(false_label, s);
+
+    // code for FALSE
+    else_exp->code(s, c);
+
+    // Output ending label
+    emit_label_def(ending_label, s);
 }
 
 // TODO
@@ -2037,9 +2065,40 @@ void neg_class::code(ostream &s, CgenClassTableP c) {
 
 }
 
-//TODO 
 void lt_class::code(ostream &s, CgenClassTableP c) {
-    //
+    // emit the code for the first expression
+    e1->code(s, c);
+
+    // push the return value of the first expression onto the stack
+    emit_push(ACC, s);
+    stack_offset--;
+
+    // emit the code for the second expression
+    e2->code(s, c);
+
+    // pop stack into register T1, and fix it
+    emit_load(T1, 1, SP, s);
+    emit_addiu(SP, SP, WORD_SIZE, s);
+    stack_offset++;
+
+    // load the int value stored within the first result into T1
+    emit_load(T1, DEFAULT_OBJFIELDS, T1, s);
+
+    // load the int value stored within the second result into T2
+    emit_load(T2, DEFAULT_OBJFIELDS, ACC, s);
+
+    // load TRUE into ACC
+    emit_load_bool(ACC, BoolConst(1), s);
+
+    // check the 'less than' condition, if match, jump to specified label
+    emit_blt(T1, T2, curr_label, s);
+
+    // load FALSE into ACC
+    emit_load_bool(ACC, BoolConst(0), s);
+
+    // Output label for next expression in the method, or end of method
+    emit_label_def(curr_label, s);
+    curr_label++;
 }
 
 //TODO
