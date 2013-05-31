@@ -2140,14 +2140,65 @@ void lt_class::code(ostream &s, CgenClassTableP c) {
 
 //TODO
 void eq_class::code(ostream &s, CgenClassTableP c) {
+
+    // emit the code for the first expression
+    e1->code(s, c);
+
+    // push the return value of the first expression onto the stack
+    emit_push(ACC, s);
+    stack_offset--;
+
+    // emit the code for the second expression
+    e2->code(s, c);
+
+    // pop stack into register T1, and fix it
+    emit_load(T1, 1, SP, s);
+    emit_addiu(SP, SP, WORD_SIZE, s);
+    stack_offset++;
+
+    // load the value stored within the second result into T2
+    emit_move(T2, ACC, s);
+
+    // load TRUE into ACC
+    emit_load_bool(ACC, BoolConst(1), s);
+
+    // if pointers match match, jump to specified label
+    emit_beq(T1, T2, curr_label, s);
+
+    // load FALSE into ACC and call equality_test
+    emit_load_bool(ACC, BoolConst(0), s);
+    emit_jal("equality_test", s);
+
+    // Output label for next expression in the method, or end of method
+    emit_label_def(curr_label, s);
+    curr_label++;
 }
 
 //TODO
 void leq_class::code(ostream &s, CgenClassTableP c) {
+
 }
 
 //TODO
 void comp_class::code(ostream &s, CgenClassTableP c) {
+    // emit code for the expression
+    e1->code(s, c);
+
+    // load the value into T1
+    emit_load(T1, DEFAULT_OBJFIELDS, ACC, s);
+
+    // Load true into ACC
+    emit_load_bool(ACC, truebool, s);
+
+    // If the current value is zero (false), then skip ahead and return the true bool
+    emit_beqz(T1, curr_label, s);
+
+    // Else load false
+    emit_load_bool(ACC, falsebool, s);
+
+    // Label
+    emit_label_def(curr_label, s);
+    curr_label++;
 }
 
 void int_const_class::code(ostream &s, CgenClassTableP c)  
@@ -2222,7 +2273,24 @@ void new__class::code(ostream &s, CgenClassTableP c) {
 
 //TODO
 void isvoid_class::code(ostream &s, CgenClassTableP c) {
+    // emit code for the expression
+    e1->code(s, c);
 
+    // move the object from ACC into T1
+    emit_move(T1, ACC, s);
+
+    // Load true into ACC
+    emit_load_bool(ACC, truebool, s);
+
+    // If the current value is zero (void object), then skip ahead and return the true bool
+    emit_beqz(T1, curr_label, s);
+
+    // Else load false
+    emit_load_bool(ACC, falsebool, s);
+
+    // Label
+    emit_label_def(curr_label, s);
+    curr_label++;
 }
 
 //DONE!
