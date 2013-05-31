@@ -2166,7 +2166,7 @@ void eq_class::code(ostream &s, CgenClassTableP c) {
     emit_beq(T1, T2, curr_label, s);
 
     // load FALSE into ACC and call equality_test
-    emit_load_bool(ACC, BoolConst(0), s);
+    emit_load_bool(A1, BoolConst(0), s);
     emit_jal("equality_test", s);
 
     // Output label for next expression in the method, or end of method
