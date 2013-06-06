@@ -472,6 +472,9 @@ void SemanticAnalyzer::check_attributes(Features features, Symbol class_name) {
     }
 }
 
+
+// REGRADE DIFF - added a check for SELF_TYPE here. 
+// Also moved the line where we added attribute to symbol_table up to before we evaluate the init.
 void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name) {
     // check whether exists in parent classes or not
 
@@ -483,10 +486,14 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
     	// check in same class whether attribute has been defined or not
     	if(symbol_table->lookup(attribute->get_name()) == NULL) {
 	    Symbol type = attribute->get_type();
-	    if (!class_table->class_exists(type)) {
+	    if (type == SELF_TYPE) {
+		type = SELF_TYPE;
+		// DEBUG cerr << "SELF TYPE attribute: " << attribute->get_name() << " is now labelled: " << type <<  endl;
+	    } else if (!class_table->class_exists(type)) {
 		error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Class " << type << " of attribute " << attribute->get_name() << " is undefined." << endl;
 		type = Object;
 	    }
+	    symbol_table->addid(attribute->get_name(), new Symbol(type));
 	    Symbol expr_type = (attribute->get_init_expr())->eval(class_table, feature_table, symbol_table);
 	    if (expr_type != No_type) { // init expression is defined
 		if(class_table->is_child(expr_type, type)) {
@@ -495,8 +502,6 @@ void SemanticAnalyzer::check_attribute(attr_class *attribute, Symbol class_name)
 		    error_reporter->semant_error(class_table->get_curr_class_ptr(), attribute) << "Inferred type " << expr_type << " of initialization of attribute " << attribute->get_name() << " does not conform to declared type " << type << "." << endl;
 		    symbol_table->addid(attribute->get_name(), new Symbol(type));
 		}
-	    } else { // init expression not defined
-		symbol_table->addid(attribute->get_name(), new Symbol(type));
 	    }
         } else {
 	    if(attribute->get_name() == self) {
@@ -1159,6 +1164,7 @@ Symbol no_expr_class::eval(ClassTable *class_table, FeatureTable *feature_table,
     return No_type;
 }
 
+// REGRADE DIFF - We allow objects to be of type Object. Jesus christ how did we miss this.
 Symbol object_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     if(name == self) {
 	set_type(SELF_TYPE);	
@@ -1172,11 +1178,11 @@ Symbol object_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
 	ret_type = Object;
     } else {
         Symbol obj = *obj_type;
-        if (obj == Object) {
+        /*if (obj == Object) {
 	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Object cannot have type Object." << endl;
 	    set_type(Object);
 	    ret_type = Object;
-        }
+        } */
         set_type(obj);
 	ret_type = obj;
     }
