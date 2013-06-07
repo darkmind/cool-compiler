@@ -780,6 +780,7 @@ void FeatureTable::add_inherited_features(ClassTable *class_tab) {
     }
 }
 
+// REGRADE DIFF - When we assign something, we DON'T change the type of the object! The expression's type doesn't replace the object type!
 Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, SymbolTable<Symbol, Symbol> *symbol_table) {
     // check that name is defined in symbol table, and that expression is valid type
 
@@ -797,8 +798,8 @@ Symbol assign_class::eval(ClassTable *class_table, FeatureTable *feature_table, 
 	if(!class_table->is_child(expr_type, type_of_attr)) {
 	    error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Type " << expr_type << " of assigned expression does not conform to declared return type " << type_of_attr << "." << endl;
 	} else {
-	    // add to symbol table
-	    symbol_table->addid(name, new Symbol(expr_type));
+	    // add to symbol table - NOPE
+	    // symbol_table->addid(name, new Symbol(expr_type));
 	}
     } else {
 	error_reporter->semant_error(class_table->get_curr_class_ptr(), this) << "Attribute " << name << " being assigned to is not defined." << endl;
